@@ -4,12 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#0a1f0a" />
-  <meta name="description" content="Forest Survey Pro — Ecological Field Data Collection" />
+  <meta name="description" content="Forest Capture — Ecological Field Data Collection" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>Forest Survey Pro</title>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>Forest Capture</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="index.css" />
 </head>
@@ -18,7 +22,7 @@
   <!-- SPLASH SCREEN -->
   <div class="splash-screen" id="splashScreen">
     <div class="splash-leaf">🍃</div>
-    <div class="splash-title">Forest Logger</div>
+    <div class="splash-title">Forest Capture</div>
     <div class="splash-subtitle">Ecological Field Survey</div>
     <div class="splash-bar"><div class="splash-bar-fill"></div></div>
   </div>
@@ -60,7 +64,7 @@
   <header class="app-header" id="appHeader">
     <div class="header-left">
       <span class="header-icon">🌲</span>
-      <h1 class="header-title">Forest Survey <span class="header-pro">PRO</span></h1>
+      <h1 class="header-title">Forest Capture</h1>
     </div>
     <div class="header-right">
       <div class="live-clock" id="liveClock">
@@ -85,7 +89,7 @@
 
     <!-- ===== DASHBOARD ===== -->
     <section class="screen active" id="screenDashboard">
-      <div class="screen-header"><h2>Dashboard</h2><p class="screen-subtitle">Survey Sessions & Live Telemetry</p></div>
+      <div class="screen-header"><h2>Dashboard</h2></div>
       <div class="telemetry-grid">
         <div class="tele-card"><div class="tele-label">Location</div><div class="tele-value" id="teleLocation">Acquiring…</div><div class="tele-sub" id="teleCoords">---, ---</div></div>
         <div class="tele-card"><div class="tele-label">Temperature</div><div class="tele-value" id="teleTemp">--°C</div><div class="tele-sub" id="teleWeatherDesc">---</div></div>
@@ -128,7 +132,7 @@
         </div>
       </div>
       <div class="form-card">
-        <div class="section-title-row"><h3 class="card-title">📌 GPS Waypoints</h3><button class="btn btn-accent btn-sm" id="btnAddWaypointManual">＋ Add</button></div>
+        <div class="section-title-row"><h3 class="card-title">📌 GPS Waypoints</h3><button class="btn btn-accent btn-sm" id="btnSurveyTimer" style="margin-left:auto;">⏱️ Start Timer</button><button class="btn btn-accent btn-sm" id="btnAddWaypointManual">＋ Add</button></div>
         <div class="form-row">
           <div class="form-group"><label for="waypointName">Name</label><input type="text" id="waypointName" placeholder="e.g., Plot A Center" /></div>
           <div class="form-group"><label for="waypointType">Type</label><select id="waypointType"><option value="plot">Plot Center</option><option value="sample">Sample Point</option><option value="landmark">Landmark</option><option value="trail">Trail Marker</option><option value="water">Water Source</option><option value="camp">Camp</option><option value="other">Other</option></select></div>
@@ -141,9 +145,7 @@
     <!-- ===== QUADRAT ===== -->
     <section class="screen" id="screenQuadrat">
       <div class="screen-header"><h2>Quadrat Sampling</h2><p class="screen-subtitle">Vegetation composition & structure</p></div>
-      <div class="active-survey-bar" id="quadratSurveyBar"><span class="active-label">Active:</span><span class="active-name" id="quadratSurveyName">No survey</span>
-        <button class="btn btn-accent btn-sm" id="btnQuadratTimer" style="margin-left:auto;">⏱️ Start Timer</button>
-      </div>
+      <div class="active-survey-bar" id="quadratSurveyBar"><span class="active-label">Active:</span><span class="active-name" id="quadratSurveyName">No survey</span></div>
       <div class="form-card">
         <h3 class="card-title">Quadrat Configuration</h3>
         <div class="form-row">
@@ -413,7 +415,7 @@
 
     <div class="settings-section"><div class="settings-section-title">ℹ️ About</div>
       <p style="font-size:.78rem;color:var(--text-secondary);line-height:1.6;">
-        <strong>Forest Logger v3.0</strong><br>
+        <strong>Forest Capture v3.0</strong><br>
         Ecological Field Data Collection<br>
         GPS • Weather • Analytics • Maps<br>
         Biodiversity Indices • IVI • Basal Area<br>
@@ -428,5 +430,14 @@
   <div class="toast" id="toast"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(reg => console.log('SW registered:', reg.scope))
+          .catch(err => console.log('SW registration failed:', err));
+      });
+    }
+  </script>
 </body>
 </html>
