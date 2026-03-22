@@ -1,4 +1,4 @@
-/* Forest Survey Pro v3.0 — Full Ecology Suite */
+/* Forest Capture v3.0 — Full Ecology Suite */
 ;(function(){
 'use strict';
 const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
@@ -28,7 +28,7 @@ setInterval(updateClock,1000);updateClock();
 // ===== SURVEY TIMER =====
 let timerInterval=null,timerStart=null,timerRunning=false;
 function updateTimerDisplay(){if(!timerStart)return;const s=Math.floor((Date.now()-timerStart)/1000);const m=Math.floor(s/60);$('#timerText').textContent=`Timer: ${String(m).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;}
-$('#btnQuadratTimer').addEventListener('click',function(){
+$('#btnSurveyTimer').addEventListener('click',function(){
   if(timerRunning){clearInterval(timerInterval);timerRunning=false;this.textContent='⏱️ Start Timer';toast('Timer stopped');}
   else{timerStart=Date.now();timerInterval=setInterval(updateTimerDisplay,1000);timerRunning=true;this.textContent='⏱️ Stop Timer';toast('Timer started');}
 });
@@ -261,19 +261,19 @@ function toCSV(s){const rows=[['Survey','Date','Location','Investigator','Q#','S
 $('#btnExportCSV').addEventListener('click',()=>{const s=Store.getActive();if(!s){toast('No survey',true);return;}dl(toCSV(s),s.name.replace(/\W/g,'_')+'_survey.csv','text/csv');toast('CSV exported');});
 $('#btnExportJSON').addEventListener('click',()=>{const s=Store.getActive();if(!s){toast('No survey',true);return;}dl(JSON.stringify(s,null,2),s.name.replace(/\W/g,'_')+'_survey.json','application/json');toast('JSON exported');});
 $('#btnExportAllCSV').addEventListener('click',()=>{const sv=Store.getSurveys();if(!sv.length){toast('No surveys',true);return;}dl(sv.map(s=>toCSV(s)).join('\n'),'all_surveys.csv','text/csv');toast('All exported');});
-$('#btnExportGPX').addEventListener('click',()=>{const w=getWps();if(!w.length){toast('No waypoints',true);return;}let g='<?xml version="1.0"?>\n<gpx version="1.1" creator="ForestSurveyPro">\n';w.forEach(p=>{g+=`<wpt lat="${p.lat}" lon="${p.lng}"><name>${esc(p.name)}</name><desc>${esc(p.type)}</desc><time>${p.time}</time></wpt>\n`;});g+='</gpx>';dl(g,'waypoints.gpx','application/gpx+xml');toast('GPX exported');});
+$('#btnExportGPX').addEventListener('click',()=>{const w=getWps();if(!w.length){toast('No waypoints',true);return;}let g='<?xml version="1.0"?>\n<gpx version="1.1" creator="ForestCapture">\n';w.forEach(p=>{g+=`<wpt lat="${p.lat}" lon="${p.lng}"><name>${esc(p.name)}</name><desc>${esc(p.type)}</desc><time>${p.time}</time></wpt>\n`;});g+='</gpx>';dl(g,'waypoints.gpx','application/gpx+xml');toast('GPX exported');});
 
 // Summary Report
 $('#btnExportReport').addEventListener('click',()=>{const s=Store.getActive();if(!s){toast('No survey',true);return;}
   // Calculate analytics for report
   const speciesMap={};let totalN=0;s.quadrats&&s.quadrats.forEach(q=>{q.species&&q.species.forEach(sp=>{if(!sp.name)return;if(!speciesMap[sp.name])speciesMap[sp.name]={abundance:0,ba:0};speciesMap[sp.name].abundance+=sp.abundance||0;totalN+=sp.abundance||0;if(sp.dbh>0)speciesMap[sp.name].ba+=Math.PI*Math.pow(sp.dbh/200,2)*(sp.abundance||1);});});
   let H=0;Object.values(speciesMap).forEach(v=>{const p=v.abundance/totalN;if(p>0)H-=p*Math.log(p);});
-  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Survey Report — ${esc(s.name)}</title><style>body{font-family:'Times New Roman',serif;max-width:800px;margin:0 auto;padding:20px;color:#1a1a1a;}h1{color:#16a34a;border-bottom:2px solid #16a34a;padding-bottom:8px;}h2{color:#15803d;margin-top:24px;}table{width:100%;border-collapse:collapse;margin:12px 0;}th,td{border:1px solid #ccc;padding:6px 10px;text-align:left;font-size:14px;}th{background:#f0f9f0;}.species{font-style:italic;}.stat{font-weight:bold;color:#16a34a;}</style></head><body>`;
-  html+=`<h1>🌲 Forest Survey Report</h1><table><tr><th>Survey</th><td>${esc(s.name)}</td></tr><tr><th>Date</th><td>${s.date||''}</td></tr><tr><th>Location</th><td>${esc(s.location||'')}</td></tr><tr><th>Investigator</th><td>${esc(s.investigator||'')}</td></tr><tr><th>GPS</th><td>${s.gpsCoords||''}</td></tr></table>`;
+  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Survey Report — ${esc(s.name)}</title><style>body{font-family:'Inter','Segoe UI',Roboto,sans-serif;max-width:800px;margin:0 auto;padding:20px;color:#1a1a1a;}h1{color:#16a34a;border-bottom:2px solid #16a34a;padding-bottom:8px;}h2{color:#15803d;margin-top:24px;}table{width:100%;border-collapse:collapse;margin:12px 0;}th,td{border:1px solid #ccc;padding:6px 10px;text-align:left;font-size:14px;}th{background:#f0f9f0;}.species{font-style:italic;}.stat{font-weight:bold;color:#16a34a;}</style></head><body>`;
+  html+=`<h1>🌲 Forest Capture — Survey Report</h1><table><tr><th>Survey</th><td>${esc(s.name)}</td></tr><tr><th>Date</th><td>${s.date||''}</td></tr><tr><th>Location</th><td>${esc(s.location||'')}</td></tr><tr><th>Investigator</th><td>${esc(s.investigator||'')}</td></tr><tr><th>GPS</th><td>${s.gpsCoords||''}</td></tr></table>`;
   html+=`<h2>Summary Statistics</h2><table><tr><th>Total Quadrats</th><td>${s.quadrats?s.quadrats.length:0}</td></tr><tr><th>Species Richness</th><td class="stat">${Object.keys(speciesMap).length}</td></tr><tr><th>Total Individuals</th><td>${totalN}</td></tr><tr><th>Shannon-Wiener (H')</th><td class="stat">${H.toFixed(3)}</td></tr></table>`;
   if(s.quadrats&&s.quadrats.length){html+=`<h2>Quadrat Data</h2><table><tr><th>Q#</th><th>Size</th><th>Species</th><th>Stage</th><th>Phenology</th><th>Abundance</th><th>DBH</th><th>Height</th></tr>`;s.quadrats.forEach(q=>{q.species&&q.species.forEach(sp=>{html+=`<tr><td>${q.number}</td><td>${q.size}</td><td class="species">${esc(sp.name)}</td><td>${sp.stage}</td><td>${sp.phenology||''}</td><td>${sp.abundance}</td><td>${sp.dbh}</td><td>${sp.height}</td></tr>`;});});html+=`</table>`;}
   if(s.environment){html+=`<h2>Environmental Variables</h2><table>`;const e=s.environment;Object.entries(e).forEach(([k,v])=>{if(v)html+=`<tr><th>${k}</th><td>${v}</td></tr>`;});html+=`</table>`;}
-  html+=`<p style="margin-top:32px;color:#888;font-size:12px;">Generated by Forest Survey Pro — ${new Date().toLocaleString()}</p></body></html>`;
+  html+=`<p style="margin-top:32px;color:#888;font-size:12px;">Generated by Forest Capture — ${new Date().toLocaleString()}</p></body></html>`;
   dl(html,s.name.replace(/\W/g,'_')+'_report.html','text/html');toast('Report generated');});
 
 // Backup/Restore
