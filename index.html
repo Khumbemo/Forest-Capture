@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0a1f0a" />
+  <meta name="description" content="Forest Survey Pro — Ecological Field Data Collection" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Forest Survey Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="index.css" />
+</head>
+<body>
+
+  <!-- SPLASH SCREEN -->
+  <div class="splash-screen" id="splashScreen">
+    <div class="splash-leaf">🍃</div>
+    <div class="splash-title">Forest Logger</div>
+    <div class="splash-subtitle">Ecological Field Survey</div>
+    <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+  </div>
+
+  <!-- LEFT TOOLBAR (desktop) -->
+  <aside class="left-toolbar" id="leftToolbar">
+    <div class="toolbar-top">
+      <button class="tb-btn active" data-screen="screenDashboard" title="Dashboard"><span class="tb-icon">📊</span><span class="tb-label">Home</span></button>
+      <button class="tb-btn" data-screen="screenMap" title="Map"><span class="tb-icon">🛰️</span><span class="tb-label">Map</span></button>
+      <button class="tb-btn" data-screen="screenQuadrat" title="Quadrat"><span class="tb-icon">📐</span><span class="tb-label">Quadrat</span></button>
+      <button class="tb-btn" data-screen="screenTransect" title="Transect"><span class="tb-icon">📏</span><span class="tb-label">Transect</span></button>
+      <button class="tb-btn" data-screen="screenEnvironment" title="Environment"><span class="tb-icon">🌡️</span><span class="tb-label">Environ</span></button>
+      <button class="tb-btn" data-screen="screenDisturbance" title="Disturbance"><span class="tb-icon">⚠️</span><span class="tb-label">Disturb</span></button>
+      <button class="tb-btn" data-screen="screenCBI" title="CBI"><span class="tb-icon">🔥</span><span class="tb-label">CBI</span></button>
+      <button class="tb-btn" data-screen="screenPhotos" title="Photos"><span class="tb-icon">📸</span><span class="tb-label">Photos</span></button>
+      <button class="tb-btn" data-screen="screenAnalytics" title="Analytics"><span class="tb-icon">🧮</span><span class="tb-label">Analytics</span></button>
+      <button class="tb-btn" data-screen="screenExport" title="Export"><span class="tb-icon">💾</span><span class="tb-label">Export</span></button>
+    </div>
+    <div class="toolbar-bottom">
+      <button class="tb-btn" id="btnSettingsToolbar" title="Settings"><span class="tb-icon">⚙</span><span class="tb-label">Settings</span></button>
+    </div>
+  </aside>
+
+  <!-- MOBILE BOTTOM NAV -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="nav-btn active" data-screen="screenDashboard"><span class="nav-icon">📊</span><span class="nav-label">Home</span></button>
+    <button class="nav-btn" data-screen="screenMap"><span class="nav-icon">🛰️</span><span class="nav-label">Map</span></button>
+    <button class="nav-btn" data-screen="screenQuadrat"><span class="nav-icon">📐</span><span class="nav-label">Quadrat</span></button>
+    <button class="nav-btn" data-screen="screenTransect"><span class="nav-icon">📏</span><span class="nav-label">Transect</span></button>
+    <button class="nav-btn" data-screen="screenEnvironment"><span class="nav-icon">🌡️</span><span class="nav-label">Env</span></button>
+    <button class="nav-btn" data-screen="screenDisturbance"><span class="nav-icon">⚠️</span><span class="nav-label">Disturb</span></button>
+    <button class="nav-btn" data-screen="screenCBI"><span class="nav-icon">🔥</span><span class="nav-label">CBI</span></button>
+    <button class="nav-btn" data-screen="screenPhotos"><span class="nav-icon">📸</span><span class="nav-label">Photos</span></button>
+    <button class="nav-btn" data-screen="screenAnalytics"><span class="nav-icon">🧮</span><span class="nav-label">Stats</span></button>
+    <button class="nav-btn" data-screen="screenExport"><span class="nav-icon">💾</span><span class="nav-label">Export</span></button>
+  </nav>
+
+  <!-- HEADER -->
+  <header class="app-header" id="appHeader">
+    <div class="header-left">
+      <span class="header-icon">🌲</span>
+      <h1 class="header-title">Forest Survey <span class="header-pro">PRO</span></h1>
+    </div>
+    <div class="header-right">
+      <div class="live-clock" id="liveClock">
+        <span class="clock-time" id="clockTime">--:--</span>
+        <span class="clock-date" id="clockDate">---</span>
+      </div>
+      <span class="offline-badge" id="offlineBadge">● Offline Ready</span>
+      <button class="settings-btn" id="btnSettings" title="Settings"><span>⚙</span></button>
+    </div>
+  </header>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar" id="statusBar">
+    <div class="status-item"><span class="status-icon">📍</span><span class="status-text" id="gpsText">Acquiring GPS…</span></div>
+    <div class="status-item"><span class="status-icon" id="weatherIcon">🌤️</span><span class="status-text" id="weatherText">Fetching weather…</span></div>
+    <div class="status-item"><span class="status-icon">⛰️</span><span class="status-text" id="altText">Alt: ---</span></div>
+    <div class="status-item"><span class="status-icon">⏱️</span><span class="status-text" id="timerText">Timer: 00:00</span></div>
+  </div>
+
+  <!-- MAIN -->
+  <main class="app-main" id="appMain">
+
+    <!-- ===== DASHBOARD ===== -->
+    <section class="screen active" id="screenDashboard">
+      <div class="screen-header"><h2>Dashboard</h2><p class="screen-subtitle">Survey Sessions & Live Telemetry</p></div>
+      <div class="telemetry-grid">
+        <div class="tele-card"><div class="tele-label">Location</div><div class="tele-value" id="teleLocation">Acquiring…</div><div class="tele-sub" id="teleCoords">---, ---</div></div>
+        <div class="tele-card"><div class="tele-label">Temperature</div><div class="tele-value" id="teleTemp">--°C</div><div class="tele-sub" id="teleWeatherDesc">---</div></div>
+        <div class="tele-card"><div class="tele-label">Altitude</div><div class="tele-value" id="teleAlt">--- m</div><div class="tele-sub">Above sea level</div></div>
+        <div class="tele-card"><div class="tele-label">Humidity</div><div class="tele-value" id="teleHumidity">---%</div><div class="tele-sub" id="teleWind">Wind: --- km/h</div></div>
+      </div>
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-icon">📐</div><div class="stat-value" id="statQuadrats">0</div><div class="stat-label">Quadrats</div></div>
+        <div class="stat-card"><div class="stat-icon">📏</div><div class="stat-value" id="statTransects">0</div><div class="stat-label">Transects</div></div>
+        <div class="stat-card"><div class="stat-icon">🌿</div><div class="stat-value" id="statSpecies">0</div><div class="stat-label">Species</div></div>
+        <div class="stat-card"><div class="stat-icon">📌</div><div class="stat-value" id="statWaypoints">0</div><div class="stat-label">Waypoints</div></div>
+      </div>
+      <div class="section-block">
+        <div class="section-title-row"><h3>Survey Sessions</h3><button class="btn btn-primary btn-sm" id="btnNewSurvey">＋ New Survey</button></div>
+        <div class="survey-list" id="surveyList"><div class="empty-state"><div class="empty-icon">🌿</div><p>No surveys yet</p><p class="empty-hint">Tap "New Survey"</p></div></div>
+      </div>
+      <!-- Modal -->
+      <div class="modal-overlay" id="modalNewSurvey">
+        <div class="modal-card">
+          <h3>Create New Survey</h3>
+          <div class="form-group"><label for="surveyName">Survey Name *</label><input type="text" id="surveyName" placeholder="e.g., Plot A — Sal Forest" /></div>
+          <div class="form-group"><label for="surveyLocation">Location</label><input type="text" id="surveyLocation" placeholder="e.g., Dehradun Ridge" /></div>
+          <div class="form-group"><label for="surveyInvestigator">Investigator</label><input type="text" id="surveyInvestigator" placeholder="e.g., Dr. Sharma" /></div>
+          <div class="form-group"><label for="surveyDate">Date</label><input type="date" id="surveyDate" /></div>
+          <div class="form-group"><label><input type="checkbox" id="surveyAutoGPS" checked /> Auto-fill GPS</label></div>
+          <div class="modal-actions"><button class="btn btn-ghost" id="btnCancelSurvey">Cancel</button><button class="btn btn-primary" id="btnSaveSurvey">Create</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== MAP ===== -->
+    <section class="screen" id="screenMap">
+      <div class="screen-header"><h2>Satellite Map & Waypoints</h2><p class="screen-subtitle">GPS tracking & waypoint management</p></div>
+      <div class="map-container"><div id="mapView" class="map-view"></div>
+        <div class="map-controls">
+          <button class="map-ctrl-btn" id="btnLocateMe" title="My Location">📍</button>
+          <button class="map-ctrl-btn" id="btnAddWaypoint" title="Drop Waypoint">📌</button>
+          <button class="map-ctrl-btn" id="btnMapSatellite" title="Satellite">🛰️</button>
+          <button class="map-ctrl-btn" id="btnMapTerrain" title="Terrain">🏔️</button>
+        </div>
+      </div>
+      <div class="form-card">
+        <div class="section-title-row"><h3 class="card-title">📌 GPS Waypoints</h3><button class="btn btn-accent btn-sm" id="btnAddWaypointManual">＋ Add</button></div>
+        <div class="form-row">
+          <div class="form-group"><label for="waypointName">Name</label><input type="text" id="waypointName" placeholder="e.g., Plot A Center" /></div>
+          <div class="form-group"><label for="waypointType">Type</label><select id="waypointType"><option value="plot">Plot Center</option><option value="sample">Sample Point</option><option value="landmark">Landmark</option><option value="trail">Trail Marker</option><option value="water">Water Source</option><option value="camp">Camp</option><option value="other">Other</option></select></div>
+        </div>
+        <div class="form-group"><label for="waypointNotes">Notes</label><input type="text" id="waypointNotes" placeholder="Optional" /></div>
+        <div class="waypoint-list" id="waypointList"><div class="empty-state small"><p>No waypoints</p></div></div>
+      </div>
+    </section>
+
+    <!-- ===== QUADRAT ===== -->
+    <section class="screen" id="screenQuadrat">
+      <div class="screen-header"><h2>Quadrat Sampling</h2><p class="screen-subtitle">Vegetation composition & structure</p></div>
+      <div class="active-survey-bar" id="quadratSurveyBar"><span class="active-label">Active:</span><span class="active-name" id="quadratSurveyName">No survey</span>
+        <button class="btn btn-accent btn-sm" id="btnQuadratTimer" style="margin-left:auto;">⏱️ Start Timer</button>
+      </div>
+      <div class="form-card">
+        <h3 class="card-title">Quadrat Configuration</h3>
+        <div class="form-row">
+          <div class="form-group"><label for="quadratSize">Size (m²)</label><input type="number" id="quadratSize" min="1" placeholder="e.g., 100" /></div>
+          <div class="form-group"><label for="quadratNumber">Number</label><input type="number" id="quadratNumber" min="1" placeholder="e.g., 1" /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label for="quadratShape">Shape</label><select id="quadratShape"><option value="square">Square</option><option value="rectangular">Rectangular</option><option value="circular">Circular</option></select></div>
+          <div class="form-group"><label for="quadratGPS">GPS</label><div style="display:flex;gap:4px;"><input type="text" id="quadratGPS" placeholder="Lat, Long" style="flex:1;" /><button class="btn btn-accent btn-sm" id="btnQuadratGPS">📍</button></div></div>
+        </div>
+      </div>
+      <div class="form-card">
+        <div class="section-title-row"><h3 class="card-title">Species Entries</h3><button class="btn btn-accent btn-sm" id="btnAddSpecies">＋ Add Species</button></div>
+        <div class="species-list" id="speciesList"></div>
+      </div>
+      <button class="btn btn-primary btn-block" id="btnSaveQuadrat">Save Quadrat Data</button>
+      <div class="quadrat-table-section">
+        <div class="section-title-row"><h3 class="card-title">📋 Recorded Quadrats</h3></div>
+        <div class="table-scroll"><table class="quadrat-table" id="quadratTable"><thead><tr><th>Q#</th><th>Size</th><th>Species</th><th>Stage</th><th>Phenology</th><th>Count</th><th>DBH</th><th>Height</th><th>⌀</th></tr></thead><tbody id="quadratTableBody"><tr><td colspan="9" class="table-empty">No data yet</td></tr></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ===== TRANSECT ===== -->
+    <section class="screen" id="screenTransect">
+      <div class="screen-header"><h2>Transect Sampling</h2><p class="screen-subtitle">Line intercept / belt transect method</p></div>
+      <div class="active-survey-bar"><span class="active-label">Active:</span><span class="active-name" id="transectSurveyName">No survey</span></div>
+      <div class="form-card">
+        <h3 class="card-title">Transect Configuration</h3>
+        <div class="form-row">
+          <div class="form-group"><label for="transectLength">Length (m)</label><input type="number" id="transectLength" min="1" placeholder="e.g., 100" /></div>
+          <div class="form-group"><label for="transectWidth">Width (m)</label><input type="number" id="transectWidth" min="0.1" step="0.1" placeholder="e.g., 2" /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label for="transectBearing">Bearing (°)</label><input type="number" id="transectBearing" min="0" max="360" placeholder="0–360" /></div>
+          <div class="form-group"><label for="transectNumber">Transect #</label><input type="number" id="transectNumber" min="1" placeholder="e.g., 1" /></div>
+        </div>
+        <div class="form-group"><label for="transectStartGPS">Start GPS</label><div style="display:flex;gap:4px;"><input type="text" id="transectStartGPS" placeholder="Start Lat, Long" style="flex:1;" /><button class="btn btn-accent btn-sm" id="btnTransectStartGPS">📍</button></div></div>
+        <div class="form-group"><label for="transectEndGPS">End GPS</label><div style="display:flex;gap:4px;"><input type="text" id="transectEndGPS" placeholder="End Lat, Long" style="flex:1;" /><button class="btn btn-accent btn-sm" id="btnTransectEndGPS">📍</button></div></div>
+      </div>
+      <div class="form-card">
+        <div class="section-title-row"><h3 class="card-title">Intercept Entries</h3><button class="btn btn-accent btn-sm" id="btnAddIntercept">＋ Add</button></div>
+        <div id="interceptList"></div>
+      </div>
+      <button class="btn btn-primary btn-block" id="btnSaveTransect">Save Transect</button>
+      <div class="form-card" style="margin-top:16px;">
+        <h3 class="card-title">📋 Saved Transects</h3>
+        <div class="table-scroll"><table class="quadrat-table"><thead><tr><th>T#</th><th>Length</th><th>Width</th><th>Species</th><th>Distance</th><th>Cover %</th><th>⌀</th></tr></thead><tbody id="transectTableBody"><tr><td colspan="7" class="table-empty">No transect data</td></tr></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ===== ENVIRONMENT ===== -->
+    <section class="screen" id="screenEnvironment">
+      <div class="screen-header"><h2>Environmental Variables</h2><p class="screen-subtitle">Abiotic site conditions</p></div>
+      <div class="active-survey-bar"><span class="active-label">Active:</span><span class="active-name" id="envSurveyName">No survey</span></div>
+      <div class="form-card">
+        <div class="section-title-row"><h3 class="card-title">Topography</h3><button class="btn btn-accent btn-sm" id="btnAutoFillEnv">📡 Auto-Fill</button></div>
+        <div class="form-row"><div class="form-group"><label for="envSlope">Slope (°)</label><input type="number" id="envSlope" min="0" max="90" step="0.1" placeholder="0–90" /></div><div class="form-group"><label for="envAspect">Aspect</label><select id="envAspect"><option value="">—</option><option value="N">N</option><option value="NE">NE</option><option value="E">E</option><option value="SE">SE</option><option value="S">S</option><option value="SW">SW</option><option value="W">W</option><option value="NW">NW</option><option value="flat">Flat</option></select></div></div>
+        <div class="form-row"><div class="form-group"><label for="envElevation">Elevation (m)</label><input type="number" id="envElevation" min="0" max="9000" placeholder="e.g., 1250" /></div><div class="form-group"><label for="envCanopyCover">Canopy Cover (%)</label><input type="number" id="envCanopyCover" min="0" max="100" placeholder="0–100" /></div></div>
+      </div>
+      <div class="form-card">
+        <h3 class="card-title">🌿 Canopy Cover Estimation</h3>
+        <p class="card-desc">Take an upward-facing photo to estimate canopy closure percentage.</p>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+          <label class="btn btn-accent btn-sm" for="canopyPhotoInput">📷 Capture Canopy Photo</label>
+          <input type="file" id="canopyPhotoInput" accept="image/*" capture="environment" class="hidden-input" />
+          <span id="canopyEstimate" style="font-weight:700;color:var(--emerald);">—</span>
+        </div>
+        <canvas id="canopyCanvas" style="display:none;"></canvas>
+      </div>
+      <div class="form-card">
+        <h3 class="card-title">Soil & Moisture</h3>
+        <div class="form-row"><div class="form-group"><label for="envSoilType">Soil</label><select id="envSoilType"><option value="">—</option><option value="clay">Clay</option><option value="silt">Silt</option><option value="sand">Sandy</option><option value="loam">Loam</option><option value="clay-loam">Clay-Loam</option><option value="sandy-loam">Sandy-Loam</option><option value="peat">Peat</option><option value="rocky">Rocky</option></select></div><div class="form-group"><label for="envSoilMoisture">Moisture</label><select id="envSoilMoisture"><option value="">—</option><option value="dry">Dry</option><option value="moist">Moist</option><option value="wet">Wet</option><option value="waterlogged">Waterlogged</option></select></div></div>
+        <div class="form-group"><label for="envSoilColor">Soil Color</label><input type="text" id="envSoilColor" placeholder="e.g., Dark brown" /></div>
+      </div>
+      <div class="form-card">
+        <h3 class="card-title">Weather</h3>
+        <div class="form-row"><div class="form-group"><label for="envTemperature">Temp (°C)</label><input type="number" id="envTemperature" step="0.1" placeholder="e.g., 28.5" /></div><div class="form-group"><label for="envHumidity">Humidity (%)</label><input type="number" id="envHumidity" min="0" max="100" placeholder="0–100" /></div></div>
+        <div class="form-group"><label for="envWeather">Weather</label><select id="envWeather"><option value="">—</option><option value="clear">Clear</option><option value="partly-cloudy">Partly Cloudy</option><option value="overcast">Overcast</option><option value="rain">Rain</option><option value="fog">Fog</option><option value="snow">Snow</option></select></div>
+      </div>
+      <button class="btn btn-primary btn-block" id="btnSaveEnv">Save Environmental Data</button>
+    </section>
+
+    <!-- ===== DISTURBANCE ===== -->
+    <section class="screen" id="screenDisturbance">
+      <div class="screen-header"><h2>Disturbance Indicators</h2><p class="screen-subtitle">Anthropogenic & natural disturbance</p></div>
+      <div class="active-survey-bar"><span class="active-label">Active:</span><span class="active-name" id="distSurveyName">No survey</span></div>
+      <div class="form-card"><h3 class="card-title">Grazing</h3><div class="toggle-row"><label>Evidence</label><label class="switch"><input type="checkbox" id="distGrazingPresent" /><span class="slider"></span></label></div><div class="severity-group" id="grazingSeverityGroup"><label>Severity (1–5)</label><div class="severity-slider"><input type="range" id="distGrazingSeverity" min="1" max="5" value="1" /><span class="severity-value" id="distGrazingSeverityVal">1</span></div><div class="form-group"><label for="distGrazingType">Type</label><select id="distGrazingType"><option value="">—</option><option value="cattle">Cattle</option><option value="goats">Goats</option><option value="wild">Wild</option><option value="mixed">Mixed</option></select></div></div></div>
+      <div class="form-card"><h3 class="card-title">Logging</h3><div class="toggle-row"><label>Evidence</label><label class="switch"><input type="checkbox" id="distLoggingPresent" /><span class="slider"></span></label></div><div class="severity-group" id="loggingSeverityGroup"><label>Severity (1–5)</label><div class="severity-slider"><input type="range" id="distLoggingSeverity" min="1" max="5" value="1" /><span class="severity-value" id="distLoggingSeverityVal">1</span></div><div class="form-group"><label for="distLoggingType">Type</label><select id="distLoggingType"><option value="">—</option><option value="selective">Selective</option><option value="clear-cut">Clear-cut</option><option value="deadwood">Deadwood</option><option value="illegal">Illegal</option></select></div></div></div>
+      <div class="form-card"><h3 class="card-title">Fire</h3><div class="toggle-row"><label>Evidence</label><label class="switch"><input type="checkbox" id="distFirePresent" /><span class="slider"></span></label></div><div class="severity-group" id="fireSeverityGroup"><label>Severity (1–5)</label><div class="severity-slider"><input type="range" id="distFireSeverity" min="1" max="5" value="1" /><span class="severity-value" id="distFireSeverityVal">1</span></div><div class="form-row"><div class="form-group"><label for="distFireType">Type</label><select id="distFireType"><option value="">—</option><option value="surface">Surface</option><option value="crown">Crown</option><option value="ground">Ground</option><option value="prescribed">Prescribed</option></select></div><div class="form-group"><label for="distFireRecency">Recency</label><select id="distFireRecency"><option value="">—</option><option value="recent">&lt;1yr</option><option value="1-3yr">1–3yr</option><option value="3-5yr">3–5yr</option><option value="old">&gt;5yr</option></select></div></div></div></div>
+      <div class="form-card"><h3 class="card-title">Human Activity</h3><div class="toggle-row"><label>Evidence</label><label class="switch"><input type="checkbox" id="distHumanPresent" /><span class="slider"></span></label></div><div class="severity-group" id="humanSeverityGroup"><label>Severity (1–5)</label><div class="severity-slider"><input type="range" id="distHumanSeverity" min="1" max="5" value="1" /><span class="severity-value" id="distHumanSeverityVal">1</span></div><div class="form-group"><label for="distHumanType">Activity</label><select id="distHumanType" multiple size="4"><option value="trails">Trails</option><option value="construction">Construction</option><option value="waste">Waste</option><option value="encroachment">Encroachment</option><option value="ntfp">NTFP</option><option value="recreation">Recreation</option></select></div></div></div>
+      <div class="form-group"><label for="distNotes">Notes</label><textarea id="distNotes" rows="3" placeholder="Disturbance observations…"></textarea></div>
+      <button class="btn btn-primary btn-block" id="btnSaveDist">Save Disturbance Data</button>
+    </section>
+
+    <!-- ===== CBI ===== -->
+    <section class="screen" id="screenCBI">
+      <div class="screen-header"><h2>Composite Burn Index</h2><p class="screen-subtitle">Fire severity across strata</p></div>
+      <div class="active-survey-bar"><span class="active-label">Active:</span><span class="active-name" id="cbiSurveyName">No survey</span></div>
+      <div class="cbi-composite-score"><div class="cbi-score-label">Composite CBI</div><div class="cbi-score-value" id="cbiCompositeScore">0.00</div><div class="cbi-score-bar"><div class="cbi-score-fill" id="cbiScoreFill"></div></div><div class="cbi-score-range"><span>0 — Unburned</span><span>3 — High</span></div></div>
+      <div class="form-card"><h3 class="card-title">🪨 Substrate</h3><div class="form-group"><label for="cbiSubLitter">Litter</label><select id="cbiSubLitter" class="cbi-select" data-layer="substrate"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="form-group"><label for="cbiSubDuff">Duff</label><select id="cbiSubDuff" class="cbi-select" data-layer="substrate"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="form-group"><label for="cbiSubSoil">Soil</label><select id="cbiSubSoil" class="cbi-select" data-layer="substrate"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="cbi-layer-avg">Avg: <strong id="cbiSubstrateAvg">0.00</strong></div></div>
+      <div class="form-card"><h3 class="card-title">🌾 Herbaceous</h3><div class="form-group"><label for="cbiHerbFreq">Frequency</label><select id="cbiHerbFreq" class="cbi-select" data-layer="herbaceous"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="form-group"><label for="cbiHerbMort">Mortality</label><select id="cbiHerbMort" class="cbi-select" data-layer="herbaceous"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="cbi-layer-avg">Avg: <strong id="cbiHerbaceousAvg">0.00</strong></div></div>
+      <div class="form-card"><h3 class="card-title">🌿 Shrub</h3><div class="form-group"><label for="cbiShrubMort">Mortality</label><select id="cbiShrubMort" class="cbi-select" data-layer="shrub"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="form-group"><label for="cbiShrubChar">Char</label><select id="cbiShrubChar" class="cbi-select" data-layer="shrub"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="cbi-layer-avg">Avg: <strong id="cbiShrubAvg">0.00</strong></div></div>
+      <div class="form-card"><h3 class="card-title">🌳 Intermediate</h3><div class="form-group"><label for="cbiIntChar">Char Height</label><select id="cbiIntChar" class="cbi-select" data-layer="intermediate"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="form-group"><label for="cbiIntMort">Mortality</label><select id="cbiIntMort" class="cbi-select" data-layer="intermediate"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="cbi-layer-avg">Avg: <strong id="cbiIntermediateAvg">0.00</strong></div></div>
+      <div class="form-card"><h3 class="card-title">🏔️ Overstory</h3><div class="form-group"><label for="cbiOverScorch">Crown Scorch</label><select id="cbiOverScorch" class="cbi-select" data-layer="overstory"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="form-group"><label for="cbiOverMort">Mortality</label><select id="cbiOverMort" class="cbi-select" data-layer="overstory"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="form-group"><label for="cbiOverChar">Bark Char</label><select id="cbiOverChar" class="cbi-select" data-layer="overstory"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="cbi-layer-avg">Avg: <strong id="cbiOverstoryAvg">0.00</strong></div></div>
+      <button class="btn btn-primary btn-block" id="btnSaveCBI">Save CBI</button>
+    </section>
+
+    <!-- ===== PHOTOS & NOTES ===== -->
+    <section class="screen" id="screenPhotos">
+      <div class="screen-header"><h2>Photos, Notes & Voice</h2><p class="screen-subtitle">Multimedia documentation</p></div>
+      <div class="active-survey-bar"><span class="active-label">Active:</span><span class="active-name" id="photoSurveyName">No survey</span></div>
+      <div class="form-card"><h3 class="card-title">📸 Photos</h3><div class="form-group"><label for="photoQuadratRef">Quadrat #</label><input type="number" id="photoQuadratRef" min="1" placeholder="e.g., 1" /></div><div class="photo-capture-area"><label class="photo-upload-btn" for="photoInput"><span class="photo-upload-icon">📷</span><span>Capture Photo</span></label><input type="file" id="photoInput" accept="image/*" capture="environment" class="hidden-input" /></div><div class="photo-gallery" id="photoGallery"></div></div>
+      <div class="form-card"><h3 class="card-title">🎤 Voice Notes</h3><p class="card-desc">Record audio observations directly in the field.</p><div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;"><button class="btn btn-accent" id="btnStartRecording">🔴 Start Recording</button><button class="btn btn-ghost" id="btnStopRecording" disabled>⏹️ Stop</button><span id="recordingStatus" style="font-size:.78rem;color:var(--text-muted);">Not recording</span></div><div id="audioList"></div></div>
+      <div class="form-card"><h3 class="card-title">📝 Notes</h3><div class="form-group"><label for="noteQuadratRef">Quadrat #</label><input type="number" id="noteQuadratRef" min="1" placeholder="e.g., 1" /></div><div class="form-group"><label for="noteCategory">Category</label><select id="noteCategory"><option value="general">General</option><option value="vegetation">Vegetation</option><option value="fauna">Fauna</option><option value="disturbance">Disturbance</option><option value="soil">Soil</option><option value="weather">Weather</option></select></div><div class="form-group"><label for="noteContent">Details</label><textarea id="noteContent" rows="4" placeholder="Observations…"></textarea></div><button class="btn btn-accent btn-block" id="btnAddNote">Save Note</button></div>
+      <div class="form-card"><h3 class="card-title">Saved Notes</h3><div class="notes-list" id="notesList"><div class="empty-state small"><p>No notes</p></div></div></div>
+    </section>
+
+    <!-- ===== ANALYTICS ===== -->
+    <section class="screen" id="screenAnalytics">
+      <div class="screen-header"><h2>Analytics & Indices</h2><p class="screen-subtitle">Biodiversity, IVI, basal area & more</p></div>
+      <div class="active-survey-bar"><span class="active-label">Active:</span><span class="active-name" id="analyticsSurveyName">No survey</span></div>
+
+      <div class="form-card">
+        <h3 class="card-title">🧮 Biodiversity Indices</h3>
+        <div class="analytics-grid">
+          <div class="analytic-item"><div class="analytic-label">Species Richness (S)</div><div class="analytic-value" id="analyticRichness">0</div></div>
+          <div class="analytic-item"><div class="analytic-label">Shannon-Wiener (H')</div><div class="analytic-value" id="analyticShannon">0.000</div></div>
+          <div class="analytic-item"><div class="analytic-label">Simpson's Index (D)</div><div class="analytic-value" id="analyticSimpson">0.000</div></div>
+          <div class="analytic-item"><div class="analytic-label">Simpson's Diversity (1-D)</div><div class="analytic-value" id="analyticSimpsonDiv">0.000</div></div>
+          <div class="analytic-item"><div class="analytic-label">Evenness (E)</div><div class="analytic-value" id="analyticEvenness">0.000</div></div>
+          <div class="analytic-item"><div class="analytic-label">Total Individuals (N)</div><div class="analytic-value" id="analyticTotalN">0</div></div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <h3 class="card-title">📏 Basal Area</h3>
+        <div class="analytics-grid">
+          <div class="analytic-item"><div class="analytic-label">Total Basal Area</div><div class="analytic-value" id="analyticBasalTotal">0.000 m²</div></div>
+          <div class="analytic-item"><div class="analytic-label">Per Hectare</div><div class="analytic-value" id="analyticBasalHa">0.000 m²/ha</div></div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <h3 class="card-title">📊 IVI — Importance Value Index</h3>
+        <p class="card-desc">Relative density + relative frequency + relative dominance = IVI (max 300)</p>
+        <div class="table-scroll">
+          <table class="quadrat-table" id="iviTable"><thead><tr><th>Species</th><th>Density</th><th>Rel. Density</th><th>Frequency</th><th>Rel. Freq</th><th>Dominance</th><th>Rel. Dom</th><th>IVI</th></tr></thead><tbody id="iviTableBody"><tr><td colspan="8" class="table-empty">No data</td></tr></tbody></table>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <h3 class="card-title">📊 DBH Class Distribution</h3>
+        <div id="dbhChart" class="bar-chart-container"></div>
+      </div>
+
+      <div class="form-card">
+        <h3 class="card-title">📈 Species Accumulation Curve</h3>
+        <div id="speciesAccumChart" class="bar-chart-container"></div>
+      </div>
+    </section>
+
+    <!-- ===== EXPORT ===== -->
+    <section class="screen" id="screenExport">
+      <div class="screen-header"><h2>Data Export</h2><p class="screen-subtitle">Download & backup</p></div>
+      <div class="active-survey-bar"><span class="active-label">Active:</span><span class="active-name" id="exportSurveyName">No survey</span></div>
+      <div class="form-card">
+        <h3 class="card-title">Export Options</h3>
+        <div class="export-options">
+          <button class="export-btn" id="btnExportCSV"><div class="export-icon">📊</div><div class="export-info"><strong>CSV</strong><span>Excel, R, SPSS</span></div></button>
+          <button class="export-btn" id="btnExportJSON"><div class="export-icon">🗂️</div><div class="export-info"><strong>JSON</strong><span>Programmatic</span></div></button>
+          <button class="export-btn" id="btnExportAllCSV"><div class="export-icon">📦</div><div class="export-info"><strong>All Surveys CSV</strong><span>Batch</span></div></button>
+          <button class="export-btn" id="btnExportGPX"><div class="export-icon">🗺️</div><div class="export-info"><strong>GPX Waypoints</strong><span>GPS exchange</span></div></button>
+          <button class="export-btn" id="btnExportReport"><div class="export-icon">📄</div><div class="export-info"><strong>Summary Report</strong><span>Complete HTML report</span></div></button>
+        </div>
+      </div>
+      <div class="form-card">
+        <h3 class="card-title">🔄 Backup & Restore</h3>
+        <p class="card-desc">Export entire database or restore from backup file.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-accent" id="btnBackupAll">⬇️ Backup All Data</button>
+          <label class="btn btn-ghost" for="restoreInput">⬆️ Restore from Backup</label>
+          <input type="file" id="restoreInput" accept=".json" class="hidden-input" />
+        </div>
+      </div>
+      <div class="form-card"><h3 class="card-title">Preview</h3><div class="data-preview" id="dataPreview"><div class="empty-state small"><p>Select a survey</p></div></div></div>
+      <div class="form-card danger-zone"><h3 class="card-title">⚠️ Danger Zone</h3><button class="btn btn-danger btn-block" id="btnClearAll">Clear All Data</button></div>
+    </section>
+
+  </main>
+
+  <!-- Settings -->
+  <div class="settings-overlay" id="settingsOverlay"></div>
+  <div class="settings-panel" id="settingsPanel">
+    <h3>⚙ Settings <button class="settings-close" id="btnSettingsClose">✕</button></h3>
+
+    <!-- Display -->
+    <div class="settings-section"><div class="settings-section-title">🎨 Display</div>
+      <div class="theme-cards" id="themeCards">
+        <div class="theme-card active-theme" data-theme="night"><div class="theme-swatch swatch-night"></div><div class="theme-card-info"><strong>🌙 Night</strong><span>Pure dark</span></div></div>
+        <div class="theme-card" data-theme="day"><div class="theme-swatch swatch-day"></div><div class="theme-card-info"><strong>☀️ Day</strong><span>Light</span></div></div>
+        <div class="theme-card" data-theme="green"><div class="theme-swatch swatch-green"></div><div class="theme-card-info"><strong>🌲 Green</strong><span>Forest</span></div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:12px;">
+        <span style="font-size:.8rem;color:var(--text-muted);">🔅</span>
+        <input type="range" id="brightnessSlider" min="50" max="150" value="100" style="flex:1;" />
+        <span style="font-size:.8rem;color:var(--text-muted);">🔆</span>
+        <span id="brightnessValue" style="font-size:.78rem;font-weight:600;color:var(--emerald);min-width:36px;text-align:center;">100%</span>
+      </div>
+    </div>
+
+    <!-- Sampling Methodology -->
+    <div class="settings-section"><div class="settings-section-title">🔬 Sampling Methodology</div>
+      <div class="form-group"><label for="settingSamplingMethod">Sampling Design</label>
+        <select id="settingSamplingMethod"><option value="random">Simple Random Sampling</option><option value="systematic">Systematic Sampling</option><option value="stratified">Stratified Random Sampling</option><option value="cluster">Cluster Sampling</option><option value="transect">Belt Transect</option><option value="plotless">Plotless (Point-Quarter)</option></select></div>
+      <div class="form-group"><label for="settingPlotShape">Default Plot Shape</label>
+        <select id="settingPlotShape"><option value="square">Square</option><option value="rectangular">Rectangular</option><option value="circular">Circular</option></select></div>
+      <div class="form-group"><label for="settingDefaultPlotSize">Default Plot Size (m²)</label>
+        <input type="number" id="settingDefaultPlotSize" value="100" min="1" max="10000" /></div>
+    </div>
+
+    <!-- Measurement Standards -->
+    <div class="settings-section"><div class="settings-section-title">📏 Measurement Standards</div>
+      <div class="form-group"><label for="settingDBHHeight">DBH Measurement Height</label>
+        <select id="settingDBHHeight"><option value="1.37">1.37 m (Standard breast height)</option><option value="1.3">1.3 m (Alternate standard)</option><option value="custom">Custom height</option></select></div>
+      <div class="form-group"><label for="settingMinDBH">Minimum DBH Threshold (cm)</label>
+        <input type="number" id="settingMinDBH" value="10" min="0" step="0.1" />
+        <small class="form-hint">Stems below this DBH excluded from tree analysis</small></div>
+      <div class="form-group"><label for="settingUnits">Measurement Units</label>
+        <select id="settingUnits"><option value="metric">Metric (m, cm, ha)</option><option value="imperial">Imperial (ft, in, ac)</option></select></div>
+    </div>
+
+    <!-- Diversity Indices -->
+    <div class="settings-section"><div class="settings-section-title">🧮 Diversity Analysis</div>
+      <div class="toggle-row"><label>Shannon-Wiener Index (H')</label><label class="switch"><input type="checkbox" id="settingShannon" checked /><span class="slider"></span></label></div>
+      <div class="toggle-row"><label>Simpson's Index (D)</label><label class="switch"><input type="checkbox" id="settingSimpson" checked /><span class="slider"></span></label></div>
+      <div class="toggle-row"><label>Margalef's Richness (R₁)</label><label class="switch"><input type="checkbox" id="settingMargalef" checked /><span class="slider"></span></label></div>
+      <div class="toggle-row"><label>Pielou's Evenness (J')</label><label class="switch"><input type="checkbox" id="settingPielou" checked /><span class="slider"></span></label></div>
+      <div class="toggle-row"><label>IVI (Importance Value Index)</label><label class="switch"><input type="checkbox" id="settingIVI" checked /><span class="slider"></span></label></div>
+      <div class="form-group" style="margin-top:8px;"><label for="settingLogBase">Logarithm Base (for H')</label>
+        <select id="settingLogBase"><option value="e">Natural log (ln) — Standard</option><option value="2">Log₂ (bits)</option><option value="10">Log₁₀ (decits)</option></select></div>
+    </div>
+
+    <!-- Taxonomy -->
+    <div class="settings-section"><div class="settings-section-title">🌿 Taxonomy & Nomenclature</div>
+      <div class="form-group"><label for="settingNomenclature">Naming Convention</label>
+        <select id="settingNomenclature"><option value="binomial">Binomial (Genus species)</option><option value="trinomial">Trinomial (incl. subspecies)</option><option value="common">Common Names</option><option value="both">Both Scientific & Common</option></select></div>
+      <div class="toggle-row"><label>Italicize Scientific Names</label><label class="switch"><input type="checkbox" id="settingItalicSpecies" checked /><span class="slider"></span></label></div>
+      <div class="toggle-row"><label>Auto-capitalize Genus</label><label class="switch"><input type="checkbox" id="settingAutoCapitalize" checked /><span class="slider"></span></label></div>
+    </div>
+
+    <!-- GPS & Coordinates -->
+    <div class="settings-section"><div class="settings-section-title">📡 GPS & Coordinates</div>
+      <div class="form-group"><label for="settingCoordFormat">Coordinate Format</label>
+        <select id="settingCoordFormat"><option value="dd">Decimal Degrees (DD)</option><option value="dms">Degrees Minutes Seconds (DMS)</option><option value="utm">UTM (Universal Transverse Mercator)</option></select></div>
+      <div class="toggle-row"><label>Continuous GPS Tracking</label><label class="switch"><input type="checkbox" id="settingsGPSContinuous" checked /><span class="slider"></span></label></div>
+      <div class="toggle-row"><label>Auto-record GPS with each entry</label><label class="switch"><input type="checkbox" id="settingAutoGPSEntry" checked /><span class="slider"></span></label></div>
+      <div class="form-group"><label for="settingDatum">Geodetic Datum</label>
+        <select id="settingDatum"><option value="WGS84">WGS 84 (GPS standard)</option><option value="NAD83">NAD 83</option><option value="Everest">Everest 1830 (India)</option></select></div>
+    </div>
+
+    <!-- Data & Export -->
+    <div class="settings-section"><div class="settings-section-title">💾 Data Management</div>
+      <div class="toggle-row"><label>Auto-save after each entry</label><label class="switch"><input type="checkbox" id="settingAutoSave" checked /><span class="slider"></span></label></div>
+      <div class="toggle-row"><label>Include raw GPS in exports</label><label class="switch"><input type="checkbox" id="settingExportGPS" checked /><span class="slider"></span></label></div>
+      <div class="toggle-row"><label>Include timestamps in exports</label><label class="switch"><input type="checkbox" id="settingExportTimestamp" checked /><span class="slider"></span></label></div>
+    </div>
+
+    <div class="settings-section"><div class="settings-section-title">ℹ️ About</div>
+      <p style="font-size:.78rem;color:var(--text-secondary);line-height:1.6;">
+        <strong>Forest Logger v3.0</strong><br>
+        Ecological Field Data Collection<br>
+        GPS • Weather • Analytics • Maps<br>
+        Biodiversity Indices • IVI • Basal Area<br>
+        <br>
+        Supports: Quadrat, Transect, Point-Quarter<br>
+        Standards: CBH at 1.37m (Husch et al., 2003)<br>
+        Indices: Shannon (1948), Simpson (1949)
+      </p>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
