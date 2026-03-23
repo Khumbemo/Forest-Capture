@@ -71,7 +71,7 @@
         <span class="clock-time" id="clockTime">--:--</span>
         <span class="clock-date" id="clockDate">---</span>
       </div>
-      <span class="offline-badge" id="offlineBadge">● Offline Ready</span>
+      <span class="online-dot" id="onlineDot"></span>
       <button class="settings-btn" id="btnSettings" title="Settings"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15 1.65 1.65 0 0 0 3.17 14H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 8.82a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6 1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.26.6.77 1.05 1.51 1.08H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     </div>
   </header>
@@ -125,14 +125,15 @@
       <div class="screen-header"><h2>Satellite Map & Waypoints</h2><p class="screen-subtitle">GPS tracking & waypoint management</p></div>
       <div class="map-container"><div id="mapView" class="map-view"></div>
         <div class="map-controls">
-          <button class="map-ctrl-btn" id="btnLocateMe" title="My Location">LOC</button>
-          <button class="map-ctrl-btn" id="btnAddWaypoint" title="Drop Waypoint">PIN</button>
-          <button class="map-ctrl-btn" id="btnMapSatellite" title="Satellite">SAT</button>
-          <button class="map-ctrl-btn" id="btnMapTerrain" title="Terrain">TER</button>
+          <button class="map-ctrl-btn" id="btnLocateMe" title="My Location">📍</button>
+          <button class="map-ctrl-btn" id="btnAddWaypoint" title="Drop Waypoint">📌</button>
+          <button class="map-ctrl-btn" id="btnMapSatellite" title="Satellite">🛰️</button>
+          <button class="map-ctrl-btn" id="btnMapTerrain" title="Terrain">🏔️</button>
+          <button class="map-ctrl-btn" id="btnMapHybrid" title="Hybrid">🌍</button>
         </div>
       </div>
       <div class="form-card">
-        <div class="section-title-row"><h3 class="card-title">GPS Waypoints</h3><button class="btn btn-accent btn-sm" id="btnSurveyTimer" style="margin-left:auto;">Start Timer</button><button class="btn btn-accent btn-sm" id="btnAddWaypointManual">+ Add</button></div>
+        <div class="section-title-row"><h3 class="card-title">📌 GPS Waypoints</h3><button class="btn btn-accent btn-sm" id="btnSurveyTimer" style="margin-left:auto;">⏱️ Timer</button><button class="btn btn-accent btn-sm" id="btnAddWaypointManual">+ Add</button></div>
         <div class="form-row">
           <div class="form-group"><label for="waypointName">Name</label><input type="text" id="waypointName" placeholder="e.g., Plot A Center" /></div>
           <div class="form-group"><label for="waypointType">Type</label><select id="waypointType"><option value="plot">Plot Center</option><option value="sample">Sample Point</option><option value="landmark">Landmark</option><option value="trail">Trail Marker</option><option value="water">Water Source</option><option value="camp">Camp</option><option value="other">Other</option></select></div>
@@ -201,15 +202,15 @@
       <div class="screen-header"><h2>Environmental Variables</h2><p class="screen-subtitle">Abiotic site conditions</p></div>
       <div class="active-survey-bar"><span class="active-label">Active:</span><span class="active-name" id="envSurveyName">No survey</span></div>
       <div class="form-card">
-        <div class="section-title-row"><h3 class="card-title">Topography</h3><button class="btn btn-accent btn-sm" id="btnAutoFillEnv">📡 Auto-Fill</button></div>
+        <div class="section-title-row"><h3 class="card-title">Topography</h3><button class="btn btn-accent btn-sm" id="btnAutoFillEnv">Auto-Fill</button></div>
         <div class="form-row"><div class="form-group"><label for="envSlope">Slope (°)</label><input type="number" id="envSlope" min="0" max="90" step="0.1" placeholder="0–90" /></div><div class="form-group"><label for="envAspect">Aspect</label><select id="envAspect"><option value="">—</option><option value="N">N</option><option value="NE">NE</option><option value="E">E</option><option value="SE">SE</option><option value="S">S</option><option value="SW">SW</option><option value="W">W</option><option value="NW">NW</option><option value="flat">Flat</option></select></div></div>
         <div class="form-row"><div class="form-group"><label for="envElevation">Elevation (m)</label><input type="number" id="envElevation" min="0" max="9000" placeholder="e.g., 1250" /></div><div class="form-group"><label for="envCanopyCover">Canopy Cover (%)</label><input type="number" id="envCanopyCover" min="0" max="100" placeholder="0–100" /></div></div>
       </div>
       <div class="form-card">
-        <h3 class="card-title">🌿 Canopy Cover Estimation</h3>
+        <h3 class="card-title">Canopy Cover Estimation</h3>
         <p class="card-desc">Take an upward-facing photo to estimate canopy closure percentage.</p>
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
-          <label class="btn btn-accent btn-sm" for="canopyPhotoInput">📷 Capture Canopy Photo</label>
+          <label class="btn btn-accent btn-sm" for="canopyPhotoInput">Capture Canopy Photo</label>
           <input type="file" id="canopyPhotoInput" accept="image/*" capture="environment" class="hidden-input" />
           <span id="canopyEstimate" style="font-weight:700;color:var(--emerald);">—</span>
         </div>
@@ -245,11 +246,11 @@
       <div class="screen-header"><h2>Composite Burn Index</h2><p class="screen-subtitle">Fire severity across strata</p></div>
       <div class="active-survey-bar"><span class="active-label">Active:</span><span class="active-name" id="cbiSurveyName">No survey</span></div>
       <div class="cbi-composite-score"><div class="cbi-score-label">Composite CBI</div><div class="cbi-score-value" id="cbiCompositeScore">0.00</div><div class="cbi-score-bar"><div class="cbi-score-fill" id="cbiScoreFill"></div></div><div class="cbi-score-range"><span>0 — Unburned</span><span>3 — High</span></div></div>
-      <div class="form-card"><h3 class="card-title">🪨 Substrate</h3><div class="form-group"><label for="cbiSubLitter">Litter</label><select id="cbiSubLitter" class="cbi-select" data-layer="substrate"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="form-group"><label for="cbiSubDuff">Duff</label><select id="cbiSubDuff" class="cbi-select" data-layer="substrate"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="form-group"><label for="cbiSubSoil">Soil</label><select id="cbiSubSoil" class="cbi-select" data-layer="substrate"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="cbi-layer-avg">Avg: <strong id="cbiSubstrateAvg">0.00</strong></div></div>
-      <div class="form-card"><h3 class="card-title">🌾 Herbaceous</h3><div class="form-group"><label for="cbiHerbFreq">Frequency</label><select id="cbiHerbFreq" class="cbi-select" data-layer="herbaceous"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="form-group"><label for="cbiHerbMort">Mortality</label><select id="cbiHerbMort" class="cbi-select" data-layer="herbaceous"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="cbi-layer-avg">Avg: <strong id="cbiHerbaceousAvg">0.00</strong></div></div>
-      <div class="form-card"><h3 class="card-title">🌿 Shrub</h3><div class="form-group"><label for="cbiShrubMort">Mortality</label><select id="cbiShrubMort" class="cbi-select" data-layer="shrub"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="form-group"><label for="cbiShrubChar">Char</label><select id="cbiShrubChar" class="cbi-select" data-layer="shrub"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="cbi-layer-avg">Avg: <strong id="cbiShrubAvg">0.00</strong></div></div>
-      <div class="form-card"><h3 class="card-title">🌳 Intermediate</h3><div class="form-group"><label for="cbiIntChar">Char Height</label><select id="cbiIntChar" class="cbi-select" data-layer="intermediate"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="form-group"><label for="cbiIntMort">Mortality</label><select id="cbiIntMort" class="cbi-select" data-layer="intermediate"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="cbi-layer-avg">Avg: <strong id="cbiIntermediateAvg">0.00</strong></div></div>
-      <div class="form-card"><h3 class="card-title">🏔️ Overstory</h3><div class="form-group"><label for="cbiOverScorch">Crown Scorch</label><select id="cbiOverScorch" class="cbi-select" data-layer="overstory"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="form-group"><label for="cbiOverMort">Mortality</label><select id="cbiOverMort" class="cbi-select" data-layer="overstory"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="form-group"><label for="cbiOverChar">Bark Char</label><select id="cbiOverChar" class="cbi-select" data-layer="overstory"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="cbi-layer-avg">Avg: <strong id="cbiOverstoryAvg">0.00</strong></div></div>
+      <div class="form-card"><h3 class="card-title">Substrate</h3><div class="form-group"><label for="cbiSubLitter">Litter</label><select id="cbiSubLitter" class="cbi-select" data-layer="substrate"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="form-group"><label for="cbiSubDuff">Duff</label><select id="cbiSubDuff" class="cbi-select" data-layer="substrate"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="form-group"><label for="cbiSubSoil">Soil</label><select id="cbiSubSoil" class="cbi-select" data-layer="substrate"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="cbi-layer-avg">Avg: <strong id="cbiSubstrateAvg">0.00</strong></div></div>
+      <div class="form-card"><h3 class="card-title">Herbaceous</h3><div class="form-group"><label for="cbiHerbFreq">Frequency</label><select id="cbiHerbFreq" class="cbi-select" data-layer="herbaceous"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="form-group"><label for="cbiHerbMort">Mortality</label><select id="cbiHerbMort" class="cbi-select" data-layer="herbaceous"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="cbi-layer-avg">Avg: <strong id="cbiHerbaceousAvg">0.00</strong></div></div>
+      <div class="form-card"><h3 class="card-title">Shrub</h3><div class="form-group"><label for="cbiShrubMort">Mortality</label><select id="cbiShrubMort" class="cbi-select" data-layer="shrub"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="form-group"><label for="cbiShrubChar">Char</label><select id="cbiShrubChar" class="cbi-select" data-layer="shrub"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="cbi-layer-avg">Avg: <strong id="cbiShrubAvg">0.00</strong></div></div>
+      <div class="form-card"><h3 class="card-title">Intermediate</h3><div class="form-group"><label for="cbiIntChar">Char Height</label><select id="cbiIntChar" class="cbi-select" data-layer="intermediate"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="form-group"><label for="cbiIntMort">Mortality</label><select id="cbiIntMort" class="cbi-select" data-layer="intermediate"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="cbi-layer-avg">Avg: <strong id="cbiIntermediateAvg">0.00</strong></div></div>
+      <div class="form-card"><h3 class="card-title">Overstory</h3><div class="form-group"><label for="cbiOverScorch">Crown Scorch</label><select id="cbiOverScorch" class="cbi-select" data-layer="overstory"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="form-group"><label for="cbiOverMort">Mortality</label><select id="cbiOverMort" class="cbi-select" data-layer="overstory"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="form-group"><label for="cbiOverChar">Bark Char</label><select id="cbiOverChar" class="cbi-select" data-layer="overstory"><option value="0">0</option><option value="0.5">0.5</option><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option><option value="3">3</option></select></div><div class="cbi-layer-avg">Avg: <strong id="cbiOverstoryAvg">0.00</strong></div></div>
       <button class="btn btn-primary btn-block" id="btnSaveCBI">Save CBI</button>
     </section>
 
@@ -257,9 +258,9 @@
     <section class="screen" id="screenPhotos">
       <div class="screen-header"><h2>Photos, Notes & Voice</h2><p class="screen-subtitle">Multimedia documentation</p></div>
       <div class="active-survey-bar"><span class="active-label">Active:</span><span class="active-name" id="photoSurveyName">No survey</span></div>
-      <div class="form-card"><h3 class="card-title">📸 Photos</h3><div class="form-group"><label for="photoQuadratRef">Quadrat #</label><input type="number" id="photoQuadratRef" min="1" placeholder="e.g., 1" /></div><div class="photo-capture-area"><label class="photo-upload-btn" for="photoInput"><span class="photo-upload-icon">📷</span><span>Capture Photo</span></label><input type="file" id="photoInput" accept="image/*" capture="environment" class="hidden-input" /></div><div class="photo-gallery" id="photoGallery"></div></div>
-      <div class="form-card"><h3 class="card-title">🎤 Voice Notes</h3><p class="card-desc">Record audio observations directly in the field.</p><div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;"><button class="btn btn-accent" id="btnStartRecording">🔴 Start Recording</button><button class="btn btn-ghost" id="btnStopRecording" disabled>⏹️ Stop</button><span id="recordingStatus" style="font-size:.78rem;color:var(--text-muted);">Not recording</span></div><div id="audioList"></div></div>
-      <div class="form-card"><h3 class="card-title">📝 Notes</h3><div class="form-group"><label for="noteQuadratRef">Quadrat #</label><input type="number" id="noteQuadratRef" min="1" placeholder="e.g., 1" /></div><div class="form-group"><label for="noteCategory">Category</label><select id="noteCategory"><option value="general">General</option><option value="vegetation">Vegetation</option><option value="fauna">Fauna</option><option value="disturbance">Disturbance</option><option value="soil">Soil</option><option value="weather">Weather</option></select></div><div class="form-group"><label for="noteContent">Details</label><textarea id="noteContent" rows="4" placeholder="Observations…"></textarea></div><button class="btn btn-accent btn-block" id="btnAddNote">Save Note</button></div>
+      <div class="form-card"><h3 class="card-title">Photos</h3><div class="form-group"><label for="photoQuadratRef">Quadrat #</label><input type="number" id="photoQuadratRef" min="1" placeholder="e.g., 1" /></div><div class="photo-capture-area"><label class="photo-upload-btn" for="photoInput"><span class="photo-upload-icon">+</span><span>Capture Photo</span></label><input type="file" id="photoInput" accept="image/*" capture="environment" class="hidden-input" /></div><div class="photo-gallery" id="photoGallery"></div></div>
+      <div class="form-card"><h3 class="card-title">Voice Notes</h3><p class="card-desc">Record audio observations directly in the field.</p><div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;"><button class="btn btn-accent" id="btnStartRecording">Record</button><button class="btn btn-ghost" id="btnStopRecording" disabled>Stop</button><span id="recordingStatus" style="font-size:.78rem;color:var(--text-muted);">Not recording</span></div><div id="audioList"></div></div>
+      <div class="form-card"><h3 class="card-title">Notes</h3><div class="form-group"><label for="noteQuadratRef">Quadrat #</label><input type="number" id="noteQuadratRef" min="1" placeholder="e.g., 1" /></div><div class="form-group"><label for="noteCategory">Category</label><select id="noteCategory"><option value="general">General</option><option value="vegetation">Vegetation</option><option value="fauna">Fauna</option><option value="disturbance">Disturbance</option><option value="soil">Soil</option><option value="weather">Weather</option></select></div><div class="form-group"><label for="noteContent">Details</label><textarea id="noteContent" rows="4" placeholder="Observations…"></textarea></div><button class="btn btn-accent btn-block" id="btnAddNote">Save Note</button></div>
       <div class="form-card"><h3 class="card-title">Saved Notes</h3><div class="notes-list" id="notesList"><div class="empty-state small"><p>No notes</p></div></div></div>
     </section>
 
@@ -269,7 +270,7 @@
       <div class="active-survey-bar"><span class="active-label">Active:</span><span class="active-name" id="analyticsSurveyName">No survey</span></div>
 
       <div class="form-card">
-        <h3 class="card-title">🧮 Biodiversity Indices</h3>
+        <h3 class="card-title">Biodiversity Indices</h3>
         <div class="analytics-grid">
           <div class="analytic-item"><div class="analytic-label">Species Richness (S)</div><div class="analytic-value" id="analyticRichness">0</div></div>
           <div class="analytic-item"><div class="analytic-label">Shannon-Wiener (H')</div><div class="analytic-value" id="analyticShannon">0.000</div></div>
@@ -281,7 +282,7 @@
       </div>
 
       <div class="form-card">
-        <h3 class="card-title">📏 Basal Area</h3>
+        <h3 class="card-title">Basal Area</h3>
         <div class="analytics-grid">
           <div class="analytic-item"><div class="analytic-label">Total Basal Area</div><div class="analytic-value" id="analyticBasalTotal">0.000 m²</div></div>
           <div class="analytic-item"><div class="analytic-label">Per Hectare</div><div class="analytic-value" id="analyticBasalHa">0.000 m²/ha</div></div>
@@ -289,7 +290,7 @@
       </div>
 
       <div class="form-card">
-        <h3 class="card-title">📊 IVI — Importance Value Index</h3>
+        <h3 class="card-title">IVI — Importance Value Index</h3>
         <p class="card-desc">Relative density + relative frequency + relative dominance = IVI (max 300)</p>
         <div class="table-scroll">
           <table class="quadrat-table" id="iviTable"><thead><tr><th>Species</th><th>Density</th><th>Rel. Density</th><th>Frequency</th><th>Rel. Freq</th><th>Dominance</th><th>Rel. Dom</th><th>IVI</th></tr></thead><tbody id="iviTableBody"><tr><td colspan="8" class="table-empty">No data</td></tr></tbody></table>
@@ -297,12 +298,12 @@
       </div>
 
       <div class="form-card">
-        <h3 class="card-title">📊 DBH Class Distribution</h3>
+        <h3 class="card-title">DBH Class Distribution</h3>
         <div id="dbhChart" class="bar-chart-container"></div>
       </div>
 
       <div class="form-card">
-        <h3 class="card-title">📈 Species Accumulation Curve</h3>
+        <h3 class="card-title">Species Accumulation Curve</h3>
         <div id="speciesAccumChart" class="bar-chart-container"></div>
       </div>
     </section>
@@ -314,11 +315,11 @@
       <div class="form-card">
         <h3 class="card-title">Export Options</h3>
         <div class="export-options">
-          <button class="export-btn" id="btnExportCSV"><div class="export-icon">CSV</div><div class="export-info"><strong>CSV</strong><span>Excel, R, SPSS</span></div></button>
-          <button class="export-btn" id="btnExportJSON"><div class="export-icon">JSON</div><div class="export-info"><strong>JSON</strong><span>Programmatic</span></div></button>
-          <button class="export-btn" id="btnExportAllCSV"><div class="export-icon">ALL</div><div class="export-info"><strong>All Surveys CSV</strong><span>Batch</span></div></button>
-          <button class="export-btn" id="btnExportGPX"><div class="export-icon">GPX</div><div class="export-info"><strong>GPX Waypoints</strong><span>GPS exchange</span></div></button>
-          <button class="export-btn" id="btnExportReport"><div class="export-icon">RPT</div><div class="export-info"><strong>Summary Report</strong><span>Complete HTML report</span></div></button>
+          <button class="export-btn" id="btnExportCSV"><div class="export-icon">Σ</div><div class="export-info"><strong>CSV</strong><span>Excel, R, SPSS</span></div></button>
+          <button class="export-btn" id="btnExportJSON"><div class="export-icon">{ }</div><div class="export-info"><strong>JSON</strong><span>Programmatic</span></div></button>
+          <button class="export-btn" id="btnExportAllCSV"><div class="export-icon">≡</div><div class="export-info"><strong>All Surveys CSV</strong><span>Batch</span></div></button>
+          <button class="export-btn" id="btnExportGPX"><div class="export-icon">⌖</div><div class="export-info"><strong>GPX Waypoints</strong><span>GPS exchange</span></div></button>
+          <button class="export-btn" id="btnExportReport"><div class="export-icon">α</div><div class="export-info"><strong>Summary Report</strong><span>Complete HTML report</span></div></button>
         </div>
       </div>
       <div class="form-card">
