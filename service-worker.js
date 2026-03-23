@@ -1,5 +1,5 @@
-// Forest Capture — Service Worker v4
-const CACHE_NAME = 'forest-capture-v4';
+// Forest Capture — Service Worker v5
+const CACHE_NAME = 'forest-capture-v5';
 const ASSETS = [
   './',
   './index.html',
@@ -8,7 +8,7 @@ const ASSETS = [
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap',
+  'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
 ];
@@ -26,7 +26,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
-  if (url.hostname === 'api.open-meteo.com' || url.hostname === 'generativelanguage.googleapis.com') return;
+  if (url.hostname === 'api.open-meteo.com') return;
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
