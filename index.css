@@ -16,9 +16,9 @@
   --border:         #333333;
   --border-light:   #444444;
 
-  --emerald:        #34d399;
-  --emerald-dim:    #22c55e;
-  --emerald-glow:   #34d39920;
+  --emerald:        #5ee5a0;
+  --emerald-dim:    #3dd68c;
+  --emerald-glow:   #5ee5a020;
   --amber:          #f59e0b;
   --amber-dim:      #d97706;
   --red:            #ef4444;
@@ -150,8 +150,8 @@ input,select,textarea,button{font-family:'Roboto',-apple-system,BlinkMacSystemFo
 .clock-time{font-family:'JetBrains Mono',monospace;font-size:.82rem;font-weight:600;color:var(--emerald);}
 .clock-date{font-size:.6rem;color:var(--text-muted);}
 
-.offline-badge{font-size:.6rem;font-weight:600;color:var(--emerald);background:var(--emerald-glow);padding:3px 8px;border-radius:var(--radius-full);letter-spacing:.3px;animation:pulse-badge 3s ease-in-out infinite;}
-@keyframes pulse-badge{0%,100%{opacity:.85;}50%{opacity:1;}}
+.online-dot{width:10px;height:10px;border-radius:50%;background:#5ee5a0;display:inline-block;box-shadow:0 0 6px #5ee5a055;transition:background .3s;}
+.online-dot.offline{background:#ef4444;box-shadow:0 0 6px #ef444455;}
 
 .settings-btn{background:var(--emerald-glow);border:1px solid var(--border);font-size:1.1rem;cursor:pointer;padding:5px 8px;border-radius:var(--radius-full);transition:all var(--transition);display:flex;align-items:center;color:var(--text-primary);}
 .settings-btn:hover{background:var(--bg-hover);border-color:var(--emerald);}
@@ -448,7 +448,7 @@ input,select,textarea,button{font-family:'Roboto',-apple-system,BlinkMacSystemFo
 
 /* =========== STAT ICON (text-based) =========== */
 .stat-icon{font-size:1.1rem;font-weight:700;color:var(--emerald);font-family:'JetBrains Mono',monospace;}
-.export-icon{font-size:.7rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--emerald);font-family:'JetBrains Mono',monospace;}
+.export-icon{font-size:1.2rem;font-weight:700;color:var(--emerald);font-family:'JetBrains Mono',monospace;}
 
 /* =========== MOBILE OPTIMIZATIONS =========== */
 @media(max-width:480px){
