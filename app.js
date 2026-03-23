@@ -4,6 +4,9 @@
 const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 let toastT;function toast(m,e){const el=$('#toast');el.textContent=m;el.classList.toggle('error',!!e);el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2500);}
+// Online/Offline dot
+function updateDot(){const d=$('#onlineDot');if(d){navigator.onLine?d.classList.remove('offline'):d.classList.add('offline');}}
+window.addEventListener('online',updateDot);window.addEventListener('offline',updateDot);setTimeout(updateDot,500);
 
 // ===== STORAGE =====
 const SK='forest_survey_data';
@@ -105,17 +108,19 @@ $('#btnSaveSurvey').addEventListener('click',()=>{
 });
 
 // ===== MAP =====
-let map=null,userMarker=null,wpMarkers=[],satLayer,terLayer;
+let map=null,userMarker=null,wpMarkers=[],satLayer,terLayer,hybLayer;
 function initMap(){if(map)return;const la=curPos.lat||20.5937,ln=curPos.lng||78.9629;
   map=L.map('mapView',{zoomControl:false}).setView([la,ln],14);
   satLayer=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19});
   terLayer=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19});
+  hybLayer=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:19});
   satLayer.addTo(map);
-  if(curPos.lat)userMarker=L.circleMarker([curPos.lat,curPos.lng],{radius:8,color:'#34d399',fillColor:'#34d399',fillOpacity:.8,weight:2}).addTo(map).bindPopup('📍 You');
+  if(curPos.lat)userMarker=L.circleMarker([curPos.lat,curPos.lng],{radius:8,color:'#5ee5a0',fillColor:'#5ee5a0',fillOpacity:.8,weight:2}).addTo(map).bindPopup('You');
   refreshMapWps();}
 $('#btnLocateMe').addEventListener('click',()=>{if(map&&curPos.lat){map.setView([curPos.lat,curPos.lng],16);toast('Centered');}else toast('No GPS',true);});
-$('#btnMapSatellite').addEventListener('click',()=>{if(map){map.removeLayer(terLayer);satLayer.addTo(map);toast('Satellite');}});
-$('#btnMapTerrain').addEventListener('click',()=>{if(map){map.removeLayer(satLayer);terLayer.addTo(map);toast('Terrain');}});
+$('#btnMapSatellite').addEventListener('click',()=>{if(map){map.removeLayer(terLayer);map.removeLayer(hybLayer);satLayer.addTo(map);toast('Satellite');}});
+$('#btnMapTerrain').addEventListener('click',()=>{if(map){map.removeLayer(satLayer);map.removeLayer(hybLayer);terLayer.addTo(map);toast('Terrain');}});
+$('#btnMapHybrid').addEventListener('click',()=>{if(map){map.removeLayer(satLayer);map.removeLayer(terLayer);hybLayer.addTo(map);toast('Hybrid');}});
 
 // ===== WAYPOINTS =====
 function getWps(){return JSON.parse(localStorage.getItem('forest_wps')||'[]');}
