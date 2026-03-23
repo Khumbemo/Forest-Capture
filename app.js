@@ -319,12 +319,12 @@ function loadSettings(){try{const s=JSON.parse(localStorage.getItem(SETTINGS_KEY
 $$('#settingsPanel select, #settingsPanel input').forEach(el=>{el.addEventListener('change',saveSettings);el.addEventListener('input',saveSettings);});
 
 // ===== SWIPE NAVIGATION =====
-const SCREEN_ORDER=['screenDashboard','screenMap','screenQuadrat','screenTransect','screenEnvironment','screenDisturbance','screenCBI','screenPhotos','screenAnalytics','screenExport','screenAI'];
+const SCREEN_ORDER=['screenDashboard','screenMap','screenQuadrat','screenTransect','screenEnvironment','screenDisturbance','screenCBI','screenPhotos','screenAnalytics','screenExport'];
 let swipeStartX=0,swipeStartY=0,swiping=false;
 const mainEl=$('.app-main');
 if(mainEl){
   mainEl.addEventListener('touchstart',e=>{
-    if(e.target.closest('.leaflet-container')||e.target.closest('input')||e.target.closest('select')||e.target.closest('textarea')||e.target.closest('.ai-messages'))return;
+    if(e.target.closest('.leaflet-container')||e.target.closest('input')||e.target.closest('select')||e.target.closest('textarea'))return;
     swipeStartX=e.touches[0].clientX;swipeStartY=e.touches[0].clientY;swiping=true;
   },{passive:true});
   mainEl.addEventListener('touchmove',e=>{
@@ -342,46 +342,6 @@ if(mainEl){
     else if(dx>0&&cur>0)switchScreen(SCREEN_ORDER[cur-1]);
   },{passive:true});
 }
-
-// ===== AI ASSISTANT =====
-const AI_SYS='You are a forest ecology expert assistant for the Forest Capture app. Provide concise, accurate answers about species identification, survey methodology, biodiversity indices (Shannon-Wiener, Simpson, IVI), sampling techniques (quadrat, transect, point-quarter), environmental variables, and field best practices. Keep responses under 200 words. Use scientific terminology with brief explanations.';
-let aiReqCount=0,aiReqReset=Date.now();
-function getAIKey(){return($('#settingAIKey')?$('#settingAIKey').value:'')||localStorage.getItem('forest_ai_key')||'';}
-function showAILabel(){const el=$('#settingAILabel');return!el||el.checked;}
-
-async function sendAI(msg){
-  if(!navigator.onLine){toast('AI requires internet connection',true);return;}
-  const key=getAIKey();
-  if(!key){toast('Set your Gemini API key in Settings',true);return;}
-  // Rate limit: 20/min
-  if(Date.now()-aiReqReset>60000){aiReqCount=0;aiReqReset=Date.now();}
-  if(aiReqCount>=20){toast('Rate limit: max 20 requests/minute',true);return;}
-  aiReqCount++;
-  const msgs=$('#aiMessages');
-  // User message
-  const uDiv=document.createElement('div');uDiv.className='ai-msg user';uDiv.innerHTML=`<span class="msg-text">${esc(msg)}</span>`;msgs.appendChild(uDiv);
-  // Typing indicator
-  const typing=document.createElement('div');typing.className='ai-msg ai ai-typing';typing.innerHTML='<span></span><span></span><span></span>';msgs.appendChild(typing);
-  msgs.scrollTop=msgs.scrollHeight;
-  try{
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{role:'user',parts:[{text:AI_SYS+'\n\nUser question: '+msg}]}],generationConfig:{maxOutputTokens:512,temperature:0.7}})
-    });
-    typing.remove();
-    if(!r.ok){const err=await r.text();toast('AI error: '+r.status,true);return;}
-    const data=await r.json();
-    const text=data.candidates?.[0]?.content?.parts?.[0]?.text||'No response received.';
-    const aDiv=document.createElement('div');aDiv.className='ai-msg ai';
-    aDiv.innerHTML=(showAILabel()?'<span class="ai-label">AI-Generated</span>':'')+`<span class="msg-text">${text.replace(/\n/g,'<br>')}</span>`;
-    msgs.appendChild(aDiv);
-  }catch(e){typing.remove();toast('AI connection failed',true);}
-  msgs.scrollTop=msgs.scrollHeight;
-}
-
-$('#btnAISend').addEventListener('click',()=>{const inp=$('#aiInput');const v=inp.value.trim();if(v){sendAI(v);inp.value='';}});
-$('#aiInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#btnAISend').click();}});
-$$('.ai-quick-btn').forEach(b=>b.addEventListener('click',()=>{const p=b.dataset.prompt;$('#aiInput').value=p;$('#aiInput').focus();}));
 
 // ===== HELP ACCORDION =====
 $$('.help-item-title').forEach(t=>t.addEventListener('click',()=>{t.parentElement.classList.toggle('open');}));
