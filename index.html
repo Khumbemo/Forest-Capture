@@ -21,7 +21,7 @@
 
   <!-- SPLASH SCREEN -->
   <div class="splash-screen" id="splashScreen">
-    <div class="splash-leaf"><svg viewBox="0 0 24 24" width="64" height="64" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L7 8h2l-4 5h2l-4 6h14l-4-6h2l-4-5h2z"/><rect x="11" y="19" width="2" height="3"/></svg></div>
+    <div class="splash-leaf"><svg viewBox="0 0 24 24" width="72" height="72" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 5,10 8,10 3,17 8,17 6,22 18,22 16,17 21,17 16,10 19,10" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" fill="none"/><line x1="12" y1="17" x2="12" y2="22" stroke="currentColor" stroke-width="1.5"/></svg></div>
     <div class="splash-title">Forest Capture</div>
     <div class="splash-subtitle">Ecological Field Survey</div>
     <div class="splash-bar"><div class="splash-bar-fill"></div></div>
@@ -31,7 +31,7 @@
   <div class="login-screen" id="loginScreen" style="position:fixed;inset:0;z-index:9000;background:var(--bg-primary);flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;display:none;">
     <div style="width:100%;max-width:380px;">
       <div style="text-align:center;margin-bottom:32px;">
-        <div style="margin-bottom:8px;"><svg viewBox="0 0 24 24" width="56" height="56" stroke="var(--emerald)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L7 8h2l-4 5h2l-4 6h14l-4-6h2l-4-5h2z"/><rect x="11" y="19" width="2" height="3"/></svg></div>
+        <div style="margin-bottom:12px;"><svg viewBox="0 0 24 24" width="60" height="60" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 5,10 8,10 3,17 8,17 6,22 18,22 16,17 21,17 16,10 19,10" stroke="var(--emerald)" stroke-width="1.2" stroke-linejoin="round" fill="none"/><line x1="12" y1="17" x2="12" y2="22" stroke="var(--emerald)" stroke-width="1.5"/></svg></div>
         <h1 style="font-size:1.7rem;font-weight:800;color:var(--emerald);margin:0 0 4px;">Forest Capture</h1>
         <p style="font-size:.85rem;color:var(--text-muted);margin:0;">Ecological Field Survey</p>
       </div>
@@ -70,25 +70,14 @@
   </nav>
 
   <!-- HEADER -->
-  <header class="app-header" id="appHeader" style="height:auto;padding:10px 16px 8px 16px;display:flex;flex-direction:column;gap:6px;background:var(--bg-primary);border-bottom:1px solid var(--border);">
-    <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
-      <div class="header-left">
-        <button id="btnHeaderBack" style="display:none;background:none;border:none;color:var(--emerald);font-size:1.4rem;cursor:pointer;margin-right:8px;padding:4px;font-weight:900;">←</button>
-        <h1 class="header-title" style="font-size:1.25rem;">Forest Capture</h1>
-      </div>
-      <div class="header-right" style="display:flex;align-items:center;gap:8px;">
-        <div style="display:flex;align-items:center;gap:6px;background:var(--bg-input);border-radius:8px;padding:4px 10px;border:1px solid var(--border);">
-          <div class="live-clock" id="liveClock" style="align-items:flex-end;line-height:1.1;">
-            <span class="clock-date" id="clockDate" style="font-size:.55rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;">---</span>
-            <span class="clock-time" id="clockTime" style="font-size:.85rem;font-weight:800;color:var(--text-primary);letter-spacing:.5px;">--:--</span>
-          </div>
-          <div style="width:1px;height:20px;background:var(--border);margin:0 2px;"></div>
-          <span id="headerWeatherIcon" style="font-size:.95rem;">⛅</span>
-          <span id="headerWeatherText" style="font-size:.78rem;font-weight:700;color:var(--emerald);">--°C</span>
-        </div>
-        <span class="online-dot" id="onlineDot"></span>
-        <button class="settings-btn" id="btnSettings" title="Settings"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15 1.65 1.65 0 0 0 3.17 14H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 8.82a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6 1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.26.6.77 1.05 1.51 1.08H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
-      </div>
+  <header class="app-header" id="appHeader" style="height:auto;padding:10px 16px 10px 16px;display:flex;align-items:center;justify-content:space-between;background:var(--bg-primary);border-bottom:1px solid var(--border);">
+    <div class="header-left" style="display:flex;align-items:center;gap:8px;">
+      <button id="btnHeaderBack" style="display:none;background:none;border:none;color:var(--emerald);font-size:1.4rem;cursor:pointer;padding:4px;font-weight:900;">←</button>
+      <h1 class="header-title" style="font-size:1.25rem;">Forest Capture</h1>
+    </div>
+    <div class="header-right" style="display:flex;align-items:center;gap:10px;">
+      <span id="headerWeatherIcon" style="font-size:1.5rem;">⛅</span>
+      <button class="settings-btn" id="btnSettings" title="Settings"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15 1.65 1.65 0 0 0 3.17 14H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 8.82a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6 1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.26.6.77 1.05 1.51 1.08H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     </div>
   </header>
 
@@ -97,11 +86,27 @@
 
     <!-- ===== DASHBOARD ===== -->
     <section class="screen active" id="screenDashboard">
-      <div class="telemetry-grid" style="margin-top:16px;">
-        <div class="tele-card"><div class="tele-label">Location</div><div class="tele-value" id="teleLocation">---</div><div class="tele-sub" id="teleCoords">---, ---</div></div>
-        <div class="tele-card"><div class="tele-label">Temperature</div><div class="tele-value" id="teleTemp">--°C</div><div class="tele-sub" id="teleWeatherDesc">---</div></div>
-        <div class="tele-card"><div class="tele-label">Altitude</div><div class="tele-value" id="teleAlt">--- m</div><div class="tele-sub">Above sea level</div></div>
-        <div class="tele-card"><div class="tele-label">Humidity</div><div class="tele-value" id="teleHumidity">---%</div><div class="tele-sub" id="teleWind">Wind: --- km/h</div></div>
+      <div class="telemetry-grid" style="margin-top:16px;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="tele-card" style="padding:20px 16px;">
+          <div class="tele-label" style="font-size:.7rem;letter-spacing:1px;">📍 LOCATION</div>
+          <div class="tele-value" id="teleLocation" style="font-size:1rem;margin:8px 0 4px;">---</div>
+          <div class="tele-sub" id="teleCoords" style="font-size:.72rem;">---, ---</div>
+        </div>
+        <div class="tele-card" style="padding:20px 16px;">
+          <div class="tele-label" style="font-size:.7rem;letter-spacing:1px;">🌡️ TEMPERATURE</div>
+          <div class="tele-value" id="teleTemp" style="font-size:1.6rem;font-weight:900;margin:8px 0 4px;">--°C</div>
+          <div class="tele-sub" id="teleWeatherDesc" style="font-size:.72rem;">---</div>
+        </div>
+        <div class="tele-card" style="padding:20px 16px;">
+          <div class="tele-label" style="font-size:.7rem;letter-spacing:1px;">⛰️ ALTITUDE</div>
+          <div class="tele-value" id="teleAlt" style="font-size:1.6rem;font-weight:900;margin:8px 0 4px;">--- m</div>
+          <div class="tele-sub" style="font-size:.72rem;">Above sea level</div>
+        </div>
+        <div class="tele-card" style="padding:20px 16px;">
+          <div class="tele-label" style="font-size:.7rem;letter-spacing:1px;">💧 HUMIDITY</div>
+          <div class="tele-value" id="teleHumidity" style="font-size:1.6rem;font-weight:900;margin:8px 0 4px;">---%</div>
+          <div class="tele-sub" id="teleWind" style="font-size:.72rem;">Wind: --- km/h</div>
+        </div>
       </div>
     </section>
 

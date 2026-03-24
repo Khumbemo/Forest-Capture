@@ -153,14 +153,46 @@ input,select,textarea,button{font-family:'Roboto',-apple-system,BlinkMacSystemFo
 
 /* =========== MAIN =========== */
 .app-main{
-  padding-top:80px;
+  padding-top:70px;
   padding-bottom:calc(var(--nav-h) + var(--sp-xl));
-  padding-left:var(--sp-lg);padding-right:var(--sp-lg);
+  padding-left:0;padding-right:0;
   max-width:600px;margin:0 auto;
+  overflow:hidden;
+  position:relative;
 }
-.screen{display:none;animation:fadeUp .35s ease;}
-.screen.active{display:block;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+/* =========== SCREENS with slide transition =========== */
+.screen{
+  display:none;
+  padding:0 var(--sp-lg);
+  opacity:0;
+  transform:translateX(40px);
+  transition:opacity .28s ease, transform .28s ease;
+  will-change:transform,opacity;
+}
+.screen.active{
+  display:block;
+  opacity:1;
+  transform:translateX(0);
+  animation:slideIn .28s ease both;
+}
+.screen.slide-out-left{
+  display:block;
+  opacity:0;
+  transform:translateX(-40px);
+  pointer-events:none;
+}
+.screen.slide-out-right{
+  display:block;
+  opacity:0;
+  transform:translateX(40px);
+  pointer-events:none;
+}
+@keyframes slideIn{
+  from{opacity:0;transform:translateX(30px);}
+  to{opacity:1;transform:translateX(0);}
+}
+
 .screen-header{margin-bottom:var(--sp-xl);}
 .screen-header h2{font-size:1.5rem;font-weight:800;letter-spacing:-.3px;}
 .screen-subtitle{color:var(--text-secondary);font-size:.82rem;margin-top:4px;font-weight:400;}
@@ -169,6 +201,8 @@ input,select,textarea,button{font-family:'Roboto',-apple-system,BlinkMacSystemFo
 .active-survey-bar{display:flex;align-items:center;gap:var(--sp-sm);background:var(--emerald-glow);border:1px solid var(--border);border-radius:var(--radius-md);padding:var(--sp-sm) var(--sp-md);margin-bottom:var(--sp-lg);font-size:.82rem;}
 .active-label{color:var(--text-muted);font-weight:500;}
 .active-name{color:var(--emerald);font-weight:600;}
+
+.online-dot{display:none;}
 
 /* =========== TELEMETRY GRID =========== */
 .telemetry-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-sm);margin-bottom:var(--sp-xl);}
