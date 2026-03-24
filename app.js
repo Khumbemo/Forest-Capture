@@ -25,7 +25,7 @@ const Store={
 const SPECIES_DB=["Shorea robusta","Tectona grandis","Dalbergia sissoo","Acacia catechu","Pinus roxburghii","Cedrus deodara","Quercus leucotrichophora","Rhododendron arboreum","Alnus nepalensis","Schima wallichii","Terminalia tomentosa","Anogeissus latifolia","Diospyros melanoxylon","Madhuca indica","Butea monosperma","Bombax ceiba","Ficus benghalensis","Ficus religiosa","Mangifera indica","Azadirachta indica","Eucalyptus globulus","Dendrocalamus strictus","Bambusa bambos","Lantana camara","Eupatorium adenophorum","Parthenium hysterophorus","Adina cordifolia","Lagerstroemia parviflora","Syzygium cumini","Emblica officinalis"];
 
 // ===== CLOCK =====
-function updateClock(){const n=new Date();$('#clockTime').textContent=n.toLocaleTimeString('en-IN',{hour12:false});$('#clockDate').textContent=n.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});}
+function updateClock(){const n=new Date();const ct=$('#clockTime');const cd=$('#clockDate');if(ct)ct.textContent=n.toLocaleTimeString('en-IN',{hour12:false});if(cd)cd.textContent=n.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});}
 setInterval(updateClock,1000);updateClock();
 
 // ===== SURVEY TIMER =====
