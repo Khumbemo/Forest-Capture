@@ -75,7 +75,7 @@ function switchScreen(id){
   
   const backBtn = $('#btnHeaderBack');
   const title = $('.header-title');
-  if(id === 'screenDashboard' || id === 'screenToolbar') {
+  if(id === 'screenDashboard' || id === 'screenToolbar' || id === 'screenData') {
     if(backBtn) backBtn.style.display = 'none';
     if(title) title.style.marginLeft = '0';
   } else {
@@ -84,7 +84,7 @@ function switchScreen(id){
   }
 
   window.scrollTo({top:0,behavior:'smooth'});updateBars();
-  if(id==='screenDashboard')refreshDash();if(id==='screenMap'){setTimeout(()=>{if(map)map.invalidateSize();initMap();},100);}
+  if(id==='screenDashboard'||id==='screenData')refreshDash();if(id==='screenMap'){setTimeout(()=>{if(map)map.invalidateSize();initMap();},100);}
   if(id==='screenQuadrat')refreshQuadratTable();if(id==='screenTransect')refreshTransectTable();
   if(id==='screenEnvironment')loadEnvData();if(id==='screenDisturbCBI'){loadDistData();loadCBIData();}
   if(id==='screenPhotos'){refreshPhotos();refreshNotes();refreshAudio();}
