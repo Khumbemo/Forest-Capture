@@ -21,7 +21,7 @@
 
   <!-- SPLASH SCREEN -->
   <div class="splash-screen" id="splashScreen">
-    <div class="splash-leaf">🍃</div>
+    <div class="splash-leaf"><svg viewBox="0 0 24 24" width="64" height="64" stroke="currentColor" stroke-width="1.5" fill="none"><path d="M12 2L3 10h4l-5 8h20l-5-8h4L12 2z"/><path d="M10 18v6h4v-6"/></svg></div>
     <div class="splash-title">Forest Capture</div>
     <div class="splash-subtitle">Ecological Field Survey</div>
     <div class="splash-bar"><div class="splash-bar-fill"></div></div>
@@ -31,7 +31,7 @@
   <div class="login-screen" id="loginScreen" style="display:none;position:fixed;inset:0;z-index:9000;background:var(--bg-primary);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;">
     <div style="width:100%;max-width:380px;">
       <div style="text-align:center;margin-bottom:32px;">
-        <div style="font-size:3rem;margin-bottom:8px;">🌲</div>
+        <div style="margin-bottom:8px;"><svg viewBox="0 0 24 24" width="56" height="56" stroke="var(--emerald)" stroke-width="1.5" fill="none"><path d="M12 2L3 10h4l-5 8h20l-5-8h4L12 2z"/><path d="M10 18v6h4v-6"/></svg></div>
         <h1 style="font-size:1.7rem;font-weight:800;color:var(--emerald);margin:0 0 4px;">Forest Capture</h1>
         <p style="font-size:.85rem;color:var(--text-muted);margin:0;">Ecological Field Survey</p>
       </div>
@@ -52,6 +52,9 @@
         <div style="text-align:center;">
           <button class="btn btn-ghost" id="btnGuestLogin" style="font-size:.82rem;color:var(--text-muted);background:none;border:none;cursor:pointer;padding:6px 0;">Continue as Guest →</button>
         </div>
+        <div style="text-align:center;margin-top:24px;font-size:0.75rem;color:var(--text-muted);">
+          By continuing, you agree to our <a href="#" style="color:var(--emerald);text-decoration:none;">Terms of Service</a> &amp; <a href="#" style="color:var(--emerald);text-decoration:none;">Privacy Policy</a>.
+        </div>
       </div>
     </div>
   </div>
@@ -61,15 +64,14 @@
 
   <!-- BOTTOM NAV -->
   <nav class="bottom-nav" id="bottomNav" style="justify-content:space-evenly;">
-    <button class="nav-btn active" data-screen="screenDashboard" style="flex:1;max-width:200px;"><span class="nav-icon" style="font-size:1.4rem;">🏠</span><span class="nav-label" style="font-size:.7rem;margin-top:2px;">Dashboard</span></button>
-    <button class="nav-btn" data-screen="screenToolbar" style="flex:1;max-width:200px;"><span class="nav-icon" style="font-size:1.4rem;">🛠️</span><span class="nav-label" style="font-size:.7rem;margin-top:2px;">Tools</span></button>
+    <button class="nav-btn active" data-screen="screenDashboard" style="flex:1;max-width:200px;"><span class="nav-icon"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="nav-label" style="font-size:.7rem;margin-top:2px;">Dashboard</span></button>
+    <button class="nav-btn" data-screen="screenToolbar" style="flex:1;max-width:200px;"><span class="nav-icon"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span><span class="nav-label" style="font-size:.7rem;margin-top:2px;">Tools</span></button>
   </nav>
 
   <!-- HEADER -->
   <header class="app-header" id="appHeader">
     <div class="header-left">
       <button id="btnHeaderBack" style="display:none;background:none;border:none;color:var(--emerald);font-size:1.4rem;cursor:pointer;margin-right:8px;padding:4px;font-weight:900;">←</button>
-      <span class="header-icon">🌲</span>
       <h1 class="header-title">Forest Capture</h1>
     </div>
     <div class="header-right">
@@ -95,7 +97,7 @@
 
     <!-- ===== DASHBOARD ===== -->
     <section class="screen active" id="screenDashboard">
-      <div class="screen-header"><h2>Dashboard</h2></div>
+      <div class="screen-header"><h2>DASHBOARD</h2></div>
       <div class="telemetry-grid">
         <div class="tele-card"><div class="tele-label">Location</div><div class="tele-value" id="teleLocation">---</div><div class="tele-sub" id="teleCoords">---, ---</div></div>
         <div class="tele-card"><div class="tele-label">Temperature</div><div class="tele-value" id="teleTemp">--°C</div><div class="tele-sub" id="teleWeatherDesc">---</div></div>
@@ -128,16 +130,16 @@
 
     <!-- ===== TOOLS MENU ===== -->
     <section class="screen" id="screenToolbar">
-      <div class="screen-header"><h2>Field Tools</h2></div>
+      <div class="screen-header"><h2>FIELD TOOLS</h2></div>
       <div class="stats-grid" id="toolsMenuGrid">
-        <div class="stat-card" data-tool="screenMap"><div class="stat-icon">🗺️</div><div class="stat-label">Map &amp; GPS</div></div>
-        <div class="stat-card" data-tool="screenQuadrat"><div class="stat-icon">🌿</div><div class="stat-label">Quadrat</div></div>
-        <div class="stat-card" data-tool="screenTransect"><div class="stat-icon">📏</div><div class="stat-label">Transect</div></div>
-        <div class="stat-card" data-tool="screenEnvironment"><div class="stat-icon">⛅</div><div class="stat-label">Environment</div></div>
-        <div class="stat-card" data-tool="screenDisturbCBI"><div class="stat-icon">🔥</div><div class="stat-label">Disturb &amp; CBI</div></div>
-        <div class="stat-card" data-tool="screenPhotos"><div class="stat-icon">📸</div><div class="stat-label">Media</div></div>
-        <div class="stat-card" data-tool="screenAnalytics"><div class="stat-icon">📊</div><div class="stat-label">Analytics</div></div>
-        <div class="stat-card" data-tool="screenExport"><div class="stat-icon">📤</div><div class="stat-label">Export</div></div>
+        <div class="stat-card" data-tool="screenMap"><div class="stat-icon"><svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg></div><div class="stat-label">Map &amp; GPS</div></div>
+        <div class="stat-card" data-tool="screenQuadrat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/></svg></div><div class="stat-label">Quadrat</div></div>
+        <div class="stat-card" data-tool="screenTransect"><div class="stat-icon"><svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none"><path d="M22 12H2"/><path d="M5 8v8"/><path d="M19 8v8"/><path d="M12 10v4"/></svg></div><div class="stat-label">Transect</div></div>
+        <div class="stat-card" data-tool="screenEnvironment"><div class="stat-icon"><svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none"><path d="M2 12h4"/><path d="M18 12h4"/><path d="M12 2v4"/><path d="M12 18v4"/><circle cx="12" cy="12" r="4"/></svg></div><div class="stat-label">Environment</div></div>
+        <div class="stat-card" data-tool="screenDisturbCBI"><div class="stat-icon"><svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 2c0 0-5 6-5 12a5 5 0 0 0 10 0c0-6-5-12-5-12z"/></svg></div><div class="stat-label">Disturb &amp; CBI</div></div>
+        <div class="stat-card" data-tool="screenPhotos"><div class="stat-icon"><svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="7" width="18" height="14" rx="2"/><circle cx="12" cy="14" r="3"/><path d="M8 7V5h8v2"/></svg></div><div class="stat-label">Media</div></div>
+        <div class="stat-card" data-tool="screenAnalytics"><div class="stat-icon"><svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none"><rect x="4" y="14" width="4" height="6"/><rect x="10" y="8" width="4" height="12"/><rect x="16" y="2" width="4" height="18"/></svg></div><div class="stat-label">Analytics</div></div>
+        <div class="stat-card" data-tool="screenExport"><div class="stat-icon"><svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></div><div class="stat-label">Export</div></div>
       </div>
     </section>
 
@@ -364,103 +366,75 @@
   <div class="settings-overlay" id="settingsOverlay"></div>
   <div class="settings-panel" id="settingsPanel">
     <h3>Settings <button class="settings-close" id="btnSettingsClose">✕</button></h3>
+    
+    <div class="settings-tabs" style="display:flex;gap:4px;overflow-x:auto;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border);">
+      <button class="btn btn-sm btn-primary settings-tab active" data-tab="setPref">Pref</button>
+      <button class="btn btn-sm btn-ghost settings-tab" data-tab="setData">Data</button>
+      <button class="btn btn-sm btn-ghost settings-tab" data-tab="setGuide">Guide</button>
+      <button class="btn btn-sm btn-ghost settings-tab text-danger" data-tab="setDanger" style="color:var(--red);">Danger</button>
+    </div>
 
-    <!-- Display -->
-    <div class="settings-section"><div class="settings-section-title">Display</div>
-      <div class="theme-cards" id="themeCards">
-        <div class="theme-card active-theme" data-theme="night"><div class="theme-swatch swatch-night"></div><div class="theme-card-info"><strong>Night</strong><span>Pure dark</span></div></div>
-        <div class="theme-card" data-theme="day"><div class="theme-swatch swatch-day"></div><div class="theme-card-info"><strong>Day</strong><span>Light</span></div></div>
-        <div class="theme-card" data-theme="green"><div class="theme-swatch swatch-green"></div><div class="theme-card-info"><strong>Green</strong><span>Forest</span></div></div>
+    <div class="settings-body">
+      <!-- PREFERENCES TAB -->
+      <div class="settings-tab-pane active" id="setPref">
+        <div class="settings-section"><div class="settings-section-title">Display</div>
+          <div class="theme-cards" id="themeCards">
+            <div class="theme-card active-theme" data-theme="night"><div class="theme-swatch swatch-night"></div><div class="theme-card-info"><strong>Night</strong><span>Dark</span></div></div>
+            <div class="theme-card" data-theme="day"><div class="theme-swatch swatch-day"></div><div class="theme-card-info"><strong>Day</strong><span>Light</span></div></div>
+            <div class="theme-card" data-theme="green"><div class="theme-swatch swatch-green"></div><div class="theme-card-info"><strong>Green</strong><span>Forest</span></div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:12px;">
+            <span style="font-size:.75rem;color:var(--text-muted);font-weight:600;">DIM</span>
+            <input type="range" id="brightnessSlider" min="50" max="150" value="100" style="flex:1;" />
+            <span style="font-size:.75rem;color:var(--text-muted);font-weight:600;">BRT</span>
+            <span id="brightnessValue" style="font-size:.78rem;font-weight:600;color:var(--emerald);min-width:36px;text-align:center;">100%</span>
+          </div>
+        </div>
+        <div class="settings-section"><div class="settings-section-title">GPS & Coordinates</div>
+          <div class="form-group"><label for="settingCoordFormat">Coordinate Format</label>
+            <select id="settingCoordFormat"><option value="dd">DECIMAL DEGREES (DD)</option><option value="dms">DEGREES MINUTES SECONDS (DMS)</option><option value="utm">UTM</option></select></div>
+          <div class="toggle-row"><label>Continuous GPS Tracking</label><label class="switch"><input type="checkbox" id="settingsGPSContinuous" checked /><span class="slider"></span></label></div>
+        </div>
+        <div class="settings-section"><div class="settings-section-title">Taxonomy</div>
+          <div class="toggle-row"><label>Italicize Scientific Names</label><label class="switch"><input type="checkbox" id="settingItalicSpecies" checked /><span class="slider"></span></label></div>
+        </div>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;margin-top:12px;">
-        <span style="font-size:.75rem;color:var(--text-muted);font-weight:600;">DIM</span>
-        <input type="range" id="brightnessSlider" min="50" max="150" value="100" style="flex:1;" />
-        <span style="font-size:.75rem;color:var(--text-muted);font-weight:600;">BRT</span>
-        <span id="brightnessValue" style="font-size:.78rem;font-weight:600;color:var(--emerald);min-width:36px;text-align:center;">100%</span>
+
+      <!-- DATA TAB -->
+      <div class="settings-tab-pane" id="setData" style="display:none;">
+        <div class="settings-section"><div class="settings-section-title">Data Management</div>
+          <div class="toggle-row"><label>Auto-save after each entry</label><label class="switch"><input type="checkbox" id="settingAutoSave" checked /><span class="slider"></span></label></div>
+          <div class="toggle-row"><label>Include raw GPS in exports</label><label class="switch"><input type="checkbox" id="settingExportGPS" checked /><span class="slider"></span></label></div>
+        </div>
+        <div class="form-card" style="margin-top:16px;">
+          <h3 class="card-title">Backup & Restore</h3>
+          <p class="card-desc">Export database directly or restore from an existing JSON file.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+            <button class="btn btn-primary" id="btnBackupAll">Backup All Data</button>
+            <label class="btn btn-ghost" for="restoreInput" style="border:1px solid var(--border);">Restore Backup</label>
+            <input type="file" id="restoreInput" accept=".json" class="hidden-input" style="display:none;" />
+          </div>
+        </div>
       </div>
-    </div>
 
-    <!-- Sampling Methodology -->
-    <div class="settings-section"><div class="settings-section-title">Sampling Methodology</div>
-      <div class="form-group"><label for="settingSamplingMethod">Sampling Design</label>
-        <select id="settingSamplingMethod"><option value="random">Simple Random Sampling</option><option value="systematic">Systematic Sampling</option><option value="stratified">Stratified Random Sampling</option><option value="cluster">Cluster Sampling</option><option value="transect">Belt Transect</option><option value="plotless">Plotless (Point-Quarter)</option></select></div>
-      <div class="form-group"><label for="settingPlotShape">Default Plot Shape</label>
-        <select id="settingPlotShape"><option value="square">Square</option><option value="rectangular">Rectangular</option><option value="circular">Circular</option></select></div>
-      <div class="form-group"><label for="settingDefaultPlotSize">Default Plot Size (m²)</label>
-        <input type="number" id="settingDefaultPlotSize" value="100" min="1" max="10000" /></div>
-    </div>
-
-    <!-- Measurement Standards -->
-    <div class="settings-section"><div class="settings-section-title">Measurement Standards</div>
-      <div class="form-group"><label for="settingDBHHeight">DBH Measurement Height</label>
-        <select id="settingDBHHeight"><option value="1.37">1.37 m (Standard breast height)</option><option value="1.3">1.3 m (Alternate standard)</option><option value="custom">Custom height</option></select></div>
-      <div class="form-group"><label for="settingMinDBH">Minimum DBH Threshold (cm)</label>
-        <input type="number" id="settingMinDBH" value="10" min="0" step="0.1" />
-        <small class="form-hint">Stems below this DBH excluded from tree analysis</small></div>
-      <div class="form-group"><label for="settingUnits">Measurement Units</label>
-        <select id="settingUnits"><option value="metric">Metric (m, cm, ha)</option><option value="imperial">Imperial (ft, in, ac)</option></select></div>
-    </div>
-
-    <!-- Diversity Indices -->
-    <div class="settings-section"><div class="settings-section-title">Diversity Analysis</div>
-      <div class="toggle-row"><label>Shannon-Wiener Index (H')</label><label class="switch"><input type="checkbox" id="settingShannon" checked /><span class="slider"></span></label></div>
-      <div class="toggle-row"><label>Simpson's Index (D)</label><label class="switch"><input type="checkbox" id="settingSimpson" checked /><span class="slider"></span></label></div>
-      <div class="toggle-row"><label>Margalef's Richness (R₁)</label><label class="switch"><input type="checkbox" id="settingMargalef" checked /><span class="slider"></span></label></div>
-      <div class="toggle-row"><label>Pielou's Evenness (J')</label><label class="switch"><input type="checkbox" id="settingPielou" checked /><span class="slider"></span></label></div>
-      <div class="toggle-row"><label>IVI (Importance Value Index)</label><label class="switch"><input type="checkbox" id="settingIVI" checked /><span class="slider"></span></label></div>
-      <div class="form-group" style="margin-top:8px;"><label for="settingLogBase">Logarithm Base (for H')</label>
-        <select id="settingLogBase"><option value="e">Natural log (ln) — Standard</option><option value="2">Log₂ (bits)</option><option value="10">Log₁₀ (decits)</option></select></div>
-    </div>
-
-    <!-- Taxonomy -->
-    <div class="settings-section"><div class="settings-section-title">Taxonomy & Nomenclature</div>
-      <div class="form-group"><label for="settingNomenclature">Naming Convention</label>
-        <select id="settingNomenclature"><option value="binomial">Binomial (Genus species)</option><option value="trinomial">Trinomial (incl. subspecies)</option><option value="common">Common Names</option><option value="both">Both Scientific & Common</option></select></div>
-      <div class="toggle-row"><label>Italicize Scientific Names</label><label class="switch"><input type="checkbox" id="settingItalicSpecies" checked /><span class="slider"></span></label></div>
-      <div class="toggle-row"><label>Auto-capitalize Genus</label><label class="switch"><input type="checkbox" id="settingAutoCapitalize" checked /><span class="slider"></span></label></div>
-    </div>
-
-    <!-- GPS & Coordinates -->
-    <div class="settings-section"><div class="settings-section-title">GPS & Coordinates</div>
-      <div class="form-group"><label for="settingCoordFormat">Coordinate Format</label>
-        <select id="settingCoordFormat"><option value="dd">Decimal Degrees (DD)</option><option value="dms">Degrees Minutes Seconds (DMS)</option><option value="utm">UTM (Universal Transverse Mercator)</option></select></div>
-      <div class="toggle-row"><label>Continuous GPS Tracking</label><label class="switch"><input type="checkbox" id="settingsGPSContinuous" checked /><span class="slider"></span></label></div>
-      <div class="toggle-row"><label>Auto-record GPS with each entry</label><label class="switch"><input type="checkbox" id="settingAutoGPSEntry" checked /><span class="slider"></span></label></div>
-      <div class="form-group"><label for="settingDatum">Geodetic Datum</label>
-        <select id="settingDatum"><option value="WGS84">WGS 84 (GPS standard)</option><option value="NAD83">NAD 83</option><option value="Everest">Everest 1830 (India)</option></select></div>
-    </div>
-
-    <!-- Data & Export -->
-    <div class="settings-section"><div class="settings-section-title">Data Management</div>
-      <div class="toggle-row"><label>Auto-save after each entry</label><label class="switch"><input type="checkbox" id="settingAutoSave" checked /><span class="slider"></span></label></div>
-      <div class="toggle-row"><label>Include raw GPS in exports</label><label class="switch"><input type="checkbox" id="settingExportGPS" checked /><span class="slider"></span></label></div>
-      <div class="toggle-row"><label>Include timestamps in exports</label><label class="switch"><input type="checkbox" id="settingExportTimestamp" checked /><span class="slider"></span></label></div>
-    </div>
-    <div class="settings-section"><div class="settings-section-title">Help & Guide</div>
-      <div class="help-section" id="helpSection">
-        <div class="help-item"><div class="help-item-title">Getting Started <span class="help-chevron">▶</span></div><div class="help-item-content">1. Tap <strong>+ New Survey</strong> on the Dashboard to create your first survey.<br>2. Fill in survey name, date, location, and investigator.<br>3. Navigate between sections using the bottom toolbar or swipe left/right.<br>4. Data is saved automatically to your device — no internet needed.</div></div>
-        <div class="help-item"><div class="help-item-title">Quadrat Sampling <span class="help-chevron">▶</span></div><div class="help-item-content">Set up quadrat size (m²) and shape. Add species with their abundance, DBH (cm), height (m), and phenology stage. GPS coordinates are auto-filled. Multiple species can be added per quadrat.</div></div>
-        <div class="help-item"><div class="help-item-title">Transect Method <span class="help-chevron">▶</span></div><div class="help-item-content">Define a transect line with start and end points. Record species at intervals along the transect. Use for vegetation gradient studies or belt transect sampling.</div></div>
-        <div class="help-item"><div class="help-item-title">Environmental Data <span class="help-chevron">▶</span></div><div class="help-item-content">Record abiotic factors: soil type, pH, moisture, slope, aspect, canopy cover, temperature, humidity, and light conditions.</div></div>
-        <div class="help-item"><div class="help-item-title">GPS & Waypoints <span class="help-chevron">▶</span></div><div class="help-item-content">The Map tab shows your location and saved waypoints. Export as GPX for GIS software. Change coordinate format in Settings (DD, DMS, UTM).</div></div>
-        <div class="help-item"><div class="help-item-title">Exporting Data <span class="help-chevron">▶</span></div><div class="help-item-content">Export as CSV (Excel/R/SPSS), JSON, GPX (GIS), or HTML summary report. Use Backup to save all data.</div></div>
-        <div class="help-item"><div class="help-item-title">Swipe Navigation <span class="help-chevron">▶</span></div><div class="help-item-content">Swipe left or right on the main content area to move between screens. Scroll bottom toolbar sideways to access all tabs.</div></div>
+      <!-- GUIDE TAB -->
+      <div class="settings-tab-pane" id="setGuide" style="display:none;">
+        <div class="settings-section"><div class="settings-section-title">Help & Guide</div>
+          <div class="help-section" id="helpSection">
+            <div class="help-item"><div class="help-item-title">Getting Started <span class="help-chevron">▶</span></div><div class="help-item-content">1. Tap <strong>+ New Survey</strong> on Dashboard to start.<br>2. Fill survey info.<br>3. Use the Tools menu to launch modules.<br>4. Data auto-saves completely offline.</div></div>
+            <div class="help-item"><div class="help-item-title">About Developer <span class="help-chevron">▶</span></div><div class="help-item-content"><strong>Forest Capture v3.0</strong><br>Ecological Field App<br><br>Khumbemo T Humtsoe<br>khumbemo.t.humtsoe@gmail.com</div></div>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <div class="settings-section"><div class="settings-section-title">About</div>
-      <p style="font-size:.78rem;color:var(--text-secondary);line-height:1.7;">
-        <strong style="font-size:.9rem;color:var(--text-primary);">Forest Capture v3.0</strong><br>
-        Ecological Field Data Collection App<br><br>
-        <strong>Developer:</strong> Khumbemo T Humtsoe<br>
-        <strong>Category:</strong> Ecology & Environmental Science<br>
-        <strong>License:</strong> Open Source<br><br>
-        <strong>Features:</strong><br>
-        GPS Tracking, Quadrat & Transect Sampling, Environmental Recording, Disturbance & CBI Assessment, Photo Documentation, Voice Notes, Biodiversity Analytics (Shannon, Simpson, IVI), Multi-format Export (CSV, JSON, GPX, HTML), Offline-first PWA<br><br>
-        <strong>Standards:</strong> DBH at 1.37m (Husch et al., 2003), Shannon-Wiener (1948), Simpson's Diversity (1949), IVI (Curtis & McIntosh, 1951)<br><br>
-        <strong>Tech Stack:</strong> HTML5, CSS3, JavaScript, Leaflet.js<br>
-        <strong>Contact:</strong> khumbemo.t.humtsoe@gmail.com
-      </p>
+      <!-- DANGER TAB -->
+      <div class="settings-tab-pane" id="setDanger" style="display:none;">
+        <div class="form-card danger-zone" style="background:#ef444415;border:1px solid #ef444450;">
+          <h3 class="card-title" style="color:var(--red);">Danger Zone</h3>
+          <p class="card-desc" style="color:var(--red-dim);">This action will irreversibly destroy all local survey databases, configurations, and cache. You cannot undo this.</p>
+          <button class="btn btn-danger btn-block" id="btnClearAll" style="margin-top:16px;">Clear All Data</button>
+        </div>
+      </div>
     </div>
   </div>
 
