@@ -16,9 +16,9 @@
   --border:         #333333;
   --border-light:   #444444;
 
-  --emerald:        #38bdf8;
-  --emerald-dim:    #0284c7;
-  --emerald-glow:   #38bdf820;
+  --emerald:        #10b981;
+  --emerald-dim:    #059669;
+  --emerald-glow:   #10b98120;
   --amber:          #f59e0b;
   --amber-dim:      #d97706;
   --red:            #ef4444;
@@ -53,15 +53,6 @@
   --amber:#d97706;--red:#dc2626;--red-dim:#b91c1c;--sky:#0284c7;--cyan:#0891b2;--violet:#7c3aed;
   --text-primary:#1c1917;--text-secondary:#57534e;--text-muted:#a8a29e;--text-inverse:#ffffff;
   --glass:rgba(255,255,255,.7);--neon-glow:0 0 20px rgba(22,163,74,.1);
-}
-/* ---------- GREEN THEME (REACHED EOL, OVERRIDDEN TO SLATE) ---------- */
-[data-theme="green"] {
-  --bg-deep:#0f172a;--bg-primary:#1e293b;--bg-card:#33415590;--bg-card-solid:#334155;
-  --bg-input:#0f172a;--bg-hover:#475569;--border:#64748b;--border-light:#94a3b8;
-  --emerald:#38bdf8;--emerald-dim:#0284c7;--emerald-glow:#38bdf830;
-  --amber:#fbbf24;--red:#f87171;--red-dim:#ef4444;--sky:#67e8f9;--cyan:#34d399;--violet:#c4b5fd;
-  --text-primary:#f8fafc;--text-secondary:#cbd5e1;--text-muted:#94a3b8;--text-inverse:#0f172a;
-  --glass:rgba(30,41,59,.55);--neon-glow:0 0 20px rgba(56,189,248,.2);
 }
 
 /* ---------- Reset ---------- */
@@ -123,12 +114,15 @@ input,select,textarea,button{font-family:'Roboto',-apple-system,BlinkMacSystemFo
 .tb-icon svg{width:20px;height:20px;}
 .tb-label{font-size:.55rem;font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
 
-@media(min-width:900px){
-  .left-toolbar{display:flex;}
-  .bottom-nav{display:none!important;}
-  .app-header{left:var(--toolbar-w);}
-  .status-bar{left:var(--toolbar-w);}
-  .app-main{margin-left:var(--toolbar-w);max-width:720px;}
+@media(min-width:600px){
+  .app-header, .status-bar, .bottom-nav, .app-main, .splash-screen, .login-screen, .settings-panel, .modal-card {
+    max-width: 500px;
+    margin: 0 auto;
+    left: 50% !important;
+    transform: translateX(-50%);
+    right: auto !important;
+  }
+  .app-header, .status-bar, .bottom-nav, .splash-screen, .login-screen { width: 100%; }
 }
 
 /* =========== HEADER =========== */
