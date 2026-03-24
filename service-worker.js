@@ -1,5 +1,5 @@
 // Forest Capture — Service Worker v7
-const CACHE_NAME = 'forest-capture-v7';
+const CACHE_NAME = 'forest-capture-v8';
 const ASSETS = [
   './',
   './index.html',
