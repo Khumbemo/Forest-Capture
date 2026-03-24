@@ -41,16 +41,27 @@ let curPos={lat:null,lng:null,alt:null,acc:null},gpsWatchId=null;
 function toUTM(lat,lng){const z=Math.floor((lng+180)/6)+1;const cm=(z-1)*6-180+3;const k0=0.9996;const e=0.00669438;const ep2=e/(1-e);const n2=6378137/Math.sqrt(1-e*Math.sin(lat*Math.PI/180)**2);const t=Math.tan(lat*Math.PI/180);const c=ep2*Math.cos(lat*Math.PI/180)**2;const a2=(lng-cm)*Math.PI/180*Math.cos(lat*Math.PI/180);const lr=lat*Math.PI/180;const m=6378137*((1-e/4-3*e*e/64)*lr-(3*e/8+3*e*e/32)*Math.sin(2*lr)+(15*e*e/256)*Math.sin(4*lr));let x=k0*n2*(a2+a2**3/6*(1-t**2+c))+500000;let y=k0*(m+n2*Math.tan(lr)*a2**2/2);if(lat<0)y+=10000000;return{zone:z,easting:Math.round(x),northing:Math.round(y)};}
 function fmtCoords(lat,lng){if($('#settingsUTM')&&$('#settingsUTM').checked){const u=toUTM(lat,lng);return`${u.zone}N ${u.easting}E ${u.northing}N`;}return`${lat.toFixed(5)}°, ${lng.toFixed(5)}°`;}
 
-function startGPS(){if(!navigator.geolocation){$('#gpsText').textContent='GPS N/A';return;}
+function startGPS(){
   gpsWatchId=navigator.geolocation.watchPosition(p=>{
     curPos.lat=p.coords.latitude;curPos.lng=p.coords.longitude;curPos.alt=p.coords.altitude;curPos.acc=p.coords.accuracy;
-    $('#gpsText').textContent=fmtCoords(curPos.lat,curPos.lng);
-    $('#teleCoords').textContent=fmtCoords(curPos.lat,curPos.lng);
-    $('#teleLocation').textContent=`±${Math.round(curPos.acc)}m`;
-    if(curPos.alt!==null){$('#altText').textContent=`Alt: ${Math.round(curPos.alt)}m`;$('#teleAlt').textContent=`${Math.round(curPos.alt)} m`;}
+    const fmt = fmtCoords(curPos.lat,curPos.lng);
+    if($('#teleCoords')) $('#teleCoords').textContent = fmt;
+    if($('#teleLocation')) $('#teleLocation').textContent = `±${Math.round(curPos.acc)}m Precision`;
+    if($('#teleAlt') && curPos.alt!==null) $('#teleAlt').textContent = `${Math.round(curPos.alt)} m`;
+    
+    // Update Map HUD
+    if($('#hudCoords')) {
+      $('#hudCoords').textContent = fmtCoords(curPos.lat,curPos.lng);
+      $('#hudAlt').textContent = curPos.alt!==null ? `${Math.round(curPos.alt)} m` : '--- m';
+      $('#hudAcc').textContent = curPos.acc ? `±${Math.round(curPos.acc)} m` : '---';
+      const u = toUTM(curPos.lat,curPos.lng);
+      $('#hudUTM').textContent = `${u.zone}N`;
+      $('#hudGpsStatus').textContent = 'ACTIVE';
+    }
+
     if(map){map.setView([curPos.lat,curPos.lng],map.getZoom());if(userMarker)userMarker.setLatLng([curPos.lat,curPos.lng]);}
     if(!weatherDone)fetchWeather(curPos.lat,curPos.lng);
-  },e=>{$('#gpsText').textContent='GPS: '+e.message;},{enableHighAccuracy:true,timeout:15000,maximumAge:5000});
+  },e=>{if($('#hudGpsStatus'))$('#hudGpsStatus').textContent='NO SIGNAL';},{enableHighAccuracy:true,timeout:15000,maximumAge:5000});
 }
 
 // ===== WEATHER =====
@@ -60,11 +71,15 @@ async function fetchWeather(lat,lng){try{
   const d=await r.json();const c=d.current;
   const wm={0:'Clear',1:'Mostly Clear',2:'Partly Cloudy',3:'Overcast',45:'Fog',48:'Rime Fog',51:'Light Drizzle',53:'Drizzle',55:'Dense Drizzle',61:'Light Rain',63:'Rain',65:'Heavy Rain',71:'Light Snow',73:'Snow',75:'Heavy Snow',80:'Showers',95:'Thunderstorm'};
   const wi=c.weather_code<=0?'☀️':c.weather_code<=3?'⛅':c.weather_code<=48?'🌫️':c.weather_code<=55?'🌦️':c.weather_code<=65?'🌧️':'⛈️';
-  $('#weatherIcon').textContent=wi;$('#weatherText').textContent=`${c.temperature_2m}°C ${wm[c.weather_code]||''}`;
-  $('#teleTemp').textContent=`${c.temperature_2m}°C`;$('#teleWeatherDesc').textContent=wm[c.weather_code]||'';
-  $('#teleHumidity').textContent=`${c.relative_humidity_2m}%`;$('#teleWind').textContent=`Wind: ${c.wind_speed_10m} km/h`;
+  
+  if($('#headerWeatherIcon')) $('#headerWeatherIcon').textContent=wi;
+  if($('#headerWeatherText')) $('#headerWeatherText').textContent=`${c.temperature_2m}°C`;
+  if($('#teleTemp')) $('#teleTemp').textContent=`${c.temperature_2m}°C`;
+  if($('#teleWeatherDesc')) $('#teleWeatherDesc').textContent=wm[c.weather_code]||'';
+  if($('#teleHumidity')) $('#teleHumidity').textContent=`${c.relative_humidity_2m}%`;
+  if($('#teleWind')) $('#teleWind').textContent=`Wind: ${c.wind_speed_10m} km/h`;
   weatherDone=true;
-}catch(e){$('#weatherText').textContent='Weather unavailable';}}
+}catch(e){}}
 
 // ===== NAVIGATION =====
 function switchScreen(id){
@@ -93,6 +108,11 @@ function switchScreen(id){
 $$('.nav-btn').forEach(b=>b.addEventListener('click',()=>switchScreen(b.dataset.screen)));
 $$('.stat-card[data-tool]').forEach(b=>b.addEventListener('click',()=>switchScreen(b.dataset.tool)));
 if($('#btnHeaderBack')) $('#btnHeaderBack').addEventListener('click',()=>switchScreen('screenToolbar'));
+
+if($('#btnDataQuadrat')) $('#btnDataQuadrat').addEventListener('click',()=>switchScreen('screenQuadrat'));
+if($('#btnDataTransect')) $('#btnDataTransect').addEventListener('click',()=>switchScreen('screenTransect'));
+if($('#btnDataSpecies')) $('#btnDataSpecies').addEventListener('click',()=>switchScreen('screenAnalytics'));
+if($('#btnDataWaypoint')) $('#btnDataWaypoint').addEventListener('click',()=>switchScreen('screenMap'));
 
 function updateBars(){const s=Store.getActive();const n=s?s.name:'No survey';
 ['quadratSurveyName','envSurveyName','distSurveyName','cbiSurveyName','photoSurveyName','exportSurveyName','analyticsSurveyName','transectSurveyName'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=n;});}
