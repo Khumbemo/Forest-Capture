@@ -92,7 +92,7 @@ function refreshDash(){const surveys=Store.getSurveys();const s=Store.getActive(
     $('#statSpecies').textContent=sp.size;
   }else{$('#statQuadrats').textContent='0';$('#statTransects').textContent='0';$('#statSpecies').textContent='0';}
   const wps=getWps();$('#statWaypoints').textContent=wps.length;
-  if(!surveys.length){list.innerHTML='<div class="empty-state"><div class="empty-icon">🌿</div><p>No surveys yet</p></div>';return;}
+  if(!surveys.length){list.innerHTML='<div class="empty-state"><div class="empty-icon"></div><p>No surveys yet</p></div>';return;}
   list.innerHTML=surveys.map(sv=>`<div class="survey-item ${s&&s.id===sv.id?'selected':''}" data-id="${sv.id}"><div class="survey-item-info"><div class="survey-item-name">${esc(sv.name)}</div><div class="survey-item-meta">${sv.date||''} · ${sv.location||''}</div></div><div class="survey-item-actions"><button data-action="select" data-id="${sv.id}">✓</button><button data-action="delete" data-id="${sv.id}">🗑️</button></div></div>`).join('');
   list.querySelectorAll('[data-action="select"]').forEach(b=>{b.addEventListener('click',e=>{e.stopPropagation();Store.setActive(b.dataset.id);refreshDash();updateBars();toast('Selected');});});
   list.querySelectorAll('[data-action="delete"]').forEach(b=>{b.addEventListener('click',e=>{e.stopPropagation();if(confirm('Delete?')){Store.del(b.dataset.id);refreshDash();updateBars();toast('Deleted');}});});
@@ -126,7 +126,7 @@ $('#btnMapHybrid').addEventListener('click',()=>{if(map){map.removeLayer(satLaye
 function getWps(){return JSON.parse(localStorage.getItem('forest_wps')||'[]');}
 function saveWps(w){localStorage.setItem('forest_wps',JSON.stringify(w));}
 function refreshMapWps(){wpMarkers.forEach(m=>map.removeLayer(m));wpMarkers=[];getWps().forEach(wp=>{const m=L.marker([wp.lat,wp.lng]).addTo(map).bindPopup(`<b>${esc(wp.name)}</b><br>${wp.type}`);wpMarkers.push(m);});}
-function refreshWpList(){const wps=getWps();const list=$('#waypointList');if(!wps.length){list.innerHTML='<div class="empty-state small"><p>No waypoints</p></div>';return;}
+function refreshWpList(){const wps=getWps();const list=$('#waypointList');if(!wps.length){list.innerHTML='';return;}
   const icons={plot:'📍',sample:'🔬',landmark:'🏔️',trail:'🥾',water:'💧',camp:'⛺',other:'📌'};
   list.innerHTML=wps.map((w,i)=>`<div class="waypoint-item"><span class="wp-icon">${icons[w.type]||'📌'}</span><div class="wp-info"><div class="wp-name">${esc(w.name)}</div><div class="wp-coords">${w.lat.toFixed(5)}, ${w.lng.toFixed(5)}</div></div><button class="wp-delete" data-i="${i}">✕</button></div>`).join('');
   list.querySelectorAll('.wp-delete').forEach(b=>{b.addEventListener('click',()=>{const w=getWps();w.splice(+b.dataset.i,1);saveWps(w);refreshWpList();if(map)refreshMapWps();toast('Deleted');});});}
@@ -351,8 +351,52 @@ if(mainEl){
 // ===== HELP ACCORDION =====
 $$('.help-item-title').forEach(t=>t.addEventListener('click',()=>{t.parentElement.classList.toggle('open');}));
 
-// ===== SPLASH SCREEN =====
-function dismissSplash(){const splash=$('#splashScreen');if(splash){splash.classList.add('hide');setTimeout(()=>splash.remove(),800);}}
+// ===== SPLASH + LOGIN =====
+function dismissSplash(){
+  const splash=$('#splashScreen');
+  if(splash){splash.classList.add('hide');setTimeout(()=>{
+    if(splash.parentNode)splash.remove();
+    const u=localStorage.getItem('fc_user');
+    if(!u){
+      // Show login screen
+      const ls=$('#loginScreen');
+      if(ls){ls.style.display='flex';}
+    }
+  },800);}
+}
+function dismissLogin(){
+  const ls=$('#loginScreen');
+  if(ls){ls.style.display='none';}
+}
+// Login button handlers
+if($('#btnSignIn')){
+  $('#btnSignIn').addEventListener('click',()=>{
+    const e=$('#loginEmail').value.trim();
+    const p=$('#loginPassword').value;
+    if(!e||!p){alert('Please enter email and password.');return;}
+    localStorage.setItem('fc_user',JSON.stringify({email:e,time:Date.now()}));
+    dismissLogin();
+  });
+}
+if($('#btnGoogleSignIn')){
+  $('#btnGoogleSignIn').addEventListener('click',()=>{
+    window.open('https://accounts.google.com','_blank');
+  });
+}
+if($('#btnGuestLogin')){
+  $('#btnGuestLogin').addEventListener('click',()=>{
+    localStorage.setItem('fc_user',JSON.stringify({guest:true,time:Date.now()}));
+    dismissLogin();
+  });
+}
+// Check if already logged in initially
+(function(){
+  const u=localStorage.getItem('fc_user');
+  if(u){
+    const ls=$('#loginScreen');
+    if(ls)ls.style.display='none';
+  }
+})();
 setTimeout(dismissSplash,2500);
 
 // ===== INIT =====
