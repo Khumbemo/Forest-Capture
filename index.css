@@ -115,7 +115,7 @@ input,select,textarea,button{font-family:'Roboto',-apple-system,BlinkMacSystemFo
 .tb-label{font-size:.55rem;font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
 
 @media(min-width:600px){
-  .app-header, .status-bar, .bottom-nav, .app-main, .splash-screen, .login-screen, .settings-panel, .modal-card {
+  .app-header, .status-bar, .bottom-nav, .app-main, .splash-screen, .login-screen {
     max-width: 500px;
     margin: 0 auto;
     left: 50% !important;
@@ -123,6 +123,7 @@ input,select,textarea,button{font-family:'Roboto',-apple-system,BlinkMacSystemFo
     right: auto !important;
   }
   .app-header, .status-bar, .bottom-nav, .splash-screen, .login-screen { width: 100%; }
+  .modal-card { max-width: 420px; }
 }
 
 /* =========== HEADER =========== */
@@ -152,7 +153,7 @@ input,select,textarea,button{font-family:'Roboto',-apple-system,BlinkMacSystemFo
 
 /* =========== MAIN =========== */
 .app-main{
-  padding-top:130px;
+  padding-top:80px;
   padding-bottom:calc(var(--nav-h) + var(--sp-xl));
   padding-left:var(--sp-lg);padding-right:var(--sp-lg);
   max-width:600px;margin:0 auto;
@@ -432,13 +433,36 @@ input,select,textarea,button{font-family:'Roboto',-apple-system,BlinkMacSystemFo
 
 /* =========== MOBILE OPTIMIZATIONS =========== */
 @media(max-width:480px){
-  .app-main{padding:calc(var(--header-h) + var(--status-h) + 8px) 12px calc(var(--nav-h) + 8px);}
+  .app-main{padding:calc(var(--header-h) + 12px) 12px calc(var(--nav-h) + 8px);}
   .screen-header h2{font-size:1.2rem;}
   .tele-value{font-size:1.1rem;}
   .form-card{padding:14px;}
   .card-title{font-size:.88rem;}
   .btn{padding:10px 16px;font-size:.82rem;}
 }
+
+/* =========== DATA RECORDS LIST =========== */
+.data-records-list{display:flex;flex-direction:column;gap:4px;}
+.data-date-group{margin-bottom:12px;}
+.data-date-label{font-size:.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;padding:6px 0;margin-bottom:4px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.data-date-label::before{content:'';width:3px;height:14px;background:var(--emerald);border-radius:2px;}
+.data-record-card{display:flex;align-items:center;gap:12px;background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;cursor:pointer;transition:all var(--transition);margin-bottom:4px;}
+.data-record-card:hover{border-color:var(--emerald);background:var(--bg-hover);box-shadow:var(--neon-glow);}
+.data-record-icon{width:36px;height:36px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:800;flex-shrink:0;}
+.data-record-icon.type-quadrat{background:#16a34a20;color:#4ade80;}
+.data-record-icon.type-transect{background:#0284c720;color:#38bdf8;}
+.data-record-icon.type-environment{background:#d9770620;color:#fbbf24;}
+.data-record-icon.type-disturbance{background:#ef444420;color:#f87171;}
+.data-record-icon.type-notes{background:#a78bfa20;color:#a78bfa;}
+.data-record-icon.type-photos{background:#22d3ee20;color:#22d3ee;}
+.data-record-body{flex:1;min-width:0;}
+.data-record-title{font-size:.88rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.data-record-meta{font-size:.68rem;color:var(--text-muted);margin-top:2px;}
+.data-record-time{font-size:.68rem;color:var(--emerald);font-weight:700;flex-shrink:0;text-align:right;}
+.data-records-empty{text-align:center;padding:40px 16px;color:var(--text-muted);}
+.data-records-empty svg{margin-bottom:12px;opacity:.4;}
+.data-records-empty p{font-size:.85rem;margin-bottom:4px;}
+.data-records-empty .hint{font-size:.72rem;color:var(--text-muted)}
 
 /* =========== Leaflet overrides =========== */
 .leaflet-container{border-radius:var(--radius-lg);}

@@ -30,7 +30,7 @@ setInterval(updateClock,1000);updateClock();
 
 // ===== SURVEY TIMER =====
 let timerInterval=null,timerStart=null,timerRunning=false;
-function updateTimerDisplay(){if(!timerStart)return;const s=Math.floor((Date.now()-timerStart)/1000);const m=Math.floor(s/60);$('#timerText').textContent=`Timer: ${String(m).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;}
+function updateTimerDisplay(){if(!timerStart)return;const s=Math.floor((Date.now()-timerStart)/1000);const m=Math.floor(s/60);const label=`${String(m).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;const tt=$('#timerText');if(tt)tt.textContent=label;const btn=$('#btnSurveyTimer');if(btn&&timerRunning)btn.textContent=`\u23f1\ufe0f ${label}`;}
 $('#btnSurveyTimer').addEventListener('click',function(){
   if(timerRunning){clearInterval(timerInterval);timerRunning=false;this.textContent='⏱️ Start Timer';toast('Timer stopped');}
   else{timerStart=Date.now();timerInterval=setInterval(updateTimerDisplay,1000);timerRunning=true;this.textContent='⏱️ Stop Timer';toast('Timer started');}
@@ -39,7 +39,7 @@ $('#btnSurveyTimer').addEventListener('click',function(){
 // ===== GPS =====
 let curPos={lat:null,lng:null,alt:null,acc:null},gpsWatchId=null;
 function toUTM(lat,lng){const z=Math.floor((lng+180)/6)+1;const cm=(z-1)*6-180+3;const k0=0.9996;const e=0.00669438;const ep2=e/(1-e);const n2=6378137/Math.sqrt(1-e*Math.sin(lat*Math.PI/180)**2);const t=Math.tan(lat*Math.PI/180);const c=ep2*Math.cos(lat*Math.PI/180)**2;const a2=(lng-cm)*Math.PI/180*Math.cos(lat*Math.PI/180);const lr=lat*Math.PI/180;const m=6378137*((1-e/4-3*e*e/64)*lr-(3*e/8+3*e*e/32)*Math.sin(2*lr)+(15*e*e/256)*Math.sin(4*lr));let x=k0*n2*(a2+a2**3/6*(1-t**2+c))+500000;let y=k0*(m+n2*Math.tan(lr)*a2**2/2);if(lat<0)y+=10000000;return{zone:z,easting:Math.round(x),northing:Math.round(y)};}
-function fmtCoords(lat,lng){if($('#settingsUTM')&&$('#settingsUTM').checked){const u=toUTM(lat,lng);return`${u.zone}N ${u.easting}E ${u.northing}N`;}return`${lat.toFixed(5)}°, ${lng.toFixed(5)}°`;}
+function fmtCoords(lat,lng){return`${lat.toFixed(5)}°, ${lng.toFixed(5)}°`;}
 
 function startGPS(){
   gpsWatchId=navigator.geolocation.watchPosition(p=>{
@@ -99,7 +99,7 @@ function switchScreen(id){
   }
 
   window.scrollTo({top:0,behavior:'smooth'});updateBars();
-  if(id==='screenDashboard'||id==='screenData')refreshDash();if(id==='screenMap'){setTimeout(()=>{if(map)map.invalidateSize();initMap();},100);}
+  if(id==='screenDashboard')refreshDash();if(id==='screenData')refreshDataRecords();if(id==='screenMap'){setTimeout(()=>{if(map)map.invalidateSize();initMap();},100);}
   if(id==='screenQuadrat')refreshQuadratTable();if(id==='screenTransect')refreshTransectTable();
   if(id==='screenEnvironment')loadEnvData();if(id==='screenDisturbCBI'){loadDistData();loadCBIData();}
   if(id==='screenPhotos'){refreshPhotos();refreshNotes();refreshAudio();}
@@ -109,27 +109,113 @@ $$('.nav-btn').forEach(b=>b.addEventListener('click',()=>switchScreen(b.dataset.
 $$('.stat-card[data-tool]').forEach(b=>b.addEventListener('click',()=>switchScreen(b.dataset.tool)));
 if($('#btnHeaderBack')) $('#btnHeaderBack').addEventListener('click',()=>switchScreen('screenToolbar'));
 
-if($('#btnDataQuadrat')) $('#btnDataQuadrat').addEventListener('click',()=>switchScreen('screenQuadrat'));
-if($('#btnDataTransect')) $('#btnDataTransect').addEventListener('click',()=>switchScreen('screenTransect'));
-if($('#btnDataSpecies')) $('#btnDataSpecies').addEventListener('click',()=>switchScreen('screenAnalytics'));
-if($('#btnDataWaypoint')) $('#btnDataWaypoint').addEventListener('click',()=>switchScreen('screenMap'));
-
 function updateBars(){const s=Store.getActive();const n=s?s.name:'No survey';
 ['quadratSurveyName','envSurveyName','distSurveyName','cbiSurveyName','photoSurveyName','exportSurveyName','analyticsSurveyName','transectSurveyName'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=n;});}
 
 // ===== DASHBOARD =====
-function refreshDash(){const surveys=Store.getSurveys();const s=Store.getActive();const list=$('#surveyList');
-  if(s){$('#statQuadrats').textContent=s.quadrats?s.quadrats.length:0;$('#statTransects').textContent=s.transects?s.transects.length:0;
-    const sp=new Set();if(s.quadrats)s.quadrats.forEach(q=>{if(q.species)q.species.forEach(x=>{if(x.name)sp.add(x.name);});});
-    $('#statSpecies').textContent=sp.size;
-  }else{$('#statQuadrats').textContent='0';$('#statTransects').textContent='0';$('#statSpecies').textContent='0';}
-  const wps=getWps();$('#statWaypoints').textContent=wps.length;
-  if(!surveys.length){list.innerHTML='<div class="empty-state"><div class="empty-icon"></div><p>No surveys yet</p></div>';return;}
-  list.innerHTML=surveys.map(sv=>`<div class="survey-item ${s&&s.id===sv.id?'selected':''}" data-id="${sv.id}"><div class="survey-item-info"><div class="survey-item-name">${esc(sv.name)}</div><div class="survey-item-meta">${sv.date||''} · ${sv.location||''}</div></div><div class="survey-item-actions"><button data-action="select" data-id="${sv.id}">✓</button><button data-action="delete" data-id="${sv.id}">🗑️</button></div></div>`).join('');
-  list.querySelectorAll('[data-action="select"]').forEach(b=>{b.addEventListener('click',e=>{e.stopPropagation();Store.setActive(b.dataset.id);refreshDash();updateBars();toast('Selected');});});
-  list.querySelectorAll('[data-action="delete"]').forEach(b=>{b.addEventListener('click',e=>{e.stopPropagation();if(confirm('Delete?')){Store.del(b.dataset.id);refreshDash();updateBars();toast('Deleted');}});});
-  list.querySelectorAll('.survey-item').forEach(i=>{i.addEventListener('click',()=>{Store.setActive(i.dataset.id);refreshDash();updateBars();});});
+function refreshDash(){updateBars();}
+
+// ===== DATA RECORDS =====
+function refreshDataRecords(){
+  const surveys=Store.getSurveys();
+  const list=$('#dataRecordsList');
+  if(!list)return;
+  const filterType=$('#dataFilterType')?$('#dataFilterType').value:'all';
+
+  // Collect all recorded data entries across all surveys
+  let allRecords=[];
+  surveys.forEach(sv=>{
+    const svName=sv.name||'Unnamed';
+    const svDate=sv.date||'';
+    // Quadrats
+    if(sv.quadrats&&sv.quadrats.length){
+      sv.quadrats.forEach((q,qi)=>{
+        const speciesNames=q.species?q.species.map(s=>s.name).filter(Boolean).join(', '):'No species';
+        allRecords.push({type:'quadrat',icon:'Q',label:`Quadrat #${q.number||qi+1}`,detail:`${q.species?q.species.length:0} species · ${q.size||'—'}m²`,survey:svName,date:svDate,sortDate:svDate||'0000-00-00',surveyId:sv.id});
+      });
+    }
+    // Transects
+    if(sv.transects&&sv.transects.length){
+      sv.transects.forEach((t,ti)=>{
+        allRecords.push({type:'transect',icon:'T',label:`Transect #${t.number||ti+1}`,detail:`${t.length||'—'}m × ${t.width||'—'}m · ${t.intercepts?t.intercepts.length:0} intercepts`,survey:svName,date:svDate,sortDate:svDate||'0000-00-00',surveyId:sv.id});
+      });
+    }
+    // Environment
+    if(sv.environment){
+      allRecords.push({type:'environment',icon:'E',label:'Environment Data',detail:`Elev: ${sv.environment.elevation||'—'}m · Slope: ${sv.environment.slope||'—'}° · ${sv.environment.weather||'—'}`,survey:svName,date:svDate,sortDate:svDate||'0000-00-00',surveyId:sv.id});
+    }
+    // Disturbance
+    if(sv.disturbance){
+      const dTypes=[];
+      if(sv.disturbance.grazing&&sv.disturbance.grazing.present)dTypes.push('Grazing');
+      if(sv.disturbance.logging&&sv.disturbance.logging.present)dTypes.push('Logging');
+      if(sv.disturbance.fire&&sv.disturbance.fire.present)dTypes.push('Fire');
+      if(sv.disturbance.human&&sv.disturbance.human.present)dTypes.push('Human');
+      allRecords.push({type:'disturbance',icon:'D',label:'Disturbance & CBI',detail:dTypes.length?dTypes.join(', '):'No disturbance recorded',survey:svName,date:svDate,sortDate:svDate||'0000-00-00',surveyId:sv.id});
+    }
+    // Notes
+    if(sv.notes&&sv.notes.length){
+      sv.notes.forEach(n=>{
+        const noteDate=n.time?n.time.split('T')[0]:svDate;
+        const noteTime=n.time?new Date(n.time).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:false}):'';
+        allRecords.push({type:'notes',icon:'N',label:`Note: ${n.category||'General'}`,detail:n.text?n.text.substring(0,60)+'…':'',survey:svName,date:noteDate,sortDate:noteDate||'0000-00-00',time:noteTime,surveyId:sv.id});
+      });
+    }
+    // Photos
+    if(sv.photos&&sv.photos.length){
+      allRecords.push({type:'photos',icon:'P',label:`${sv.photos.length} Photo${sv.photos.length>1?'s':''}`,detail:`Attached to survey`,survey:svName,date:svDate,sortDate:svDate||'0000-00-00',surveyId:sv.id});
+    }
+  });
+
+  // Filter
+  if(filterType!=='all')allRecords=allRecords.filter(r=>r.type===filterType);
+
+  if(!allRecords.length){
+    list.innerHTML='<div class="data-records-empty"><svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1" fill="none"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg><p>No recorded data</p><p class="hint">Create a survey and record data from Tools</p></div>';
+    return;
+  }
+
+  // Sort by date descending
+  allRecords.sort((a,b)=>(b.sortDate||'').localeCompare(a.sortDate||''));
+
+  // Group by date
+  const groups={};
+  allRecords.forEach(r=>{
+    const dateKey=r.date||'Undated';
+    if(!groups[dateKey])groups[dateKey]=[];
+    groups[dateKey].push(r);
+  });
+
+  let html='';
+  Object.entries(groups).forEach(([dateKey,records])=>{
+    const displayDate=dateKey!=='Undated'?new Date(dateKey+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'}):dateKey;
+    html+=`<div class="data-date-group"><div class="data-date-label">${displayDate}</div>`;
+    records.forEach(r=>{
+      html+=`<div class="data-record-card" data-sid="${r.surveyId}">
+        <div class="data-record-icon type-${r.type}">${r.icon}</div>
+        <div class="data-record-body">
+          <div class="data-record-title">${esc(r.label)}</div>
+          <div class="data-record-meta">${esc(r.survey)} · ${esc(r.detail)}</div>
+        </div>
+        <div class="data-record-time">${r.time||''}</div>
+      </div>`;
+    });
+    html+='</div>';
+  });
+  list.innerHTML=html;
+
+  // Clicking a record selects the survey and switches to Tools
+  list.querySelectorAll('.data-record-card').forEach(c=>{
+    c.addEventListener('click',()=>{
+      Store.setActive(c.dataset.sid);
+      updateBars();
+      switchScreen('screenToolbar');
+      toast('Survey selected');
+    });
+  });
 }
+// Data filter change
+if($('#dataFilterType'))$('#dataFilterType').addEventListener('change',refreshDataRecords);
 $('#btnNewSurvey').addEventListener('click',()=>{$('#surveyDate').value=new Date().toISOString().split('T')[0];$('#modalNewSurvey').classList.add('show');});
 $('#btnCancelSurvey').addEventListener('click',()=>$('#modalNewSurvey').classList.remove('show'));
 $('#btnSaveSurvey').addEventListener('click',()=>{
@@ -315,9 +401,17 @@ $('#btnExportReport').addEventListener('click',()=>{const s=Store.getActive();if
   dl(html,s.name.replace(/\W/g,'_')+'_report.html','text/html');toast('Report generated');});
 
 // Backup/Restore
-$('#btnBackupAll').addEventListener('click',()=>{const all={surveys:JSON.parse(localStorage.getItem(SK)||'{}'),waypoints:getWps(),theme:localStorage.getItem('forest_survey_theme')};dl(JSON.stringify(all,null,2),'forest_survey_backup_'+new Date().toISOString().split('T')[0]+'.json','application/json');toast('Backup saved');});
-$('#restoreInput').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.surveys)localStorage.setItem(SK,JSON.stringify(d.surveys));if(d.waypoints)saveWps(d.waypoints);if(d.theme)localStorage.setItem('forest_survey_theme',d.theme);refreshDash();updateBars();toast('Data restored');location.reload();}catch(e){toast('Invalid backup file',true);}};r.readAsText(f);e.target.value='';});
-$('#btnClearAll').addEventListener('click',()=>{if(!confirm('Delete ALL data?'))return;if(!confirm('This cannot be undone!'))return;localStorage.removeItem(SK);localStorage.removeItem('forest_wps');refreshDash();updateBars();toast('All cleared');});
+function doBackup(){const all={surveys:JSON.parse(localStorage.getItem(SK)||'{}'),waypoints:getWps(),theme:localStorage.getItem('forest_survey_theme')};dl(JSON.stringify(all,null,2),'forest_survey_backup_'+new Date().toISOString().split('T')[0]+'.json','application/json');toast('Backup saved');}
+function doRestore(file){if(!file)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.surveys)localStorage.setItem(SK,JSON.stringify(d.surveys));if(d.waypoints)saveWps(d.waypoints);if(d.theme)localStorage.setItem('forest_survey_theme',d.theme);refreshDash();updateBars();toast('Data restored');location.reload();}catch(e){toast('Invalid backup file',true);}};r.readAsText(file);}
+function doClearAll(){if(!confirm('Delete ALL data?'))return;if(!confirm('This cannot be undone!'))return;localStorage.removeItem(SK);localStorage.removeItem('forest_wps');refreshDash();updateBars();toast('All cleared');}
+// Export screen buttons
+if($('#btnBackupAll'))$('#btnBackupAll').addEventListener('click',doBackup);
+if($('#restoreInput'))$('#restoreInput').addEventListener('change',e=>{doRestore(e.target.files[0]);e.target.value='';});
+if($('#btnClearAll'))$('#btnClearAll').addEventListener('click',doClearAll);
+// Settings panel duplicate buttons
+if($('#btnBackupAllSettings'))$('#btnBackupAllSettings').addEventListener('click',doBackup);
+if($('#restoreInputSettings'))$('#restoreInputSettings').addEventListener('change',e=>{doRestore(e.target.files[0]);e.target.value='';});
+if($('#btnClearAllSettings'))$('#btnClearAllSettings').addEventListener('click',doClearAll);
 
 // ===== SETTINGS =====
 const sp2=$('#settingsPanel'),so2=$('#settingsOverlay');
@@ -351,7 +445,7 @@ function fmtCoordsSetting(lat,lng){
 }
 // Override fmtCoords to use settings
 fmtCoords=fmtCoordsSetting;
-if($('#settingCoordFormat'))$('#settingCoordFormat').addEventListener('change',()=>{if(curPos.lat){$('#gpsText').textContent=fmtCoords(curPos.lat,curPos.lng);$('#teleCoords').textContent=fmtCoords(curPos.lat,curPos.lng);}});
+if($('#settingCoordFormat'))$('#settingCoordFormat').addEventListener('change',()=>{if(curPos.lat){const gt=$('#gpsText');if(gt)gt.textContent=fmtCoords(curPos.lat,curPos.lng);if($('#teleCoords'))$('#teleCoords').textContent=fmtCoords(curPos.lat,curPos.lng);}});
 
 // Settings persistence
 const SETTINGS_KEY='forest_settings';
@@ -359,8 +453,8 @@ function saveSettings(){const s={};$$('#settingsPanel select, #settingsPanel inp
 function loadSettings(){try{const s=JSON.parse(localStorage.getItem(SETTINGS_KEY));if(!s)return;Object.entries(s).forEach(([id,val])=>{const el=document.getElementById(id);if(!el)return;if(el.type==='checkbox')el.checked=val;else el.value=val;});}catch(e){}}
 $$('#settingsPanel select, #settingsPanel input').forEach(el=>{el.addEventListener('change',saveSettings);el.addEventListener('input',saveSettings);});
 
-// ===== SWIPE NAVIGATION =====
-const SCREEN_ORDER=['screenDashboard','screenToolbar','screenMap','screenQuadrat','screenTransect','screenEnvironment','screenDisturbCBI','screenPhotos','screenAnalytics','screenExport'];
+// ===== SWIPE NAVIGATION (Home ↔ Tools ↔ Data only) =====
+const SWIPE_TABS=['screenDashboard','screenToolbar','screenData'];
 let swipeStartX=0,swipeStartY=0,swiping=false;
 const mainEl=$('.app-main');
 if(mainEl){
@@ -377,10 +471,10 @@ if(mainEl){
     if(!swiping)return;swiping=false;
     const dx=e.changedTouches[0].clientX-swipeStartX;
     if(Math.abs(dx)<60)return;
-    const cur=SCREEN_ORDER.findIndex(id=>document.getElementById(id)&&document.getElementById(id).classList.contains('active'));
+    const cur=SWIPE_TABS.findIndex(id=>document.getElementById(id)&&document.getElementById(id).classList.contains('active'));
     if(cur<0)return;
-    if(dx<0&&cur<SCREEN_ORDER.length-1)switchScreen(SCREEN_ORDER[cur+1]);
-    else if(dx>0&&cur>0)switchScreen(SCREEN_ORDER[cur-1]);
+    if(dx<0&&cur<SWIPE_TABS.length-1)switchScreen(SWIPE_TABS[cur+1]);
+    else if(dx>0&&cur>0)switchScreen(SWIPE_TABS[cur-1]);
   },{passive:true});
 }
 
@@ -436,5 +530,5 @@ if($('#btnGuestLogin')){
 setTimeout(dismissSplash,2500);
 
 // ===== INIT =====
-loadTheme();loadBrightness();loadSettings();startGPS();refreshDash();updateBars();refreshQuadratTable();addSpeciesEntry();addIntercept();refreshWpList();
+loadTheme();loadBrightness();loadSettings();startGPS();refreshDash();updateBars();refreshQuadratTable();addSpeciesEntry();addIntercept();refreshWpList();refreshDataRecords();
 })();
