@@ -5,8 +5,19 @@ const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 let toastT;function toast(m,e){const el=$('#toast');if(!el)return;el.textContent=m;el.classList.toggle('error',!!e);el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2500);}
 // Online/Offline dot
-function updateDot(){const d=$('#onlineDot');if(d){navigator.onLine?d.classList.remove('offline'):d.classList.add('offline');}}
+function updateDot(){
+  const d=$('#onlineDot');
+  const online=navigator.onLine;
+  if(d){online?d.classList.remove('offline'):d.classList.add('offline');}
+  // Scientific/telemetry status next to settings button
+  setHeaderWeatherIcon(online?'📡':'∅');
+}
 window.addEventListener('online',updateDot);window.addEventListener('offline',updateDot);setTimeout(updateDot,500);
+
+function setHeaderWeatherIcon(icon){
+  const el=$('#headerWeatherIcon');
+  if(el)el.textContent=icon;
+}
 
 // ===== STORAGE =====
 const SK='forest_survey_data';
@@ -70,6 +81,8 @@ function startGPS(){
     if($('#gpsOptionStatus')) $('#gpsOptionStatus').textContent='NO API';
     return;
   }
+  if($('#gpsOptionStatus')) $('#gpsOptionStatus').textContent='SEARCHING…';
+  setHeaderWeatherIcon('⟲');
   gpsWatchId=navigator.geolocation.watchPosition(p=>{
     curPos.lat=p.coords.latitude;curPos.lng=p.coords.longitude;curPos.alt=p.coords.altitude;curPos.acc=p.coords.accuracy;
     const fmt = fmtCoords(curPos.lat,curPos.lng);
@@ -91,6 +104,7 @@ function startGPS(){
     fetchWeather(curPos.lat,curPos.lng);
   },e=>{
     if($('#gpsOptionStatus'))$('#gpsOptionStatus').textContent='NO SIGNAL';
+    setHeaderWeatherIcon(navigator.onLine?'📡':'∅');
   },{enableHighAccuracy:true,timeout:15000,maximumAge:5000});
 }
 
@@ -104,7 +118,16 @@ async function fetchWeather(lat,lng){try{
   const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`);
   const d=await r.json();if(!d||!d.current)return;const c=d.current;
   const wm={0:'Clear',1:'Mostly Clear',2:'Partly Cloudy',3:'Overcast',45:'Fog',48:'Rime Fog',51:'Light Drizzle',53:'Drizzle',55:'Dense Drizzle',61:'Light Rain',63:'Rain',65:'Heavy Rain',71:'Light Snow',73:'Snow',75:'Heavy Snow',80:'Showers',95:'Thunderstorm'};
-  const wi=c.weather_code<=0?'☀️':c.weather_code<=3?'⛅':c.weather_code<=48?'🌫️':c.weather_code<=55?'🌦️':c.weather_code<=65?'🌧️':'⛈️';
+  // Scientific + futuristic weather glyphs (derived from live forecast code)
+  let wi='☀︎';
+  if(c.weather_code<=3) wi='⛅︎';
+  if(c.weather_code<=0) wi='☀︎';
+  else if(c.weather_code<=48) wi='🌫︎';
+  else if(c.weather_code<=55) wi='🌦︎';
+  else if(c.weather_code<=65) wi='🌧︎';
+  else if(c.weather_code<=75) wi='❄︎';
+  else if(c.weather_code<=80) wi='☔︎';
+  else if(c.weather_code>=95) wi='⚡︎';
   
   if($('#headerWeatherIcon')) $('#headerWeatherIcon').textContent=wi;
   if($('#headerWeatherText')) $('#headerWeatherText').textContent=`${c.temperature_2m}°C`;
@@ -534,13 +557,17 @@ if(mainEl){
   },{passive:true});
   mainEl.addEventListener('touchmove',e=>{
     if(!swiping)return;
-    const dy=Math.abs(e.touches[0].clientY-swipeStartY);
-    if(dy>80)swiping=false;
+    const dx=e.touches[0].clientX-swipeStartX;
+    const dy=e.touches[0].clientY-swipeStartY;
+    // If the gesture is mostly vertical, don't treat it as a horizontal swipe.
+    if(Math.abs(dy) > Math.abs(dx)*1.15 && Math.abs(dy)>25)swiping=false;
   },{passive:true});
   mainEl.addEventListener('touchend',e=>{
     if(!swiping)return;swiping=false;
     const dx=e.changedTouches[0].clientX-swipeStartX;
-    if(Math.abs(dx)<60)return;
+    const dy=e.changedTouches[0].clientY-swipeStartY;
+    if(Math.abs(dx)<35)return;
+    if(Math.abs(dy) > Math.abs(dx)*1.1)return;
     const cur=SWIPE_TABS.findIndex(id=>document.getElementById(id)&&document.getElementById(id).classList.contains('active'));
     if(cur<0)return;
     if(dx<0&&cur<SWIPE_TABS.length-1)switchScreen(SWIPE_TABS[cur+1]);
