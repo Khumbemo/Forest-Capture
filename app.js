@@ -115,9 +115,34 @@ async function fetchWeather(lat,lng){try{
 }catch(e){}}
 
 // ===== NAVIGATION =====
+const FC_FLOW=['screenDashboard','screenToolbar','screenData'];
+const FC_TOOL_SCREENS=['screenMap','screenQuadrat','screenTransect','screenEnvironment','screenDisturbCBI','screenPhotos','screenAnalytics','screenExport'];
+const FC_STACK_SCREENS=FC_FLOW.concat(FC_TOOL_SCREENS);
+let FC_SUPPRESS_HISTORY=false;
+function fcGetActiveScreenId(){const a=document.querySelector('.screen.active');return a&&a.id?a.id:null;}
+function fcIsToolScreen(id){return FC_TOOL_SCREENS.includes(id);}
+function fcPushHistory(id){
+  if(FC_SUPPRESS_HISTORY)return;
+  if(!FC_STACK_SCREENS.includes(id))return;
+  try{history.pushState({fcScreen:id},'',location.href);}catch(_){}
+}
+
 function switchScreen(id){
-  $$('.screen').forEach(s=>s.classList.remove('active'));$$('.nav-btn').forEach(b=>b.classList.remove('active'));$$('.tb-btn[data-screen]').forEach(b=>b.classList.remove('active'));
-  const t=document.getElementById(id);if(t){t.classList.add('active');t.style.animation='none';t.offsetHeight;t.style.animation='';}
+  const curId=fcGetActiveScreenId();
+  $$('.screen').forEach(s=>s.classList.remove('active','slide-in-right','slide-in-left'));
+  $$('.nav-btn').forEach(b=>b.classList.remove('active'));
+  $$('.tb-btn[data-screen]').forEach(b=>b.classList.remove('active'));
+  const t=document.getElementById(id);
+  if(t){
+    t.classList.add('active');
+    // Direction-aware slide only for the main flow (Home -> Tools -> Data)
+    if(FC_FLOW.includes(curId)&&FC_FLOW.includes(id)&&curId!==id){
+      const from=FC_FLOW.indexOf(curId),to=FC_FLOW.indexOf(id);
+      const dir=to>from?'slide-in-right':'slide-in-left';
+      t.classList.add(dir);
+      setTimeout(()=>t.classList.remove(dir),220);
+    }
+  }
   const nb=document.querySelector(`.nav-btn[data-screen="${id}"]`);if(nb)nb.classList.add('active');
   const tb=document.querySelector(`.tb-btn[data-screen="${id}"]`);if(tb)tb.classList.add('active');
   
@@ -131,13 +156,34 @@ function switchScreen(id){
     if(title) title.style.marginLeft = '4px';
   }
 
-  window.scrollTo({top:0,behavior:'smooth'});updateBars();
+  const isSmall=/Mobi|Android/i.test(navigator.userAgent);
+  window.scrollTo({top:0,behavior:isSmall?'auto':'smooth'});updateBars();
   if(id==='screenDashboard')refreshDash();if(id==='screenData')refreshDataRecords();if(id==='screenMap'){setTimeout(()=>{if(map)map.invalidateSize();initMap();},100);}
   if(id==='screenQuadrat')refreshQuadratTable();if(id==='screenTransect')refreshTransectTable();
   if(id==='screenEnvironment')loadEnvData();if(id==='screenDisturbCBI'){loadDistData();loadCBIData();}
   if(id==='screenPhotos'){refreshPhotos();refreshNotes();refreshAudio();}
   if(id==='screenAnalytics')refreshAnalytics();if(id==='screenExport')refreshPreview();
+
+  fcPushHistory(id);
 }
+
+// Mobile device back button: keep user inside the app
+window.addEventListener('popstate',()=>{
+  const target=(history.state&&history.state.fcScreen)?history.state.fcScreen:null;
+  if(!target)return;
+  if(fcIsToolScreen(target)){
+    FC_SUPPRESS_HISTORY=true;
+    switchScreen('screenToolbar');
+    FC_SUPPRESS_HISTORY=false;
+    try{history.replaceState({fcScreen:'screenToolbar'},'',location.href);}catch(_){}
+    return;
+  }
+  if(document.getElementById(target)){
+    FC_SUPPRESS_HISTORY=true;
+    switchScreen(target);
+    FC_SUPPRESS_HISTORY=false;
+  }
+});
 $$('.nav-btn').forEach(b=>b.addEventListener('click',()=>switchScreen(b.dataset.screen)));
 $$('.stat-card[data-tool]').forEach(b=>b.addEventListener('click',()=>switchScreen(b.dataset.tool)));
 if($('#btnHeaderBack')) $('#btnHeaderBack').addEventListener('click',()=>switchScreen('screenToolbar'));
