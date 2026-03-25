@@ -1,20 +1,19 @@
 // Forest Capture — Service Worker v7
-const CACHE_NAME = 'forest-capture-v13';
+const CACHE_NAME = 'forest-capture-v14';
 const ASSETS = [
-  './',
   './index.html',
   './index.css',
   './app.js',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png',
-  'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+  './manifest.json'
 ];
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(async cache => {
+      // Only cache core app files; avoids install failure when optional icons are missing.
+      await Promise.all(ASSETS.map(u => cache.add(u)));
+    })
+  );
   self.skipWaiting();
 });
 

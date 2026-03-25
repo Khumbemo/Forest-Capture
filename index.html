@@ -7,15 +7,15 @@
   <meta name="description" content="Forest Capture — Ecological Field Data Collection" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
-  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
   <title>Forest Capture</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="index.css" />
+  <link rel="stylesheet" href="./index.css" />
 </head>
 <body>
 
@@ -145,7 +145,7 @@
     <!-- ===== TOOLS MENU ===== -->
     <section class="screen" id="screenToolbar">
       <div style="display:flex;justify-content:flex-start;margin-top:16px;margin-bottom:24px;padding:0 4px;">
-        <button class="btn btn-primary" id="btnNewSurvey" style="width:100%;max-width:100%;font-size:1.1rem;font-weight:700;padding:16px;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> + New Survey</button>
+        <button class="btn btn-primary" id="btnNewSurvey" style="width:100%;max-width:100%;font-size:1.1rem;font-weight:700;padding:16px;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New Survey</button>
       </div>
       <div class="stats-grid" id="toolsMenuGrid">
         <div class="stat-card" data-tool="screenMap"><div class="stat-icon"><svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg></div><div class="stat-label">Map &amp; GPS</div></div>
@@ -161,16 +161,6 @@
 
     <!-- ===== MAP ===== -->
     <section class="screen" id="screenMap" style="padding:0;position:relative;">
-      <!-- GPS Telemetry HUD -->
-      <div class="map-gps-hud" style="position:absolute;top:16px;left:16px;right:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;z-index:900;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow);pointer-events:none;">
-        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:.75rem;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;">Live Telemetry</span><span id="hudGpsStatus" style="font-size:.75rem;color:var(--emerald);font-weight:800;letter-spacing:1px;">SEARCHING...</span></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div><div style="font-size:.65rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Coordinates</div><div id="hudCoords" style="font-size:.9rem;font-weight:800;color:var(--text-primary);font-family:monospace;">---, ---</div></div>
-          <div><div style="font-size:.65rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Altitude</div><div id="hudAlt" style="font-size:.9rem;font-weight:800;color:var(--text-primary);font-family:monospace;">--- m</div></div>
-          <div><div style="font-size:.65rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Accuracy</div><div id="hudAcc" style="font-size:.9rem;font-weight:800;color:var(--text-primary);font-family:monospace;">±--- m</div></div>
-          <div><div style="font-size:.65rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;">UTM Zone</div><div id="hudUTM" style="font-size:.9rem;font-weight:800;color:var(--text-primary);font-family:monospace;">---</div></div>
-        </div>
-      </div>
       <div class="map-container"><div id="mapView" class="map-view"></div>
         <div class="map-controls">
           <button class="map-ctrl-btn" id="btnLocateMe" title="My Location">⊕</button>
@@ -178,6 +168,18 @@
           <button class="map-ctrl-btn" id="btnMapSatellite" title="Satellite">🛰️</button>
           <button class="map-ctrl-btn" id="btnMapTerrain" title="Terrain">🏔️</button>
           <button class="map-ctrl-btn" id="btnMapHybrid" title="Hybrid">🌍</button>
+        </div>
+      </div>
+      <div class="form-card" style="margin-top:0;">
+        <div class="section-title-row" style="margin-bottom:var(--sp-sm);">
+          <h3 class="card-title">GPS Coordinates</h3>
+          <div id="gpsOptionStatus" style="font-size:.75rem;color:var(--emerald);font-weight:800;letter-spacing:1px;">SEARCHING...</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><div style="font-size:.65rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Coordinates</div><div id="gpsOptionCoords" style="font-size:.9rem;font-weight:800;color:var(--text-primary);font-family:monospace;">—</div></div>
+          <div><div style="font-size:.65rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Accuracy</div><div id="gpsOptionAcc" style="font-size:.9rem;font-weight:800;color:var(--text-primary);font-family:monospace;">±--- m</div></div>
+          <div><div style="font-size:.65rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Altitude</div><div id="gpsOptionAlt" style="font-size:.9rem;font-weight:800;color:var(--text-primary);font-family:monospace;">--- m</div></div>
+          <div><div style="font-size:.65rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;">UTM</div><div id="gpsOptionUTM" style="font-size:.9rem;font-weight:800;color:var(--text-primary);font-family:monospace;">—</div></div>
         </div>
       </div>
       <div class="form-card">
@@ -461,7 +463,7 @@
       <div class="settings-tab-pane" id="setGuide" style="display:none;">
         <div class="settings-section"><div class="settings-section-title">Help & Guide</div>
           <div class="help-section" id="helpSection">
-            <div class="help-item"><div class="help-item-title">1. Getting Started <span class="help-chevron">▶</span></div><div class="help-item-content">Tap <strong>+ New Survey</strong> on the Tools page to begin. Once a session is created, select any of the 8 tool modules to record field data. Data auto-saves to your offline database.</div></div>
+            <div class="help-item"><div class="help-item-title">1. Getting Started <span class="help-chevron">▶</span></div><div class="help-item-content">Tap <strong>New Survey</strong> on the Tools page to begin. Once a session is created, select any of the 8 tool modules to record field data. Data auto-saves to your offline database.</div></div>
             <div class="help-item"><div class="help-item-title">2. Map & GPS <span class="help-chevron">▶</span></div><div class="help-item-content">Drop custom waypoints, track your live path, and switch between Satellite, Terrain, and Hybrid layers. Auto-logs altitude, precision, and UTM formatting.</div></div>
             <div class="help-item"><div class="help-item-title">3. Quadrat Sampling <span class="help-chevron">▶</span></div><div class="help-item-content">Define quadrat dimensions. Enter species lists with Abundance, DBH (cm), Height (m), and Phenology stages.</div></div>
             <div class="help-item"><div class="help-item-title">4. Belt Transect <span class="help-chevron">▶</span></div><div class="help-item-content">Set heading bearing and total length. Add interval intercepts documenting canopy cover and discrete distance.</div></div>
@@ -487,7 +489,7 @@
 
   <div class="toast" id="toast"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js"></script>
+  <script src="./app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

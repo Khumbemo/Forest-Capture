@@ -66,27 +66,32 @@ function fmtCoords(lat,lng){
 }
 
 function startGPS(){
-  if(!navigator.geolocation){if($('#hudGpsStatus'))$('#hudGpsStatus').textContent='NO API';return;}
+  if(!navigator.geolocation){
+    if($('#gpsOptionStatus')) $('#gpsOptionStatus').textContent='NO API';
+    return;
+  }
   gpsWatchId=navigator.geolocation.watchPosition(p=>{
     curPos.lat=p.coords.latitude;curPos.lng=p.coords.longitude;curPos.alt=p.coords.altitude;curPos.acc=p.coords.accuracy;
     const fmt = fmtCoords(curPos.lat,curPos.lng);
     if($('#teleCoords')) $('#teleCoords').textContent = fmt;
     if($('#teleLocation')) $('#teleLocation').textContent = `±${Math.round(curPos.acc)}m Precision`;
     if($('#teleAlt') && curPos.alt!==null) $('#teleAlt').textContent = `${Math.round(curPos.alt)} m`;
-    
-    // Update Map HUD
-    if($('#hudCoords')) {
-      $('#hudCoords').textContent = fmtCoords(curPos.lat,curPos.lng);
-      $('#hudAlt').textContent = curPos.alt!==null ? `${Math.round(curPos.alt)} m` : '--- m';
-      $('#hudAcc').textContent = curPos.acc ? `±${Math.round(curPos.acc)} m` : '---';
+
+    // Update separate map GPS coordinates panel
+    if($('#gpsOptionCoords')) $('#gpsOptionCoords').textContent = fmt;
+    if($('#gpsOptionAcc')) $('#gpsOptionAcc').textContent = curPos.acc ? `±${Math.round(curPos.acc)} m` : '±--- m';
+    if($('#gpsOptionAlt')) $('#gpsOptionAlt').textContent = curPos.alt!==null ? `${Math.round(curPos.alt)} m` : '--- m';
+    if($('#gpsOptionUTM')) {
       const u = toUTM(curPos.lat,curPos.lng);
-      $('#hudUTM').textContent = `${u.zone}${curPos.lat>=0?'N':'S'}`;
-      $('#hudGpsStatus').textContent = 'ACTIVE';
+      $('#gpsOptionUTM').textContent = `${u.zone}${curPos.lat>=0?'N':'S'} ${u.easting}E ${u.northing}N`;
     }
+    if($('#gpsOptionStatus')) $('#gpsOptionStatus').textContent = 'ACTIVE';
 
     if(map){if(userMarker)userMarker.setLatLng([curPos.lat,curPos.lng]);}
     fetchWeather(curPos.lat,curPos.lng);
-  },e=>{if($('#hudGpsStatus'))$('#hudGpsStatus').textContent='NO SIGNAL';},{enableHighAccuracy:true,timeout:15000,maximumAge:5000});
+  },e=>{
+    if($('#gpsOptionStatus'))$('#gpsOptionStatus').textContent='NO SIGNAL';
+  },{enableHighAccuracy:true,timeout:15000,maximumAge:5000});
 }
 
 // ===== WEATHER =====
@@ -464,7 +469,7 @@ function setBrightness(v){document.documentElement.style.setProperty('--brightne
 const elBright=$('#brightnessSlider');if(elBright)elBright.addEventListener('input',e=>setBrightness(+e.target.value));
 function loadBrightness(){setBrightness(parseInt(localStorage.getItem(BK))||100);}
 
-if($('#settingCoordFormat'))$('#settingCoordFormat').addEventListener('change',()=>{if(curPos.lat!=null&&curPos.lng!=null){const gt=$('#gpsText');if(gt)gt.textContent=fmtCoords(curPos.lat,curPos.lng);if($('#teleCoords'))$('#teleCoords').textContent=fmtCoords(curPos.lat,curPos.lng);if($('#hudCoords'))$('#hudCoords').textContent=fmtCoords(curPos.lat,curPos.lng);}});
+if($('#settingCoordFormat'))$('#settingCoordFormat').addEventListener('change',()=>{if(curPos.lat!=null&&curPos.lng!=null){const gt=$('#gpsText');if(gt)gt.textContent=fmtCoords(curPos.lat,curPos.lng);if($('#teleCoords'))$('#teleCoords').textContent=fmtCoords(curPos.lat,curPos.lng);if($('#gpsOptionCoords'))$('#gpsOptionCoords').textContent=fmtCoords(curPos.lat,curPos.lng);}});
 
 // Settings persistence
 const SETTINGS_KEY='forest_settings';
