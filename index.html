@@ -256,7 +256,7 @@
       </div>
       <div class="form-card">
         <h3 class="card-title">Canopy Cover Estimation</h3>
-        <p class="card-desc">Take an upward-facing photo to estimate canopy closure percentage.</p>
+        <p class="card-desc">Upward photo → rough “green fraction” proxy for canopy openness (not a substitute for densiometer or hemispherical photography).</p>
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
           <label class="btn btn-accent btn-sm" for="canopyPhotoInput">Capture Canopy Photo</label>
           <input type="file" id="canopyPhotoInput" accept="image/*" capture="environment" class="hidden-input" />
@@ -323,10 +323,10 @@
         <h3 class="card-title">Biodiversity Indices</h3>
         <div class="analytics-grid">
           <div class="analytic-item"><div class="analytic-label">Species Richness (S)</div><div class="analytic-value" id="analyticRichness">0</div></div>
-          <div class="analytic-item"><div class="analytic-label">Shannon-Wiener (H')</div><div class="analytic-value" id="analyticShannon">0.000</div></div>
-          <div class="analytic-item"><div class="analytic-label">Simpson's Index (D)</div><div class="analytic-value" id="analyticSimpson">0.000</div></div>
-          <div class="analytic-item"><div class="analytic-label">Simpson's Diversity (1-D)</div><div class="analytic-value" id="analyticSimpsonDiv">0.000</div></div>
-          <div class="analytic-item"><div class="analytic-label">Evenness (E)</div><div class="analytic-value" id="analyticEvenness">0.000</div></div>
+          <div class="analytic-item"><div class="analytic-label">Shannon–Wiener H′ (ln, πᵢ = nᵢ/N)</div><div class="analytic-value" id="analyticShannon">0.000</div></div>
+          <div class="analytic-item"><div class="analytic-label">Simpson λ (finite sample)</div><div class="analytic-value" id="analyticSimpson">0.000</div></div>
+          <div class="analytic-item"><div class="analytic-label">1 − λ (diversity)</div><div class="analytic-value" id="analyticSimpsonDiv">0.000</div></div>
+          <div class="analytic-item"><div class="analytic-label">Pielou J′ = H′/ln S</div><div class="analytic-value" id="analyticEvenness">0.000</div></div>
           <div class="analytic-item"><div class="analytic-label">Total Individuals (N)</div><div class="analytic-value" id="analyticTotalN">0</div></div>
         </div>
       </div>
@@ -341,7 +341,7 @@
 
       <div class="form-card">
         <h3 class="card-title">IVI — Importance Value Index</h3>
-        <p class="card-desc">Relative density + relative frequency + relative dominance = IVI (max 300)</p>
+        <p class="card-desc">Importance value (IV) ≈ relative density + relative frequency + relative dominance (each 0–100%; sum 0–300). Based on pooled quadrats.</p>
         <div class="table-scroll">
           <table class="quadrat-table" id="iviTable"><thead><tr><th>Species</th><th>Density</th><th>Rel. Density</th><th>Frequency</th><th>Rel. Freq</th><th>Dominance</th><th>Rel. Dom</th><th>IVI</th></tr></thead><tbody id="iviTableBody"><tr><td colspan="8" class="table-empty">No data</td></tr></tbody></table>
         </div>
@@ -371,6 +371,22 @@
           <button class="export-btn" id="btnExportGPX"><div class="export-icon">⌖</div><div class="export-info"><strong>GPX Waypoints</strong><span>GPS exchange</span></div></button>
           <button class="export-btn" id="btnExportReport"><div class="export-icon">α</div><div class="export-info"><strong>Summary Report</strong><span>Complete HTML report</span></div></button>
         </div>
+      </div>
+      <div class="form-card">
+        <h3 class="card-title">Android APK</h3>
+        <p class="card-desc">The installable Android package is produced on your computer with Capacitor and Android Studio (this screen cannot download an APK by itself).</p>
+        <div class="apk-path-box" style="background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:12px;font-family:'JetBrains Mono',monospace;font-size:.72rem;line-height:1.6;color:var(--emerald);word-break:break-all;">
+          <div style="color:var(--text-muted);font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">After a debug build, your APK is usually here:</div>
+          <strong id="apkPathDisplay">Forest Logger App\android\app\build\outputs\apk\debug\app-debug.apk</strong>
+        </div>
+        <ol style="font-size:.8rem;color:var(--text-secondary);line-height:1.65;padding-left:1.2rem;margin:0;">
+          <li>Install <strong>Node.js</strong> and <strong>Android Studio</strong> (with Android SDK).</li>
+          <li>Open a terminal in the app folder, run: <code style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">npm install</code></li>
+          <li>First time only (no <code style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">android</code> folder): <code style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">npx cap add android</code></li>
+          <li>Then: <code style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">npm run cap:sync</code></li>
+          <li>Then: <code style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">npx cap open android</code></li>
+          <li>In Android Studio: <strong>Build → Build Bundle(s) / APK(s) → Build APK(s)</strong>.</li>
+        </ol>
       </div>
       <div class="form-card">
         <h3 class="card-title">Backup & Restore</h3>

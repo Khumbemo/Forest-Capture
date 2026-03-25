@@ -1,0 +1,8 @@
+{
+  "appId": "com.forestcapture.app",
+  "appName": "Forest Capture",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
