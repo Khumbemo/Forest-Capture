@@ -1,0 +1,78 @@
+// src/modules/map.js
+
+import { $, toast, esc } from './ui.js';
+import { curPos } from './gps.js';
+import { getWps, saveWps } from './storage.js';
+
+let map = null, userMarker = null, wpMarkers = [], satLayer, terLayer, hybLayer;
+
+export function initMap() {
+  if (typeof L === 'undefined') return;
+  if (map) {
+      map.invalidateSize();
+      return;
+  }
+  const la = curPos.lat || 20.5937, ln = curPos.lng || 78.9629;
+  try {
+    map = L.map('mapView', { zoomControl: false }).setView([la, ln], 14);
+    satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
+    terLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
+    hybLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
+    satLayer.addTo(map);
+    if (curPos.lat) userMarker = L.circleMarker([curPos.lat, curPos.lng], { radius: 8, color: '#5ee5a0', fillColor: '#5ee5a0', fillOpacity: .8, weight: 2 }).addTo(map).bindPopup('You');
+    refreshMapWps();
+  } catch (err) {
+    console.error('Map init failed', err);
+  }
+}
+
+export function refreshMapWps() {
+  if (!map || typeof L === 'undefined') return;
+  wpMarkers.forEach(m => { try { map.removeLayer(m); } catch (_) { } });
+  wpMarkers = [];
+  getWps().forEach(wp => {
+    if (!wp || !Number.isFinite(wp.lat) || !Number.isFinite(wp.lng)) return;
+    const m = L.marker([wp.lat, wp.lng]).addTo(map).bindPopup(`<b>${esc(wp.name || 'WP')}</b><br>${esc(wp.type || '')}`);
+    wpMarkers.push(m);
+  });
+}
+
+export function locateMe() {
+  if (map && curPos.lat) {
+    map.setView([curPos.lat, curPos.lng], 16);
+    if (userMarker) userMarker.setLatLng([curPos.lat, curPos.lng]);
+    else userMarker = L.circleMarker([curPos.lat, curPos.lng], { radius: 8, color: '#5ee5a0', fillColor: '#5ee5a0', fillOpacity: .8, weight: 2 }).addTo(map).bindPopup('You');
+    toast('Centered');
+  } else toast('No GPS', true);
+}
+
+function mapHas(Ly) { return map && Ly && map.hasLayer(Ly); }
+
+export function setMapLayer(type) {
+    if(!map) return;
+    if (type === 'sat') {
+        if (mapHas(terLayer)) map.removeLayer(terLayer);
+        if (mapHas(hybLayer)) map.removeLayer(hybLayer);
+        if (!mapHas(satLayer)) satLayer.addTo(map);
+        toast('Satellite');
+    } else if (type === 'ter') {
+        if (mapHas(satLayer)) map.removeLayer(satLayer);
+        if (mapHas(hybLayer)) map.removeLayer(hybLayer);
+        if (!mapHas(terLayer)) terLayer.addTo(map);
+        toast('Terrain');
+    } else if (type === 'hyb') {
+        if (mapHas(satLayer)) map.removeLayer(satLayer);
+        if (mapHas(terLayer)) map.removeLayer(terLayer);
+        if (!mapHas(hybLayer)) hybLayer.addTo(map);
+        toast('Hybrid');
+    }
+}
+
+export function addWaypoint(name, type, notes = '') {
+    if (!curPos.lat) { toast('No GPS', true); return; }
+    const w = getWps();
+    w.push({ name: name || 'Waypoint', type: type || 'plot', lat: curPos.lat, lng: curPos.lng, notes, time: new Date().toISOString() });
+    saveWps(w);
+    refreshMapWps();
+    toast('Waypoint added');
+}
