@@ -4,14 +4,31 @@ const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 
 let toastT;
-export function toast(m, e) {
+export function toast(m, e, action = null) {
   const el = $('#toast');
   if (!el) return;
-  el.textContent = m;
+  el.innerHTML = m;
+  if(action) {
+      const btn = document.createElement('button');
+      btn.textContent = action.label;
+      btn.style.marginLeft = '12px';
+      btn.style.background = 'var(--emerald)';
+      btn.style.color = 'var(--text-inverse)';
+      btn.style.border = 'none';
+      btn.style.borderRadius = '4px';
+      btn.style.padding = '2px 8px';
+      btn.style.cursor = 'pointer';
+      btn.onclick = (event) => {
+          event.stopPropagation();
+          action.callback();
+          el.classList.remove('show');
+      };
+      el.appendChild(btn);
+  }
   el.classList.toggle('error', !!e);
   el.classList.add('show');
   clearTimeout(toastT);
-  toastT = setTimeout(() => el.classList.remove('show'), 2500);
+  toastT = setTimeout(() => el.classList.remove('show'), 5000);
 }
 
 export function esc(s) {
@@ -45,25 +62,27 @@ export function updateClock() {
 export function switchScreen(id, callbacks = {}) {
   const curScreen = document.querySelector('.screen.active');
   const curId = curScreen ? curScreen.id : null;
+  if (curId === id) return;
+
   const FC_FLOW = ['screenDashboard', 'screenToolbar', 'screenData'];
 
-  $$('.screen').forEach(s => s.classList.remove('active', 'slide-in-right', 'slide-in-left'));
-  $$('.nav-btn').forEach(b => b.classList.remove('active'));
-  $$('.tb-btn[data-screen]').forEach(b => b.classList.remove('active'));
+  // Direct class manipulation for reliability
+  $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.screen === id));
+  $$('.tb-btn[data-screen]').forEach(b => b.classList.toggle('active', b.dataset.screen === id));
 
-  const t = document.getElementById(id);
-  if (t) {
-    t.classList.add('active');
-    if (FC_FLOW.includes(curId) && FC_FLOW.includes(id) && curId !== id) {
-      const from = FC_FLOW.indexOf(curId), to = FC_FLOW.indexOf(id);
-      const dir = to > from ? 'slide-in-right' : 'slide-in-left';
-      t.classList.add(dir);
-      setTimeout(() => t.classList.remove(dir), 220);
+  $$('.screen').forEach(s => {
+    if (s.id === id) {
+      s.classList.add('active');
+      if (FC_FLOW.includes(curId) && FC_FLOW.includes(id)) {
+        const from = FC_FLOW.indexOf(curId), to = FC_FLOW.indexOf(id);
+        const dir = to > from ? 'slide-in-right' : 'slide-in-left';
+        s.classList.add(dir);
+        setTimeout(() => s.classList.remove(dir), 220);
+      }
+    } else {
+      s.classList.remove('active', 'slide-in-right', 'slide-in-left');
     }
-  }
-
-  const nb = document.querySelector(`.nav-btn[data-screen="${id}"]`); if (nb) nb.classList.add('active');
-  const tb = document.querySelector(`.tb-btn[data-screen="${id}"]`); if (tb) tb.classList.add('active');
+  });
 
   const backBtn = $('#btnHeaderBack');
   const title = $('.header-title');
@@ -89,6 +108,8 @@ export function dismissSplash(callback) {
       if (splash.parentNode) splash.remove();
       if (callback) callback();
     }, 800);
+  } else {
+    if (callback) callback();
   }
 }
 

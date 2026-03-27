@@ -3,8 +3,8 @@
 import { $, toast, esc } from './ui.js';
 import { Store } from './storage.js';
 
-export function refreshNotes() {
-  const s = Store.getActive();
+export async function refreshNotes() {
+  const s = await Store.getActive();
   const l = $('#notesList');
   if (!s || !s.notes || !s.notes.length) {
     if (l) l.innerHTML = '<div class="empty-state small"><p>No notes</p></div>';
@@ -21,14 +21,14 @@ export function refreshNotes() {
   });
 }
 
-export function addNote() {
-  const s = Store.getActive();
+export async function addNote() {
+  const s = await Store.getActive();
   if (!s) { toast('Select survey', true); return; }
   const t = $('#noteContent').value.trim();
   if (!t) { toast('Enter text', true); return; }
   if (!s.notes) s.notes = [];
   s.notes.push({ quadrat: parseInt($('#noteQuadratRef').value) || null, category: $('#noteCategory').value, text: t, time: new Date().toISOString() });
-  Store.update(s);
+  await Store.update(s);
   $('#noteContent').value = '';
   refreshNotes();
   toast('Note saved');

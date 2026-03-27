@@ -4,8 +4,8 @@ import { $, toast } from './ui.js';
 import { Store } from './storage.js';
 import { compress } from './utils.js';
 
-export function refreshPhotos() {
-  const s = Store.getActive();
+export async function refreshPhotos() {
+  const s = await Store.getActive();
   const g = $('#photoGallery');
   if (!s || !s.photos || !s.photos.length) {
     if (g) g.innerHTML = '';
@@ -22,13 +22,13 @@ export function refreshPhotos() {
   });
 }
 
-export function handlePhotoInput(file) {
-  const s = Store.getActive();
+export async function handlePhotoInput(file) {
+  const s = await Store.getActive();
   if (!s) { toast('Select survey', true); return; }
-  compress(file, 800, d => {
+    compress(file, 800, async d => {
     if (!s.photos) s.photos = [];
     s.photos.push({ data: d, quadrat: parseInt($('#photoQuadratRef').value) || null, time: new Date().toISOString() });
-    Store.update(s);
+    await Store.update(s);
     refreshPhotos();
     toast('Photo saved');
   });
@@ -44,12 +44,12 @@ export async function startRecording(onStart) {
     mediaRec.onstop = () => {
       const blob = new Blob(audioChunks, { type: 'audio/webm' });
       const reader = new FileReader();
-      reader.onload = ev => {
-        const s = Store.getActive();
+      reader.onload = async ev => {
+        const s = await Store.getActive();
         if (!s) return;
         if (!s.audioNotes) s.audioNotes = [];
         s.audioNotes.push({ data: ev.target.result, time: new Date().toISOString() });
-        Store.update(s);
+        await Store.update(s);
         refreshAudio();
         toast('Voice note saved');
       };
@@ -70,8 +70,8 @@ export function stopRecording(onStop) {
   }
 }
 
-export function refreshAudio() {
-  const s = Store.getActive();
+export async function refreshAudio() {
+  const s = await Store.getActive();
   const list = $('#audioList');
   if (!list) return;
   if (!s || !s.audioNotes || !s.audioNotes.length) {

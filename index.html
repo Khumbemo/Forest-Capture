@@ -83,6 +83,10 @@
 
     <!-- ===== DASHBOARD ===== -->
     <section class="screen active" id="screenDashboard">
+      <div id="welcomeHeader" class="welcome-header-custom">
+        <h2 class="welcome-title">Welcome, Researcher</h2>
+        <p class="welcome-subtitle">Field station online · Session active</p>
+      </div>
       <div class="telemetry-grid telemetry-grid-custom">
         <div class="tele-card tele-card-padded">
           <div class="tele-label tele-label-custom">⌖ LOCATION</div>
@@ -486,7 +490,7 @@
 
   <div class="toast" id="toast"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script type="module" src="src/main.js"></script>
+  <script type="module" src="./src/main.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

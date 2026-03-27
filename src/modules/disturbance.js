@@ -24,8 +24,8 @@ export function recalcCBI() {
   if (cf) cf.style.width = ((c / 3) * 100) + '%';
 }
 
-export function saveDisturbCBI() {
-  const s = Store.getActive();
+export async function saveDisturbCBI() {
+  const s = await Store.getActive();
   if (!s) { toast('Select survey', true); return; }
   s.disturbance = {
     grazing: { present: $('#distGrazingPresent').checked, severity: +$('#distGrazingSeverity').value, type: $('#distGrazingType').value },
@@ -39,12 +39,12 @@ export function saveDisturbCBI() {
     s.cbi[l] = {};
     ids.forEach(id => s.cbi[l][id] = parseFloat(document.getElementById(id).value) || 0);
   });
-  Store.update(s);
+  await Store.update(s);
   toast('Disturbance & CBI saved');
 }
 
-export function loadDistData() {
-  const s = Store.getActive();
+export async function loadDistData() {
+  const s = await Store.getActive();
   if (!s || !s.disturbance) return;
   const d = s.disturbance;
   if (d.grazing) {
@@ -78,8 +78,8 @@ export function loadDistData() {
   if (d.notes) $('#distNotes').value = d.notes;
 }
 
-export function loadCBIData() {
-  const s = Store.getActive();
+export async function loadCBIData() {
+  const s = await Store.getActive();
   if (!s || !s.cbi) return;
   Object.entries(cbiL).forEach(([l, ids]) => {
     if (s.cbi[l]) ids.forEach(id => {

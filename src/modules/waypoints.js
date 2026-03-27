@@ -4,8 +4,8 @@ import { $, esc, toast } from './ui.js';
 import { getWps, saveWps } from './storage.js';
 import { refreshMapWps } from './map.js';
 
-export function refreshWpList() {
-  const wps = getWps();
+export async function refreshWpList() {
+  const wps = await getWps();
   const list = $('#waypointList');
   if (!list) return;
   if (!wps.length) {

@@ -16,8 +16,8 @@ export function addIntercept() {
   $('#interceptList').appendChild(d);
 }
 
-export function saveTransect() {
-  const s = Store.getActive();
+export async function saveTransect() {
+  const s = await Store.getActive();
   if (!s) { toast('Select survey', true); return; }
   const t = {
     number: parseInt($('#transectNumber').value) || 1,
@@ -34,7 +34,7 @@ export function saveTransect() {
   };
   if (!s.transects) s.transects = [];
   s.transects.push(t);
-  Store.update(s);
+  await Store.update(s);
   $('#transectNumber').value = t.number + 1;
   $('#interceptList').innerHTML = '';
   intCount = 0;
@@ -43,8 +43,8 @@ export function saveTransect() {
   refreshTransectTable();
 }
 
-export function refreshTransectTable() {
-  const s = Store.getActive();
+export async function refreshTransectTable() {
+  const s = await Store.getActive();
   const tb = $('#transectTableBody');
   if (!tb) return;
   if (!s || !s.transects || !s.transects.length) {
@@ -60,10 +60,10 @@ export function refreshTransectTable() {
   });
   tb.innerHTML = r;
   tb.querySelectorAll('[data-action="del-t"]').forEach(b => {
-    b.addEventListener('click', () => {
+    b.addEventListener('click', async () => {
       if (confirm('Delete?')) {
         s.transects.splice(+b.dataset.i, 1);
-        Store.update(s);
+        await Store.update(s);
         refreshTransectTable();
         toast('Deleted');
       }

@@ -13,8 +13,8 @@ export function autoFillEnv() {
   toast('Auto-filled');
 }
 
-export function saveEnv() {
-  const s = Store.getActive();
+export async function saveEnv() {
+  const s = await Store.getActive();
   if (!s) { toast('Select survey', true); return; }
   s.environment = {
     slope: parseFloat($('#envSlope').value) || null,
@@ -28,12 +28,12 @@ export function saveEnv() {
     humidity: parseFloat($('#envHumidity').value) || null,
     weather: $('#envWeather').value
   };
-  Store.update(s);
+  await Store.update(s);
   toast('Saved');
 }
 
-export function loadEnvData() {
-  const s = Store.getActive();
+export async function loadEnvData() {
+  const s = await Store.getActive();
   if (!s || !s.environment) return;
   const e = s.environment;
   if (e.slope) $('#envSlope').value = e.slope;

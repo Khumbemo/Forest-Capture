@@ -170,8 +170,12 @@ input,select,textarea,button{font-family:'Roboto',-apple-system,BlinkMacSystemFo
   padding:0 var(--sp-lg);
   opacity:0;
   transform:translateX(40px);
-  transition:opacity .18s ease, transform .18s ease;
-  will-change:transform,opacity;
+  transition:opacity .22s cubic-bezier(0.4, 0, 0.2, 1), transform .22s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change:transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  perspective: 1000;
+  -webkit-perspective: 1000;
 }
 .screen.active{
   display:block;
@@ -554,6 +558,10 @@ button,.btn,.nav-btn,.stat-card,.map-ctrl-btn,a,input,select,textarea{
 .header-weather-icon { font-size: 1.5rem; }
 
 .telemetry-grid-custom { margin-top: 18px; grid-template-columns: 1fr 1fr; gap: 18px; }
+
+.welcome-header-custom { margin-bottom: 24px; animation: slideInLeft 0.5s ease both; }
+.welcome-title { font-size: 1.8rem; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+.welcome-subtitle { color: var(--emerald); font-size: 0.9rem; font-weight: 500; margin-top: 4px; }
 .tele-card-padded { padding: 26px 20px; }
 .tele-label-custom { font-size: .82rem; letter-spacing: 1px; }
 .tele-value-lg { font-size: 1.25rem; margin: 10px 0 6px; }

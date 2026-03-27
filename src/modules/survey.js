@@ -4,8 +4,8 @@ import { $, $$, toast, esc, switchScreen } from './ui.js';
 import { Store, getWps, saveWps } from './storage.js';
 import { fmtCoords, curPos } from './gps.js';
 
-export function refreshDataRecords() {
-  const surveys = Store.getSurveys();
+export async function refreshDataRecords() {
+  const surveys = await Store.getSurveys();
   const list = $('#dataRecordsList');
   if (!list) return;
   const filterType = $('#dataFilterType') ? $('#dataFilterType').value : 'all';
@@ -38,32 +38,37 @@ export function refreshDataRecords() {
     groups[dateKey].push(r);
   });
 
-  let html = '';
+  const fragment = document.createDocumentFragment();
   Object.entries(groups).forEach(([dateKey, records]) => {
-    html += `<div class="data-date-group"><div class="data-date-label">${dateKey}</div>`;
+    const groupDiv = document.createElement('div');
+    groupDiv.className = 'data-date-group';
+    groupDiv.innerHTML = `<div class="data-date-label">${dateKey}</div>`;
+
     records.forEach(r => {
-      html += `<div class="data-record-card" data-sid="${r.surveyId}">
+      const card = document.createElement('div');
+      card.className = 'data-record-card';
+      card.dataset.sid = r.surveyId;
+      card.innerHTML = `
         <div class="data-record-icon type-${r.type}">${r.icon}</div>
         <div class="data-record-body">
           <div class="data-record-title">${esc(r.label)}</div>
           <div class="data-record-meta">${esc(r.survey)} · ${esc(r.detail)}</div>
         </div>
-      </div>`;
+      `;
+      card.addEventListener('click', () => {
+        Store.setActive(card.dataset.sid);
+        switchScreen('screenToolbar');
+        toast('Survey selected');
+      });
+      groupDiv.appendChild(card);
     });
-    html += '</div>';
+    fragment.appendChild(groupDiv);
   });
-  list.innerHTML = html;
-
-  list.querySelectorAll('.data-record-card').forEach(c => {
-    c.addEventListener('click', () => {
-      Store.setActive(c.dataset.sid);
-      switchScreen('screenToolbar');
-      toast('Survey selected');
-    });
-  });
+  list.innerHTML = '';
+  list.appendChild(fragment);
 }
 
-export function createNewSurvey() {
+export async function createNewSurvey() {
   const name = $('#surveyName').value.trim();
   if (!name) { toast('Name required', true); return; }
   const sv = {
@@ -78,7 +83,7 @@ export function createNewSurvey() {
     sv.gpsCoords = fmtCoords(curPos.lat, curPos.lng);
     sv.location = sv.location || sv.gpsCoords;
   }
-  Store.add(sv);
+  await Store.add(sv);
   $('#modalNewSurvey').classList.remove('show');
   toast(`"${name}" created`);
   refreshDataRecords();

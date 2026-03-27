@@ -26,11 +26,12 @@ export function initMap() {
   }
 }
 
-export function refreshMapWps() {
+export async function refreshMapWps() {
   if (!map || typeof L === 'undefined') return;
   wpMarkers.forEach(m => { try { map.removeLayer(m); } catch (_) { } });
   wpMarkers = [];
-  getWps().forEach(wp => {
+  const wps = await getWps();
+  wps.forEach(wp => {
     if (!wp || !Number.isFinite(wp.lat) || !Number.isFinite(wp.lng)) return;
     const m = L.marker([wp.lat, wp.lng]).addTo(map).bindPopup(`<b>${esc(wp.name || 'WP')}</b><br>${esc(wp.type || '')}`);
     wpMarkers.push(m);
@@ -68,11 +69,11 @@ export function setMapLayer(type) {
     }
 }
 
-export function addWaypoint(name, type, notes = '') {
+export async function addWaypoint(name, type, notes = '') {
     if (!curPos.lat) { toast('No GPS', true); return; }
-    const w = getWps();
+    const w = await getWps();
     w.push({ name: name || 'Waypoint', type: type || 'plot', lat: curPos.lat, lng: curPos.lng, notes, time: new Date().toISOString() });
-    saveWps(w);
-    refreshMapWps();
+    await saveWps(w);
+    await refreshMapWps();
     toast('Waypoint added');
 }

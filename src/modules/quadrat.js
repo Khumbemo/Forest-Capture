@@ -29,10 +29,21 @@ export function addSpeciesEntry() {
     });
     document.body.appendChild(dl);
   }
+
+  // Smart Search logic
+  const inp = d.querySelector('.sp-name');
+  inp.addEventListener('input', () => {
+      const val = inp.value.toLowerCase();
+      if(val.length < 2) return;
+      const suggestions = SPECIES_DB.filter(s => s.toLowerCase().includes(val));
+      if(suggestions.length === 1 && suggestions[0].toLowerCase() === val) {
+          toast(`Species detected: ${suggestions[0]}`);
+      }
+  });
 }
 
-export function saveQuadrat() {
-  const s = Store.getActive();
+export async function saveQuadrat() {
+  const s = await Store.getActive();
   if (!s) { toast('Select survey', true); return; }
   const entries = $$('#speciesList .species-entry');
   if (!entries.length) { toast('Add species', true); return; }
@@ -54,7 +65,7 @@ export function saveQuadrat() {
   };
   if (!s.quadrats) s.quadrats = [];
   s.quadrats.push(q);
-  Store.update(s);
+  await Store.update(s);
   $('#quadratNumber').value = q.number + 1;
   $('#speciesList').innerHTML = '';
   spCount = 0;
@@ -63,8 +74,8 @@ export function saveQuadrat() {
   refreshQuadratTable();
 }
 
-export function refreshQuadratTable() {
-  const s = Store.getActive();
+export async function refreshQuadratTable() {
+  const s = await Store.getActive();
   const tb = $('#quadratTableBody');
   if (!tb) return;
   if (!s || !s.quadrats || !s.quadrats.length) {
@@ -82,13 +93,20 @@ export function refreshQuadratTable() {
   });
   tb.innerHTML = r;
   tb.querySelectorAll('[data-action="dq"]').forEach(b => {
-    b.addEventListener('click', () => {
-      if (confirm('Delete?')) {
-        s.quadrats.splice(+b.dataset.i, 1);
-        Store.update(s);
-        refreshQuadratTable();
-        toast('Deleted');
-      }
+    b.addEventListener('click', async () => {
+      const idx = +b.dataset.i;
+      const removed = s.quadrats.splice(idx, 1)[0];
+      await Store.update(s);
+      refreshQuadratTable();
+      toast(`Quadrat #${removed.number} deleted`, false, {
+          label: 'Undo',
+          callback: async () => {
+              s.quadrats.splice(idx, 0, removed);
+              await Store.update(s);
+              refreshQuadratTable();
+              toast('Restored');
+          }
+      });
     });
   });
 }

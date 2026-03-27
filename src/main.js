@@ -1,10 +1,11 @@
 // src/main.js
 
 import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot } from './modules/ui.js';
-import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness } from './modules/storage.js';
+import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, migrateFromLocalStorage } from './modules/storage.js';
 import { startGPS, fmtCoords } from './modules/gps.js';
 import { fetchWeather } from './modules/weather.js';
 import { refreshDataRecords, createNewSurvey } from './modules/survey.js';
+import { SYMBOLS } from './modules/symbols.js';
 import { initMap, locateMe, setMapLayer, addWaypoint } from './modules/map.js';
 import { refreshWpList } from './modules/waypoints.js';
 import { addSpeciesEntry, saveQuadrat, refreshQuadratTable } from './modules/quadrat.js';
@@ -17,9 +18,14 @@ import { refreshAnalytics } from './modules/analytics.js';
 import { refreshPreview, exportSurveyCSV, exportSurveyJSON, exportAllSurveysCSV, exportGPX, generateReport, backupAll, restoreData } from './modules/export.js';
 
 // ===== INIT =====
-document.addEventListener('DOMContentLoaded', () => {
-  loadAppData();
-  setupEventListeners();
+async function initApp() {
+  try {
+    await migrateFromLocalStorage();
+    await loadAppData();
+    setupEventListeners();
+  } catch (e) {
+    console.error('App: Init error', e);
+  }
   startGPS(onGPSUpdate, onGPSError);
   setInterval(updateClock, 1000);
   updateClock();
@@ -37,12 +43,18 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial species/intercept entry
   addSpeciesEntry();
   addIntercept();
-});
+}
 
-function loadAppData() {
-  applyTheme(getTheme());
-  applyBrightness(getBrightness());
-  const settings = loadSettings();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
+
+async function loadAppData() {
+  applyTheme(await getTheme());
+  applyBrightness(await getBrightness());
+  const settings = await loadSettings();
   Object.entries(settings).forEach(([id, val]) => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -66,16 +78,16 @@ function applyBrightness(v) {
 function onGPSUpdate(pos) {
   const fmt = fmtCoords(pos.lat, pos.lng, $('#settingCoordFormat')?.value || 'dd');
   if ($('#teleCoords')) $('#teleCoords').textContent = fmt;
-  if ($('#teleLocation')) $('#teleLocation').textContent = `±${Math.round(pos.acc)}m Precision`;
-  if ($('#teleAlt') && pos.alt !== null) $('#teleAlt').textContent = `${Math.round(pos.alt)} m`;
+  if ($('#teleLocation')) $('#teleLocation').textContent = `${SYMBOLS.precision}${Math.round(pos.acc)}${SYMBOLS.elevation} Precision`;
+  if ($('#teleAlt') && pos.alt !== null) $('#teleAlt').textContent = `${Math.round(pos.alt)} ${SYMBOLS.elevation}`;
   if ($('#gpsOptionCoords')) $('#gpsOptionCoords').textContent = fmt;
-  if ($('#gpsOptionAcc')) $('#gpsOptionAcc').textContent = pos.acc ? `±${Math.round(pos.acc)} m` : '±--- m';
-  if ($('#gpsOptionAlt')) $('#gpsOptionAlt').textContent = pos.alt !== null ? `${Math.round(pos.alt)} m` : '--- m';
+  if ($('#gpsOptionAcc')) $('#gpsOptionAcc').textContent = pos.acc ? `${SYMBOLS.precision}${Math.round(pos.acc)} ${SYMBOLS.elevation}` : `${SYMBOLS.precision}--- ${SYMBOLS.elevation}`;
+  if ($('#gpsOptionAlt')) $('#gpsOptionAlt').textContent = pos.alt !== null ? `${Math.round(pos.alt)} ${SYMBOLS.elevation}` : `--- ${SYMBOLS.elevation}`;
   if ($('#gpsOptionStatus')) $('#gpsOptionStatus').textContent = 'ACTIVE';
 
   fetchWeather(pos.lat, pos.lng, w => {
     if (w) {
-      if ($('#teleTemp')) $('#teleTemp').textContent = `${w.temp}°C`;
+      if ($('#teleTemp')) $('#teleTemp').textContent = `${w.temp}${SYMBOLS.temperature}`;
       if ($('#teleWeatherDesc')) $('#teleWeatherDesc').textContent = w.desc;
       if ($('#teleHumidity')) $('#teleHumidity').textContent = `${w.humidity}%`;
       if ($('#teleWind')) $('#teleWind').textContent = `Wind: ${w.wind} km/h`;
@@ -103,8 +115,8 @@ const screenCallbacks = {
   screenExport: refreshPreview
 };
 
-function updateBars() {
-  const s = Store.getActive();
+async function updateBars() {
+  const s = await Store.getActive();
   const n = s ? s.name : 'No survey';
   ['quadratSurveyName', 'envSurveyName', 'distSurveyName', 'cbiSurveyName', 'photoSurveyName', 'exportSurveyName', 'analyticsSurveyName', 'transectSurveyName'].forEach(id => {
     const el = document.getElementById(id);
@@ -136,23 +148,23 @@ function setupEventListeners() {
     $('#modalNewSurvey').classList.add('show');
   });
   $('#btnCancelSurvey')?.addEventListener('click', () => $('#modalNewSurvey').classList.remove('show'));
-  $('#btnSaveSurvey')?.addEventListener('click', () => {
-      createNewSurvey();
-      updateBars();
+  $('#btnSaveSurvey')?.addEventListener('click', async () => {
+      await createNewSurvey();
+      await updateBars();
   });
 
   // Map
   $('#btnLocateMe')?.addEventListener('click', locateMe);
-  $('#btnAddWaypoint')?.addEventListener('click', () => {
+  $('#btnAddWaypoint')?.addEventListener('click', async () => {
       const n = prompt('Waypoint name:');
-      if(n) addWaypoint(n, 'plot');
+      if(n) await addWaypoint(n, 'plot');
   });
-  $('#btnAddWaypointManual')?.addEventListener('click', () => {
+  $('#btnAddWaypointManual')?.addEventListener('click', async () => {
       const n = $('#waypointName').value.trim();
       if(!n) { toast('Enter name', true); return; }
-      addWaypoint(n, $('#waypointType').value, $('#waypointNotes').value.trim());
+      await addWaypoint(n, $('#waypointType').value, $('#waypointNotes').value.trim());
       $('#waypointName').value = ''; $('#waypointNotes').value = '';
-      refreshWpList();
+      await refreshWpList();
   });
   $('#btnMapSatellite')?.addEventListener('click', () => setMapLayer('sat'));
   $('#btnMapTerrain')?.addEventListener('click', () => setMapLayer('ter'));
@@ -168,8 +180,8 @@ function setupEventListeners() {
         } else toast('No GPS', true);
     });
   });
-  $('#btnSaveQuadrat')?.addEventListener('click', () => {
-      saveQuadrat();
+  $('#btnSaveQuadrat')?.addEventListener('click', async () => {
+      await saveQuadrat();
       switchScreen('screenToolbar', screenCallbacks);
   });
 
@@ -185,15 +197,15 @@ function setupEventListeners() {
           if (gps.curPos.lat) $('#transectEndGPS').value = fmtCoords(gps.curPos.lat, gps.curPos.lng, $('#settingCoordFormat')?.value);
       });
   });
-  $('#btnSaveTransect')?.addEventListener('click', () => {
-      saveTransect();
+  $('#btnSaveTransect')?.addEventListener('click', async () => {
+      await saveTransect();
       switchScreen('screenToolbar', screenCallbacks);
   });
 
   // Environment
   $('#btnAutoFillEnv')?.addEventListener('click', autoFillEnv);
-  $('#btnSaveEnv')?.addEventListener('click', () => {
-      saveEnv();
+  $('#btnSaveEnv')?.addEventListener('click', async () => {
+      await saveEnv();
       switchScreen('screenToolbar', screenCallbacks);
   });
   $('#canopyPhotoInput')?.addEventListener('change', e => {
@@ -209,8 +221,8 @@ function setupEventListeners() {
     s.addEventListener('input', () => { d.textContent = s.value; });
   });
   $$('.cbi-select').forEach(s => s.addEventListener('change', recalcCBI));
-  $('#btnSaveDisturbCBI')?.addEventListener('click', () => {
-      saveDisturbCBI();
+  $('#btnSaveDisturbCBI')?.addEventListener('click', async () => {
+      await saveDisturbCBI();
       switchScreen('screenToolbar', screenCallbacks);
   });
 
@@ -234,8 +246,8 @@ function setupEventListeners() {
   });
 
   // Notes
-  $('#btnAddNote')?.addEventListener('click', () => {
-      addNote();
+  $('#btnAddNote')?.addEventListener('click', async () => {
+      await addNote();
       switchScreen('screenToolbar', screenCallbacks);
   });
 
@@ -249,8 +261,8 @@ function setupEventListeners() {
   $('#btnBackupAllSettings')?.addEventListener('click', backupAll);
   $('#restoreInput')?.addEventListener('change', e => restoreData(e.target.files[0]));
   $('#restoreInputSettings')?.addEventListener('change', e => restoreData(e.target.files[0]));
-  $('#btnClearAll')?.addEventListener('click', () => { if(confirm('Delete ALL?')) Store.clearAll(); location.reload(); });
-  $('#btnClearAllSettings')?.addEventListener('click', () => { if(confirm('Delete ALL?')) Store.clearAll(); location.reload(); });
+  $('#btnClearAll')?.addEventListener('click', async () => { if(confirm('Delete ALL?')) { await Store.clearAll(); location.reload(); } });
+  $('#btnClearAllSettings')?.addEventListener('click', async () => { if(confirm('Delete ALL?')) { await Store.clearAll(); location.reload(); } });
 
   // Settings
   if ($('#btnSettings')) $('#btnSettings').addEventListener('click', () => {
@@ -267,15 +279,15 @@ function setupEventListeners() {
   });
 
   $$('.theme-card').forEach(c => {
-    c.addEventListener('click', () => {
-      setTheme(c.dataset.theme);
+    c.addEventListener('click', async () => {
+      await setTheme(c.dataset.theme);
       applyTheme(c.dataset.theme);
       toast('Theme: ' + c.dataset.theme);
     });
   });
 
-  if ($('#brightnessSlider')) $('#brightnessSlider').addEventListener('input', e => {
-    setBrightness(+e.target.value);
+  if ($('#brightnessSlider')) $('#brightnessSlider').addEventListener('input', async e => {
+    await setBrightness(+e.target.value);
     applyBrightness(+e.target.value);
   });
 
@@ -290,8 +302,8 @@ function setupEventListeners() {
     }
   }));
 
-  $$('#settingsPanel select, #settingsPanel input').forEach(el => el.addEventListener('change', () => {
-    const s = loadSettings();
+  $$('#settingsPanel select, #settingsPanel input').forEach(el => el.addEventListener('change', async () => {
+    const s = await loadSettings();
     if (el.id) {
       if (el.type === 'checkbox') s[el.id] = el.checked;
       else s[el.id] = el.value;

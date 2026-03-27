@@ -3,8 +3,8 @@
 import { $, dl, esc } from './ui.js';
 import { Store, getWps } from './storage.js';
 
-export function refreshPreview() {
-  const s = Store.getActive();
+export async function refreshPreview() {
+  const s = await Store.getActive();
   const p = $('#dataPreview');
   if (!s) {
     p.innerHTML = '<div class="empty-state small"><p>Select survey</p></div>';
@@ -23,26 +23,26 @@ export function toCSV(s) {
   return rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
 }
 
-export function exportSurveyCSV() {
-  const s = Store.getActive();
+export async function exportSurveyCSV() {
+  const s = await Store.getActive();
   if (!s) { alert('No active survey'); return; }
   dl(toCSV(s), s.name.replace(/\W/g, '_') + '_survey.csv', 'text/csv');
 }
 
-export function exportSurveyJSON() {
-  const s = Store.getActive();
+export async function exportSurveyJSON() {
+  const s = await Store.getActive();
   if (!s) { alert('No active survey'); return; }
   dl(JSON.stringify(s, null, 2), s.name.replace(/\W/g, '_') + '_survey.json', 'application/json');
 }
 
-export function exportAllSurveysCSV() {
-  const sv = Store.getSurveys();
+export async function exportAllSurveysCSV() {
+  const sv = await Store.getSurveys();
   if (!sv.length) { alert('No surveys'); return; }
   dl(sv.map(s => toCSV(s)).join('\n'), 'all_surveys.csv', 'text/csv');
 }
 
-export function exportGPX() {
-  const w = getWps();
+export async function exportGPX() {
+  const w = await getWps();
   if (!w.length) { alert('No waypoints'); return; }
   let g = '<?xml version="1.0"?>\n<gpx version="1.1" creator="ForestCapture">\n';
   w.forEach(p => {
@@ -52,8 +52,8 @@ export function exportGPX() {
   dl(g, 'waypoints.gpx', 'application/gpx+xml');
 }
 
-export function generateReport() {
-  const s = Store.getActive();
+export async function generateReport() {
+  const s = await Store.getActive();
   if (!s) { alert('No active survey'); return; }
 
   // Basic calculation for report
@@ -130,8 +130,9 @@ export function generateReport() {
   dl(html, s.name.replace(/\W/g, '_') + '_report.html', 'text/html');
 }
 
-export function backupAll() {
-  const all = { surveys: Store._d(), waypoints: getWps(), theme: localStorage.getItem('forest_survey_theme') };
+export async function backupAll() {
+  const all = await Store._d();
+  all.waypoints = await getWps();
   dl(JSON.stringify(all, null, 2), 'forest_survey_backup_' + new Date().toISOString().split('T')[0] + '.json', 'application/json');
 }
 
