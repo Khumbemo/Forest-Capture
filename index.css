@@ -517,3 +517,93 @@ button,.btn,.nav-btn,.stat-card,.map-ctrl-btn,a,input,select,textarea{
 /* =========== Leaflet overrides =========== */
 .leaflet-container{border-radius:var(--radius-lg);}
 .leaflet-control-attribution{display:none!important;}
+
+/* Modular Styles from Inline */
+.login-screen {
+  position: fixed; inset: 0; z-index: 9000;
+  background: var(--bg-primary);
+  flex-direction: column; align-items: center; justify-content: center;
+  padding: 32px 24px;
+}
+.login-container { width: 100%; max-width: 380px; }
+.login-header { text-align: center; margin-bottom: 32px; }
+.login-logo { margin-bottom: 12px; }
+.login-title { font-size: 1.7rem; font-weight: 800; color: var(--emerald); margin: 0 0 4px; }
+.login-subtitle { font-size: .85rem; color: var(--text-muted); margin: 0; }
+.login-form-card { background: var(--bg-card); border-radius: 16px; padding: 24px; border: 1px solid var(--border); }
+.login-form-group { margin-bottom: 14px; }
+.login-form-group-last { margin-bottom: 20px; }
+.login-label { font-size: .75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; }
+.login-input { width: 100%; box-sizing: border-box; }
+.login-btn-signin { margin-bottom: 10px; }
+.btn-google { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; background: #fff; color: #333; border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-weight: 600; font-size: .88rem; cursor: pointer; margin-bottom: 14px; }
+.login-footer { text-align: center; }
+.btn-guest { font-size: .82rem; color: var(--text-muted); background: none; border: none; cursor: pointer; padding: 6px 0; }
+.login-terms { text-align: center; margin-top: 24px; font-size: 0.75rem; color: var(--text-muted); }
+.login-link { color: var(--emerald); text-decoration: none; }
+
+.bottom-nav-flex { justify-content: space-evenly; }
+.nav-btn-flex { flex: 1; max-width: 150px; }
+.nav-label-sm { font-size: .7rem; margin-top: 2px; }
+
+.app-header-custom { height: auto; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; background: var(--bg-primary); border-bottom: 1px solid var(--border); }
+.header-left-flex { display: flex; align-items: center; gap: 8px; }
+.btn-back-custom { display: none; background: none; border: none; color: var(--emerald); font-size: 1.4rem; cursor: pointer; padding: 4px; font-weight: 900; }
+.header-title-custom { font-size: 1.25rem; }
+.header-right-flex { display: flex; align-items: center; gap: 10px; }
+.header-weather-icon { font-size: 1.5rem; }
+
+.telemetry-grid-custom { margin-top: 18px; grid-template-columns: 1fr 1fr; gap: 18px; }
+.tele-card-padded { padding: 26px 20px; }
+.tele-label-custom { font-size: .82rem; letter-spacing: 1px; }
+.tele-value-lg { font-size: 1.25rem; margin: 10px 0 6px; }
+.tele-value-xl { font-size: 1.95rem; font-weight: 900; margin: 10px 0 6px; }
+.tele-sub-sm { font-size: .78rem; }
+
+.data-header-flex { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; margin-bottom: 16px; }
+.data-title-lg { font-size: 1.2rem; font-weight: 800; letter-spacing: -.3px; }
+.flex-gap-sm { display: flex; gap: 6px; }
+.filter-select-custom { background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; font-size: .72rem; color: var(--text-primary); font-weight: 600; }
+
+.toolbar-new-survey-container { display: flex; justify-content: flex-start; margin-top: 16px; margin-bottom: 24px; padding: 0 4px; }
+.btn-new-survey-custom { width: 100%; max-width: 100%; font-size: 1.1rem; font-weight: 700; padding: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 12px; }
+
+.gps-status-custom { font-size: .75rem; color: var(--emerald); font-weight: 800; letter-spacing: 1px; }
+.gps-grid-custom { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.gps-label-xs { font-size: .65rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+.gps-value-mono { font-size: .9rem; font-weight: 800; color: var(--text-primary); font-family: monospace; }
+.ml-auto { margin-left: auto; }
+
+.flex-gap-xs { display: flex; gap: 4px; }
+.flex-1 { flex: 1; }
+.mt-lg { margin-top: 16px; }
+
+.canopy-estimate-custom { font-weight: 700; color: var(--emerald); }
+
+.mb-xl { margin-bottom: 24px; }
+.disturb-section-title { margin-bottom: 12px; font-size: 1.1rem; color: var(--emerald); }
+
+.recording-status-sm { font-size: .78rem; color: var(--text-muted); }
+
+.ivi-species-highlight { font-weight: 700; color: var(--emerald); }
+
+.apk-path-box-custom { background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 12px; font-family: 'JetBrains Mono', monospace; font-size: .72rem; line-height: 1.6; color: var(--emerald); word-break: break-all; }
+.apk-path-label { color: var(--text-muted); font-size: .65rem; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+.apk-steps-list { font-size: .8rem; color: var(--text-secondary); line-height: 1.65; padding-left: 1.2rem; margin: 0; }
+.code-inline { background: var(--bg-input); padding: 2px 6px; border-radius: 4px; }
+
+.flex-gap-wrap { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.danger-card-custom { background: #ef444415; border: 1px solid #ef444450; }
+.text-danger-custom { color: var(--red); }
+.text-danger-dim { color: var(--red-dim); }
+.mt-md { margin-top: 16px; }
+
+.settings-tabs-custom { display: flex; gap: 4px; overflow-x: auto; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.text-red { color: var(--red); }
+
+.brightness-container { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+.brightness-label { font-size: .75rem; color: var(--text-muted); font-weight: 600; }
+.brightness-value-custom { font-size: .78rem; font-weight: 600; color: var(--emerald); min-width: 36px; text-align: center; }
+
+.hidden { display: none; }
