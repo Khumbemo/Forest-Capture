@@ -23,10 +23,13 @@ async function initApp() {
   try {
     await migrateFromLocalStorage();
     await loadAppData();
-    setupEventListeners();
   } catch (e) {
     console.error('App: Init error', e);
   }
+
+  // Always set up listeners — must not be inside try/catch
+  setupEventListeners();
+
   startGPS(onGPSUpdate, onGPSError);
   setInterval(updateClock, 1000);
   updateClock();
@@ -34,9 +37,9 @@ async function initApp() {
   window.addEventListener('offline', updateOnlineDot);
   setTimeout(updateOnlineDot, 500);
 
-  // Show login if not authenticated (splash already handled by inline script in HTML)
+  // Show login if not authenticated
   if (!localStorage.getItem('fc_user')) {
-    setTimeout(showLogin, 2900); // slight delay so splash finishes first
+    setTimeout(showLogin, 2900);
   }
 
   // Initial species/intercept entry
