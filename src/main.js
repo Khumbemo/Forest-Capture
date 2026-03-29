@@ -83,9 +83,12 @@ function onGPSUpdate(pos) {
   if ($('#teleLocation')) $('#teleLocation').textContent = `${SYMBOLS.precision}${Math.round(pos.acc)}${SYMBOLS.elevation} Precision`;
   if ($('#teleAlt') && pos.alt !== null) $('#teleAlt').textContent = `${Math.round(pos.alt)} ${SYMBOLS.elevation}`;
   if ($('#gpsOptionCoords')) $('#gpsOptionCoords').textContent = fmt;
-  if ($('#gpsOptionAcc')) $('#gpsOptionAcc').textContent = pos.acc ? `${SYMBOLS.precision}${Math.round(pos.acc)} ${SYMBOLS.elevation}` : `${SYMBOLS.precision}--- ${SYMBOLS.elevation}`;
-  if ($('#gpsOptionAlt')) $('#gpsOptionAlt').textContent = pos.alt !== null ? `${Math.round(pos.alt)} ${SYMBOLS.elevation}` : `--- ${SYMBOLS.elevation}`;
+  if ($('#gpsOptionAcc')) $('#gpsOptionAcc').textContent = pos.acc ? `${SYMBOLS.precision}${Math.round(pos.acc)} m` : `${SYMBOLS.precision}--- m`;
+  if ($('#gpsOptionAlt')) $('#gpsOptionAlt').textContent = pos.alt !== null ? `${Math.round(pos.alt)} m` : `--- m`;
   if ($('#gpsOptionStatus')) $('#gpsOptionStatus').textContent = 'ACTIVE';
+  // Update UTM field
+  const utmFmt = fmtCoords(pos.lat, pos.lng, 'utm');
+  if ($('#gpsOptionUTM')) $('#gpsOptionUTM').textContent = utmFmt;
 
   fetchWeather(pos.lat, pos.lng, w => {
     if (w) {
@@ -113,7 +116,7 @@ const screenCallbacks = {
   screenEnvironment: loadEnvData,
   screenDisturbCBI: () => { loadDistData(); loadCBIData(); },
   screenPhotos: () => { refreshPhotos(); refreshNotes(); refreshAudio(); },
-  screenAnalytics: () => refreshAnalytics(Store.getActive()),
+  screenAnalytics: () => Store.getActive().then(s => refreshAnalytics(s)),
   screenExport: refreshPreview
 };
 
@@ -139,6 +142,9 @@ function setupEventListeners() {
     localStorage.setItem('fc_user', JSON.stringify({ email: e, time: Date.now() }));
     hideLogin();
   });
+  $('#btnGoogleSignIn')?.addEventListener('click', () => {
+    toast('Google sign-in not available in offline mode. Continue as Guest.');
+  });
   $('#btnGuestLogin')?.addEventListener('click', () => {
     localStorage.setItem('fc_user', JSON.stringify({ guest: true, time: Date.now() }));
     hideLogin();
@@ -153,6 +159,33 @@ function setupEventListeners() {
   $('#btnSaveSurvey')?.addEventListener('click', async () => {
       await createNewSurvey();
       await updateBars();
+      switchScreen('screenToolbar', screenCallbacks);
+  });
+
+  // Data filter
+  $('#dataFilterType')?.addEventListener('change', refreshDataRecords);
+
+  // Survey timer
+  let surveyTimerInterval = null, surveyTimerStart = null;
+  $('#btnSurveyTimer')?.addEventListener('click', () => {
+    if (surveyTimerInterval) {
+      clearInterval(surveyTimerInterval);
+      surveyTimerInterval = null;
+      const elapsed = Math.round((Date.now() - surveyTimerStart) / 1000);
+      const m = Math.floor(elapsed / 60), s = elapsed % 60;
+      toast(`Timer stopped — ${m}m ${s}s elapsed`);
+      $('#btnSurveyTimer').textContent = '⏱️ Timer';
+      $('#btnSurveyTimer').classList.remove('btn-danger');
+    } else {
+      surveyTimerStart = Date.now();
+      surveyTimerInterval = setInterval(() => {
+        const elapsed = Math.round((Date.now() - surveyTimerStart) / 1000);
+        const m = Math.floor(elapsed / 60), s = elapsed % 60;
+        $('#btnSurveyTimer').textContent = `⏱️ ${m}:${String(s).padStart(2,'0')}`;
+      }, 1000);
+      $('#btnSurveyTimer').classList.add('btn-danger');
+      toast('Survey timer started');
+    }
   });
 
   // Map
@@ -312,4 +345,12 @@ function setupEventListeners() {
     }
     saveSettings(s);
   }));
+
+  // Help accordion
+  document.addEventListener('click', e => {
+    const title = e.target.closest('.help-item-title');
+    if (!title) return;
+    const item = title.closest('.help-item');
+    if (item) item.classList.toggle('open');
+  });
 }

@@ -1,7 +1,7 @@
 // src/modules/survey.js
 
-import { $, $$, toast, esc, switchScreen } from './ui.js';
-import { Store, getWps, saveWps } from './storage.js';
+import { $, $$, toast, esc } from './ui.js';
+import { Store } from './storage.js';
 import { fmtCoords, curPos } from './gps.js';
 
 export async function refreshDataRecords() {
@@ -88,8 +88,7 @@ export async function refreshDataRecords() {
       `;
       card.addEventListener('click', () => {
         Store.setActive(card.dataset.sid);
-        switchScreen('screenToolbar');
-        toast('Survey selected');
+        toast('Survey selected — go to Tools to use it', false);
       });
       groupDiv.appendChild(card);
     });
