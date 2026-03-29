@@ -1,6 +1,7 @@
 // src/modules/export.js
 
-import { $, dl, esc } from './ui.js';
+import { $, esc } from './ui.js';
+import { dl } from './utils.js';
 import { Store, getWps } from './storage.js';
 
 export async function refreshPreview() {
