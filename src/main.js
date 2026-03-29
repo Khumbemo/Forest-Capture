@@ -18,6 +18,7 @@ import { refreshAnalytics } from './modules/analytics.js';
 import { refreshPreview, exportSurveyCSV, exportSurveyJSON, exportAllSurveysCSV, exportGPX, generateReport, backupAll, restoreData } from './modules/export.js';
 
 // ===== INIT =====
+
 async function initApp() {
   try {
     await migrateFromLocalStorage();
@@ -33,12 +34,10 @@ async function initApp() {
   window.addEventListener('offline', updateOnlineDot);
   setTimeout(updateOnlineDot, 500);
 
-  const u = localStorage.getItem('fc_user');
-  setTimeout(() => {
-    dismissSplash(() => {
-      if (!u) showLogin();
-    });
-  }, 2500);
+  // Show login if not authenticated (splash already handled by inline script in HTML)
+  if (!localStorage.getItem('fc_user')) {
+    setTimeout(showLogin, 2900); // slight delay so splash finishes first
+  }
 
   // Initial species/intercept entry
   addSpeciesEntry();

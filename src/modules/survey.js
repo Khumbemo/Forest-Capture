@@ -14,12 +14,43 @@ export async function refreshDataRecords() {
   surveys.forEach(sv => {
     const svName = sv.name || 'Unnamed';
     const svDate = sv.date || '';
-    if (sv.quadrats) {
+    // Quadrats
+    if (sv.quadrats && sv.quadrats.length) {
       sv.quadrats.forEach((q, qi) => {
-        allRecords.push({ type: 'quadrat', icon: 'Q', label: `Quadrat #${q.number || qi + 1}`, detail: `${q.species ? q.species.length : 0} species`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id });
+        allRecords.push({ type: 'quadrat', icon: 'Q', label: `Quadrat #${q.number || qi + 1}`, detail: `${q.species ? q.species.length : 0} species · ${q.size || '—'}m²`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id });
       });
     }
-    // More record types can be added here
+    // Transects
+    if (sv.transects && sv.transects.length) {
+      sv.transects.forEach((t, ti) => {
+        allRecords.push({ type: 'transect', icon: 'T', label: `Transect #${t.number || ti + 1}`, detail: `${t.length || '—'}m × ${t.width || '—'}m · ${t.intercepts ? t.intercepts.length : 0} intercepts`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id });
+      });
+    }
+    // Environment
+    if (sv.environment) {
+      allRecords.push({ type: 'environment', icon: 'E', label: 'Environment Data', detail: `Elev: ${sv.environment.elevation || '—'}m · Slope: ${sv.environment.slope || '—'}° · ${sv.environment.weather || '—'}`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id });
+    }
+    // Disturbance
+    if (sv.disturbance) {
+      const dTypes = [];
+      if (sv.disturbance.grazing && sv.disturbance.grazing.present) dTypes.push('Grazing');
+      if (sv.disturbance.logging && sv.disturbance.logging.present) dTypes.push('Logging');
+      if (sv.disturbance.fire && sv.disturbance.fire.present) dTypes.push('Fire');
+      if (sv.disturbance.human && sv.disturbance.human.present) dTypes.push('Human');
+      allRecords.push({ type: 'disturbance', icon: 'D', label: 'Disturbance & CBI', detail: dTypes.length ? dTypes.join(', ') : 'No disturbance recorded', survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id });
+    }
+    // Notes
+    if (sv.notes && sv.notes.length) {
+      sv.notes.forEach(n => {
+        const noteDate = n.time ? n.time.split('T')[0] : svDate;
+        const noteTime = n.time ? new Date(n.time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
+        allRecords.push({ type: 'notes', icon: 'N', label: `Note: ${n.category || 'General'}`, detail: n.text ? n.text.substring(0, 60) + '…' : '', survey: svName, date: noteDate, sortDate: noteDate || '0000-00-00', time: noteTime, surveyId: sv.id });
+      });
+    }
+    // Photos
+    if (sv.photos && sv.photos.length) {
+      allRecords.push({ type: 'photos', icon: 'P', label: `${sv.photos.length} Photo${sv.photos.length > 1 ? 's' : ''}`, detail: 'Attached to survey', survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id });
+    }
   });
 
   if (filterType !== 'all') allRecords = allRecords.filter(r => r.type === filterType);
@@ -80,7 +111,8 @@ export async function createNewSurvey() {
     quadrats: [], transects: [], environment: null, disturbance: null, cbi: null, photos: [], notes: [], audioNotes: [], waypoints: []
   };
   if ($('#surveyAutoGPS').checked && curPos.lat) {
-    sv.gpsCoords = fmtCoords(curPos.lat, curPos.lng);
+    const fmt = document.getElementById('settingCoordFormat')?.value || 'dd';
+    sv.gpsCoords = fmtCoords(curPos.lat, curPos.lng, fmt);
     sv.location = sv.location || sv.gpsCoords;
   }
   await Store.add(sv);

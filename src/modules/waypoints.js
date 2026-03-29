@@ -25,11 +25,11 @@ export async function refreshWpList() {
     </div>`;
   }).join('');
   list.querySelectorAll('.wp-delete').forEach(b => {
-    b.addEventListener('click', () => {
-      const w = getWps();
+    b.addEventListener('click', async () => {
+      const w = await getWps();
       w.splice(+b.dataset.i, 1);
-      saveWps(w);
-      refreshWpList();
+      await saveWps(w);
+      await refreshWpList();
       refreshMapWps();
       toast('Deleted');
     });
