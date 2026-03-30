@@ -16,6 +16,8 @@ import { refreshPhotos, handlePhotoInput, startRecording, stopRecording, refresh
 import { refreshNotes, addNote } from './modules/notes.js';
 import { refreshAnalytics } from './modules/analytics.js';
 import { refreshPreview, exportSurveyCSV, exportSurveyJSON, exportAllSurveysCSV, exportGPX, generateReport, backupAll, restoreData } from './modules/export.js';
+import { initCompareScreen, runComparison, exportComparisonJSON } from './modules/analytics-compare.js';
+import { loadSurveyHistory } from './modules/species-autocomplete.js';
 
 // ===== INIT =====
 
@@ -23,6 +25,7 @@ async function initApp() {
   try {
     await migrateFromLocalStorage();
     await loadAppData();
+    loadSurveyHistory(await Store.getAll('surveys'));
   } catch (e) {
     console.error('App: Init error', e);
   }
@@ -116,7 +119,10 @@ const screenCallbacks = {
   screenEnvironment: loadEnvData,
   screenDisturbCBI: () => { loadDistData(); loadCBIData(); },
   screenPhotos: () => { refreshPhotos(); refreshNotes(); refreshAudio(); },
-  screenAnalytics: () => Store.getActive().then(s => refreshAnalytics(s)),
+  screenAnalytics: () => {
+    Store.getActive().then(s => refreshAnalytics(s));
+    initCompareScreen();
+  },
   screenExport: refreshPreview
 };
 
@@ -285,6 +291,10 @@ function setupEventListeners() {
       await addNote();
       switchScreen('screenToolbar', screenCallbacks);
   });
+
+  // Analytics Compare
+  $('#compareRunBtn')?.addEventListener('click', runComparison);
+  $('#compareExportBtn')?.addEventListener('click', exportComparisonJSON);
 
   // Export
   $('#btnExportCSV')?.addEventListener('click', exportSurveyCSV);
