@@ -4,13 +4,15 @@
   "private": true,
   "description": "Forest Capture — wrap web assets for Android APK (Capacitor)",
   "scripts": {
+    "start": "npx serve -l 8080",
     "prep": "node prep-www.js",
     "cap:sync": "node prep-www.js && cap sync android",
     "cap:open": "cap open android"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.0",
-    "@capacitor/core": "^6.2.0"
+    "@capacitor/core": "^6.2.0",
+    "leaflet": "^1.9.4"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.2.0"

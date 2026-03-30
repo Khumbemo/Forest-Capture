@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="./vendor/leaflet/leaflet.css" />
   <link rel="stylesheet" href="./index.css" />
 </head>
 <body>
@@ -393,9 +393,23 @@
         <div id="dbhChart" class="bar-chart-container"></div>
       </div>
 
-      <div class="form-card">
-        <h3 class="card-title">Species Accumulation Curve</h3>
-        <div id="speciesAccumChart" class="bar-chart-container"></div>
+      <!-- Compare Surveys Feature Component -->
+      <div id="compareScreen">
+        <div class="compare-section-title">Compare Surveys</div>
+        <div class="compare-intro">
+          <p>Select 2–6 surveys to compare their biodiversity indices side-by-side.</p>
+        </div>
+        <div id="compareSurveyPicker" class="compare-picker"></div>
+        <button id="compareRunBtn" class="compare-run-btn" disabled>
+          Select at least 2 surveys
+        </button>
+        <button class="compare-export-btn" id="compareExportBtn">Export JSON</button>
+        <div id="compareResults" style="display:none">
+          <canvas id="compareIndicesChart" style="margin-bottom:24px"></canvas>
+          <canvas id="compareRichnessChart" style="margin-bottom:24px"></canvas>
+          <div id="compareOverlapTable"></div>
+          <div id="compareIVISection" style="margin-top:24px"></div>
+        </div>
       </div>
     </section>
 
@@ -527,7 +541,8 @@
   </div>
 
   <div class="toast" id="toast"></div>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="./vendor/leaflet/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script type="module" src="./src/main.js"></script>
   <!-- app.js removed: replaced by modular src/main.js -->
   <script>

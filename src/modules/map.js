@@ -3,6 +3,7 @@
 import { $, toast, esc } from './ui.js';
 import { curPos } from './gps.js';
 import { getWps, saveWps } from './storage.js';
+import { initOfflineMapUI } from './map-offline.js';
 
 let map = null, userMarker = null, wpMarkers = [], satLayer, terLayer, hybLayer;
 
@@ -21,6 +22,7 @@ export function initMap() {
     satLayer.addTo(map);
     if (curPos.lat) userMarker = L.circleMarker([curPos.lat, curPos.lng], { radius: 8, color: '#5ee5a0', fillColor: '#5ee5a0', fillOpacity: .8, weight: 2 }).addTo(map).bindPopup('You');
     refreshMapWps();
+    initOfflineMapUI(map);
   } catch (err) {
     console.error('Map init failed', err);
   }
