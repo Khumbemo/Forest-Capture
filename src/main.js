@@ -294,8 +294,18 @@ function setupEventListeners() {
   $('#btnExportReport')?.addEventListener('click', generateReport);
   $('#btnBackupAll')?.addEventListener('click', backupAll);
   $('#btnBackupAllSettings')?.addEventListener('click', backupAll);
-  $('#restoreInput')?.addEventListener('change', e => restoreData(e.target.files[0]));
-  $('#restoreInputSettings')?.addEventListener('change', e => restoreData(e.target.files[0]));
+  $('#restoreInput')?.addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try { await restoreData(file); } catch (err) { toast(err.message, true); }
+    finally { e.target.value = ''; }
+  });
+  $('#restoreInputSettings')?.addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try { await restoreData(file); } catch (err) { toast(err.message, true); }
+    finally { e.target.value = ''; }
+  });
   $('#btnClearAll')?.addEventListener('click', async () => { if(confirm('Delete ALL?')) { await Store.clearAll(); location.reload(); } });
   $('#btnClearAllSettings')?.addEventListener('click', async () => { if(confirm('Delete ALL?')) { await Store.clearAll(); location.reload(); } });
 
