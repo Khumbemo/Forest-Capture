@@ -15,10 +15,15 @@ const copyFiles = [
 ];
 
 const copyDirs = [
-  'src'
+  'src',
+  'vendor'
 ];
 
-if (!fs.existsSync(www)) fs.mkdirSync(www, { recursive: true });
+if (fs.existsSync(www)) {
+    // Clean www directory
+    fs.rmSync(www, { recursive: true, force: true });
+}
+fs.mkdirSync(www, { recursive: true });
 
 // Copy individual files
 for (const f of copyFiles) {

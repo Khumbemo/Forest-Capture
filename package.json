@@ -12,7 +12,9 @@
   "dependencies": {
     "@capacitor/android": "^6.2.0",
     "@capacitor/core": "^6.2.0",
-    "leaflet": "^1.9.4"
+    "firebase": "^12.11.0",
+    "leaflet": "^1.9.4",
+    "puppeteer": "^24.40.0"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.2.0"

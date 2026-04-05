@@ -1,0 +1,114 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset="utf-8">
+<style>
+  body { font-family: 'Arial', sans-serif; padding: 20px; line-height: 1.5; }
+  h1 { color: #10B981; border-bottom: 2px solid #10B981; padding-bottom: 10px; }
+  h2 { color: #333; margin-top: 30px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+  th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+  th { background-color: #f3f4f6; font-weight: bold; }
+  .highlight { background-color: #e5e7eb; padding: 5px; border-radius: 4px; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h1>Forest Capture: Mock Survey Data for Testing</h1>
+<p>Use this sample data to input into the Forest Capture application and test the analytics.</p>
+
+<h2>1. New Survey Details</h2>
+<p><b>Survey Name:</b> Tropical Ridge Baseline Plot 1</p>
+<p><b>Location:</b> Dehradun Forest Reserve</p>
+<p><b>Investigator:</b> Your Name</p>
+<p><b>Date:</b> Today's Date</p>
+
+<h2>2. Quadrat Sampling Tool (10x10 meters)</h2>
+<p>Type the scientific names slowly into the app to trigger the autocomplete!</p>
+<table>
+  <tr>
+    <th>Scientific Name</th>
+    <th>Common Name</th>
+    <th>Abundance</th>
+    <th>DBH (cm)</th>
+    <th>Height (m)</th>
+    <th>Phenology</th>
+  </tr>
+  <tr>
+    <td>Shorea robusta</td>
+    <td>Sal</td>
+    <td>4</td>
+    <td>55.2</td>
+    <td>28.5</td>
+    <td>Flowering</td>
+  </tr>
+  <tr>
+    <td>Tectona grandis</td>
+    <td>Teak</td>
+    <td>2</td>
+    <td>42.1</td>
+    <td>22.0</td>
+    <td>Vegetative</td>
+  </tr>
+  <tr>
+    <td>Pinus roxburghii</td>
+    <td>Chir Pine</td>
+    <td>1</td>
+    <td>65.8</td>
+    <td>31.0</td>
+    <td>Fruiting</td>
+  </tr>
+  <tr>
+    <td>Dalbergia sissoo</td>
+    <td>Shisham</td>
+    <td>3</td>
+    <td>25.4</td>
+    <td>12.5</td>
+    <td>Vegetative</td>
+  </tr>
+</table>
+
+<h2>3. Belt Transect Tool</h2>
+<p><b>Bearing / Heading:</b> 45 Degrees</p>
+<p><b>Transect Length:</b> 30 meters</p>
+<p><b>Width:</b> 2 meters</p>
+<table>
+  <tr>
+    <th>Intercept Distance</th>
+    <th>Canopy Height</th>
+    <th>Dominant Species</th>
+  </tr>
+  <tr>
+    <td>10 meters</td>
+    <td>18 m</td>
+    <td>Shorea robusta</td>
+  </tr>
+  <tr>
+    <td>20 meters</td>
+    <td>0 m (Gap)</td>
+    <td>None</td>
+  </tr>
+  <tr>
+    <td>30 meters</td>
+    <td>24 m</td>
+    <td>Tectona grandis</td>
+  </tr>
+</table>
+
+<h2>4. Environment Tool</h2>
+<p><b>Slope:</b> 15 degrees</p>
+<p><b>Aspect:</b> 180 degrees (South-facing)</p>
+<p><b>Canopy Cover:</b> 65%</p>
+<p><b>Soil Type:</b> Loamy Clay</p>
+
+<h2>5. Disturb & CBI Tool</h2>
+<p><b>Grazing:</b> Severe Tracking (Severity: 2)</p>
+<p><b>Logging/Harvesting:</b> Selective Cuts (Severity: 1)</p>
+<p><b>Fire:</b> None present</p>
+<p><b>Human Footprint:</b> Trails Present (Severity: 3)</p>
+
+<h2>6. Media & Notes Tool</h2>
+<p><b>Write Note:</b> "Camera trap setup near the large Sal tree. Significant trail erosion observed on the southern slope."</p>
+<p><b>Action:</b> Tap the Location Auto-Fill button, and observe it fetching the real Google Maps/OSM address via GPS!</p>
+
+</body>
+</html>

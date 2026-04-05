@@ -1,0 +1,271 @@
+// src/modules/herbarium.js
+
+import { $, $$, toast, esc } from './ui.js';
+import { Store } from './storage.js';
+import { fmtCoords, curPos } from './gps.js';
+import { dl } from './utils.js';
+import { attachAutocomplete } from './species-autocomplete.js';
+
+let currentImageBase64 = null;
+
+export function initHerbarium() {
+  attachAutocomplete('herbScientific', { maxResults: 10 });
+  const today = new Date().toISOString().split('T')[0];
+  if (!$('#herbDate').value) $('#herbDate').value = today;
+  refreshHerbariumTable();
+}
+
+export function handleHerbariumPhoto(file) {
+  if (!file) {
+    currentImageBase64 = null;
+    $('#herbPhotoPreview').style.display = 'none';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      // Compress image via canvas
+      const MAX_WIDTH = 800;
+      const MAX_HEIGHT = 800;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height = Math.round((height *= MAX_WIDTH / width));
+          width = MAX_WIDTH;
+        }
+      } else {
+        if (height > MAX_HEIGHT) {
+          width = Math.round((width *= MAX_HEIGHT / height));
+          height = MAX_HEIGHT;
+        }
+      }
+
+      const canvas = document.getElementById('herbCanvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      currentImageBase64 = canvas.toDataURL('image/jpeg', 0.8);
+      
+      const imgEl = document.getElementById('herbImgEl');
+      imgEl.src = currentImageBase64;
+      $('#herbPhotoPreview').style.display = 'flex';
+      toast('Photo captured');
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function getFormData() {
+  const collectionNo = $('#herbCollectionNo').value.trim();
+  const voucherNo = $('#herbVoucherNo').value.trim() || `VCH-${Date.now().toString().slice(-6)}`;
+  return {
+    collectionNo,
+    voucherNo,
+    institution: $('#herbInstitution').value.trim(),
+    family: $('#herbFamily').value.trim(),
+    scientific: $('#herbScientific').value.trim(),
+    localName: $('#herbLocalName').value.trim(),
+    phenology: $('#herbPhenology').value,
+    date: $('#herbDate').value,
+    gps: $('#herbGPS').value.trim(),
+    locality: $('#herbLocality').value.trim(),
+    habitat: $('#herbHabitat').value.trim(),
+    assocSpecies: $('#herbAssocSpecies').value.trim(),
+    remarks: $('#herbRemarks').value.trim(),
+    collector: $('#herbCollector').value.trim(),
+    identifier: $('#herbIdentifier').value.trim(),
+    photoUrl: currentImageBase64
+  };
+}
+
+export async function saveHerbarium(exportDoc = false) {
+  const s = await Store.getActive();
+  if (!s) { toast('Select a survey first', true); return; }
+  
+  const data = getFormData();
+  if (!data.scientific && !data.family) {
+    toast('Scientific name or Family is required', true);
+    return;
+  }
+
+  // Generate & export .doc if requested (even if data is otherwise not completely saved yet)
+  if (exportDoc) {
+    exportHerbariumWord(data);
+  }
+
+  if (!s.herbariums) s.herbariums = [];
+  
+  const editIdx = $('#btnSaveHerbarium').dataset.editIdx;
+  if (editIdx !== undefined && editIdx !== "") {
+    s.herbariums[parseInt(editIdx)] = data;
+    toast(`Voucher #${data.voucherNo} updated`);
+    delete $('#btnSaveHerbarium').dataset.editIdx;
+    $('#btnSaveHerbarium').textContent = 'Save to Survey';
+    $('#btnExportHerbarium').textContent = 'Save & Export (.doc)';
+  } else {
+    s.herbariums.push(data);
+    toast(`Voucher #${data.voucherNo} saved`);
+  }
+
+  await Store.update(s);
+  
+  // Clear form
+  $('#herbScientific').value = '';
+  $('#herbLocalName').value = '';
+  $('#herbCollector').value = '';
+  $('#herbRemarks').value = '';
+  $('#herbPhotoInput').value = '';
+  currentImageBase64 = null;
+  $('#herbPhotoPreview').style.display = 'none';
+  $('#herbCollectionNo').value = '';
+  $('#herbVoucherNo').value = '';
+  
+  refreshHerbariumTable();
+}
+
+export async function refreshHerbariumTable() {
+  const s = await Store.getActive();
+  const tb = $('#herbTableBody');
+  if (!s || !s.herbariums || !s.herbariums.length) {
+    tb.innerHTML = '<tr><td colspan="5" class="table-empty">No vouchers logged</td></tr>';
+    return;
+  }
+  
+  let r = '';
+  s.herbariums.forEach((h, i) => {
+    r += `<tr>
+      <td>${esc(h.voucherNo)}</td>
+      <td class="species-name-cell">${esc(h.scientific || '—')}</td>
+      <td>${esc(h.family || '—')}</td>
+      <td>${h.date || '—'}</td>
+      <td class="action-btns">
+        <button data-action="eh" data-i="${i}" title="Edit">✏️</button>
+        <button data-action="dw" data-doc="${i}" title="Download Word">📄</button>
+        <button data-action="dh" data-i="${i}" title="Delete">🗑️</button>
+      </td>
+    </tr>`;
+  });
+  tb.innerHTML = r;
+
+  // Edit handler
+  tb.querySelectorAll('[data-action="eh"]').forEach(b => {
+    b.onclick = async () => {
+      const idx = +b.dataset.i;
+      const h = s.herbariums[idx];
+      $('#herbCollectionNo').value = h.collectionNo || '';
+      $('#herbVoucherNo').value = h.voucherNo || '';
+      $('#herbInstitution').value = h.institution || '';
+      $('#herbFamily').value = h.family || '';
+      $('#herbScientific').value = h.scientific || '';
+      $('#herbLocalName').value = h.localName || '';
+      $('#herbPhenology').value = h.phenology || 'Vegetative/Sterile';
+      $('#herbDate').value = h.date || '';
+      $('#herbGPS').value = h.gps || '';
+      $('#herbLocality').value = h.locality || '';
+      $('#herbHabitat').value = h.habitat || '';
+      $('#herbAssocSpecies').value = h.assocSpecies || '';
+      $('#herbRemarks').value = h.remarks || '';
+      $('#herbCollector').value = h.collector || '';
+      $('#herbIdentifier').value = h.identifier || '';
+      
+      currentImageBase64 = h.photoUrl || null;
+      if (currentImageBase64) {
+        $('#herbImgEl').src = currentImageBase64;
+        $('#herbPhotoPreview').style.display = 'flex';
+      } else {
+        $('#herbPhotoPreview').style.display = 'none';
+      }
+
+      $('#btnSaveHerbarium').textContent = 'Update Voucher';
+      $('#btnExportHerbarium').textContent = 'Update & Export';
+      $('#btnSaveHerbarium').dataset.editIdx = idx;
+      $('#screenHerbarium').scrollTo({ top: 0, behavior: 'smooth' });
+      toast('Voucher loaded for editing');
+    };
+  });
+
+  // Download DOC handler
+  tb.querySelectorAll('[data-action="dw"]').forEach(b => {
+    b.onclick = () => {
+      exportHerbariumWord(s.herbariums[+b.dataset.doc]);
+      toast('Exporting...');
+    };
+  });
+
+  // Delete handler
+  tb.querySelectorAll('[data-action="dh"]').forEach(b => {
+    b.onclick = async () => {
+      const idx = +b.dataset.i;
+      if (!confirm(`Delete Voucher #${s.herbariums[idx].voucherNo}?`)) return;
+      s.herbariums.splice(idx, 1);
+      await Store.update(s);
+      refreshHerbariumTable();
+      toast('Voucher deleted');
+    };
+  });
+}
+
+function exportHerbariumWord(data) {
+  const content = `
+    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head>
+      <meta charset="utf-8">
+      <title>Herbarium Voucher</title>
+      <style>
+        body { font-family: 'Times New Roman', serif; font-size: 12pt; }
+        .voucher-box { border: 2px solid #000; padding: 15px; margin-top: 20px; width: 100%; max-width: 500px; page-break-inside: avoid; }
+        .title { text-align: center; font-weight: bold; font-size: 16pt; margin-bottom: 5px; text-transform: uppercase; }
+        .subtitle { text-align: center; font-size: 12pt; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; }
+        td { padding: 4px; vertical-align: top; }
+        .label { font-weight: bold; width: 35%; }
+        .scientific { font-style: italic; font-weight: bold; }
+        .img-container { text-align: center; margin-bottom: 20px; }
+        img { max-width: 500px; max-height: 600px; }
+      </style>
+    </head>
+    <body>
+      <!-- Specimen Image -->
+      ${data.photoUrl ? `<div class="img-container"><img src="${data.photoUrl}" /></div>` : ''}
+
+      <!-- Herbarium Label -->
+      <div class="voucher-box">
+        <div class="title">FLORA OF ${esc(data.locality ? data.locality.split(',')[0].toUpperCase() : 'REGION')}</div>
+        <div class="subtitle">${esc(data.institution || 'INSTITUTION VOUCHER')}</div>
+        
+        <table>
+          <tr><td class="label">Family:</td><td style="text-transform:uppercase;">${esc(data.family || '—')}</td></tr>
+          <tr><td class="label">Scientific Name:</td><td class="scientific">${esc(data.scientific || '—')}</td></tr>
+          <tr><td class="label">Common Name:</td><td>${esc(data.localName || '—')}</td></tr>
+          <tr><td class="label">Locality:</td><td>${esc(data.locality || '—')}</td></tr>
+          <tr><td class="label">GPS & Altitude:</td><td>${esc(data.gps || '—')}</td></tr>
+          <tr><td class="label">Habitat:</td><td>${esc(data.habitat || '—')}</td></tr>
+          <tr><td class="label">Associated Spp:</td><td>${esc(data.assocSpecies || '—')}</td></tr>
+          <tr><td class="label">Phenology:</td><td>${esc(data.phenology || '—')}</td></tr>
+          <tr><td class="label">Notes:</td><td>${esc(data.remarks || '—')}</td></tr>
+        </table>
+        
+        <div style="margin-top: 15px; border-top: 1px solid #000; padding-top: 10px;">
+          <table>
+            <tr><td class="label">Collector:</td><td>${esc(data.collector || '—')}</td></tr>
+            <tr><td class="label">Date:</td><td>${esc(data.date || '—')}</td></tr>
+            <tr><td class="label">Col. Number:</td><td>${esc(data.collectionNo || '—')}</td></tr>
+            <tr><td class="label">Det. By:</td><td>${esc(data.identifier || '—')}</td></tr>
+            <tr><td class="label">Accession No:</td><td>${esc(data.voucherNo || '—')}</td></tr>
+          </table>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+  
+  const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
+  const filename = (data.scientific || 'herbarium').replace(/\W/g, '_') + '_Voucher.doc';
+  dl(URL.createObjectURL(blob), filename);
+}

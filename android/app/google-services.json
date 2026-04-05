@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "604543983189",
+    "project_id": "forest-capture-5e683",
+    "storage_bucket": "forest-capture-5e683.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:604543983189:android:3914a0519b408e1d76fedc",
+        "android_client_info": {
+          "package_name": "com.forestcapture.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCY075qQvmxxDmoCRdes8d-WPLAhtM_Gec"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
