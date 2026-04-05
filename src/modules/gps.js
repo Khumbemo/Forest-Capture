@@ -45,3 +45,19 @@ export function startGPS(onUpdate, onError) {
     setHeaderWeatherIcon(navigator.onLine ? '📡' : '∅');
   }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 });
 }
+
+export async function reverseGeocode(lat, lon) {
+  if (!navigator.onLine) {
+    return null;
+  }
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`);
+    const data = await res.json();
+    if (data && data.display_name) {
+      return data.display_name;
+    }
+  } catch (e) {
+    console.error('Geocode error', e);
+  }
+  return null;
+}
