@@ -24,6 +24,9 @@ import { ensureAuth } from './modules/firebase.js';
 // ===== INIT =====
 
 async function initApp() {
+  // Always set up listeners first so UI isn't dead if Firebase hangs
+  setupEventListeners();
+
   try {
     await ensureAuth();
     await migrateFromLocalStorage();
@@ -35,10 +38,8 @@ async function initApp() {
     console.error('App: Init error', e);
   }
 
-  // Always set up listeners — must not be inside try/catch
-  setupEventListeners();
-
   startGPS(onGPSUpdate, onGPSError);
+
   setInterval(updateClock, 1000);
   updateClock();
   window.addEventListener('online', updateOnlineDot);
@@ -186,8 +187,11 @@ function setupEventListeners() {
   });
   $('#btnCancelSurvey')?.addEventListener('click', () => $('#modalNewSurvey').classList.remove('show'));
   $('#btnSaveSurvey')?.addEventListener('click', async () => {
+      console.log('btnSaveSurvey clicked!');
       await createNewSurvey();
+      console.log('createNewSurvey finished! updating bars...');
       await updateBars();
+      console.log('bars updated! switching screen...');
       switchScreen('screenToolbar', screenCallbacks);
   });
 

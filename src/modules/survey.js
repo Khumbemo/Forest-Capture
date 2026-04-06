@@ -119,27 +119,42 @@ export async function refreshDataRecords() {
 }
 
 export async function createNewSurvey() {
-  const name = $('#surveyName').value.trim();
-  if (!name) { toast('Name required', true); return; }
-  const sv = {
-    id: Date.now().toString(36) + Math.random().toString(36).substr(2, 4),
-    name,
-    location: $('#surveyLocation').value.trim(),
-    investigator: $('#surveyInvestigator').value.trim(),
-    date: $('#surveyDate').value,
-    quadrats: [], transects: [], environment: null, disturbance: null, cbi: null, photos: [], notes: [], audioNotes: [], waypoints: []
-  };
-  if ($('#surveyAutoGPS').checked && curPos.lat) {
-    const fmt = document.getElementById('settingCoordFormat')?.value || 'dd';
-    sv.gpsCoords = fmtCoords(curPos.lat, curPos.lng, fmt);
-    sv.location = sv.location || sv.gpsCoords;
+  console.log('createNewSurvey starting...');
+  try {
+    const name = $('#surveyName').value.trim();
+    if (!name) { toast('Name required', true); return; }
+    console.log('Name:', name);
+    const sv = {
+      id: Date.now().toString(36) + Math.random().toString(36).substr(2, 4),
+      name,
+      location: $('#surveyLocation').value.trim(),
+      investigator: $('#surveyInvestigator').value.trim(),
+      date: $('#surveyDate').value,
+      quadrats: [], transects: [], environment: null, disturbance: null, cbi: null, photos: [], notes: [], audioNotes: [], waypoints: []
+    };
+    const autoGpsCb = $('#surveyAutoGPS');
+    if (autoGpsCb && autoGpsCb.checked && curPos && curPos.lat) {
+      const fmtElem = document.getElementById('settingCoordFormat');
+      const fmt = fmtElem ? fmtElem.value : 'dd';
+      sv.gpsCoords = fmtCoords(curPos.lat, curPos.lng, fmt);
+      sv.location = sv.location || sv.gpsCoords;
+    }
+    console.log('Adding to Store:', sv);
+    await Store.add(sv);
+    console.log('Added to Store successfully! Removing show class...');
+    const modal = $('#modalNewSurvey');
+    if (modal) modal.classList.remove('show');
+    $('#surveyName').value = '';
+    $('#surveyLocation').value = '';
+    $('#surveyInvestigator').value = '';
+    toast(`"${name}" created`);
+    console.log('toast shown, populating selector...');
+    await populateSurveySelector();
+    console.log('selector populated, refreshing data records...');
+    refreshDataRecords();
+    console.log('createNewSurvey completely done.');
+  } catch (err) {
+    console.error("Survey creation error:", err);
+    toast("Creation failed: " + err.message, true);
   }
-  await Store.add(sv);
-  $('#modalNewSurvey').classList.remove('show');
-  $('#surveyName').value = '';
-  $('#surveyLocation').value = '';
-  $('#surveyInvestigator').value = '';
-  toast(`"${name}" created`);
-  await populateSurveySelector();
-  refreshDataRecords();
 }

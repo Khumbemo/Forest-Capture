@@ -33,19 +33,57 @@ enableIndexedDbPersistence(db).catch((err) => {
     }
 });
 
+let authPromiseCache = null;
+
 // Utility to ensure user is logged in before database operations
 export async function ensureAuth() {
-    return new Promise((resolve, reject) => {
+    if (authPromiseCache) return authPromiseCache;
+
+    authPromiseCache = new Promise((resolve, reject) => {
+        let authResolved = false;
+        
+        // Global timeout in case onAuthStateChanged hangs completely due to IDB locks
+        const globalTimeoutId = setTimeout(() => {
+            if (!authResolved) {
+                authResolved = true;
+                console.warn('ensureAuth timed out entirely, falling back to offline mode user');
+                resolve({ uid: 'offline_user_default' });
+            }
+        }, 2500);
+
         const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (authResolved) {
+                unsubscribe();
+                return;
+            }
             unsubscribe();
             if (user) {
+                authResolved = true;
+                clearTimeout(globalTimeoutId);
                 resolve(user);
             } else {
                 // If not logged in, force anonymous login
                 signInAnonymously(auth)
-                    .then((cred) => resolve(cred.user))
-                    .catch(reject);
+                    .then((cred) => {
+                        if (!authResolved) {
+                            authResolved = true;
+                            clearTimeout(globalTimeoutId);
+                            resolve(cred.user);
+                        }
+                    })
+                    .catch((err) => {
+                        if (!authResolved) {
+                            authResolved = true;
+                            clearTimeout(globalTimeoutId);
+                            console.warn('Anonymous auth failed, falling back to offline mode user', err);
+                            resolve({ uid: 'offline_user_default' });
+                        }
+                    });
             }
         });
     });
+
+    return authPromiseCache;
 }
+
+

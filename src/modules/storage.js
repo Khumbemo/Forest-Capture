@@ -31,7 +31,7 @@ export const Store = {
 
   async setActive(id) {
     const userDocRef = await getUserRef();
-    await setDoc(doc(collection(userDocRef, 'settings'), 'activeId'), { id });
+    setDoc(doc(collection(userDocRef, 'settings'), 'activeId'), { id });
   },
 
   async _getActiveId() {
@@ -42,18 +42,18 @@ export const Store = {
 
   async add(s) {
     const userDocRef = await getUserRef();
-    await setDoc(doc(collection(userDocRef, 'surveys'), s.id), s);
+    setDoc(doc(collection(userDocRef, 'surveys'), s.id), s);
     await this.setActive(s.id);
   },
 
   async update(s) {
     const userDocRef = await getUserRef();
-    await setDoc(doc(collection(userDocRef, 'surveys'), s.id), s);
+    setDoc(doc(collection(userDocRef, 'surveys'), s.id), s);
   },
 
   async del(id) {
     const userDocRef = await getUserRef();
-    await deleteDoc(doc(collection(userDocRef, 'surveys'), id));
+    deleteDoc(doc(collection(userDocRef, 'surveys'), id));
     
     // Fallback logic for activeId
     const activeId = await this._getActiveId();
@@ -74,7 +74,7 @@ export const Store = {
     batch.delete(doc(collection(userDocRef, 'settings'), 'activeId'));
     batch.delete(doc(collection(userDocRef, 'waypoints'), 'data'));
     
-    await batch.commit();
+    batch.commit(); // Fire and forget
   },
 
   async _d() {
@@ -95,12 +95,12 @@ export async function getWps() {
 
 export async function saveWps(wps) {
     const userDocRef = await getUserRef();
-    await setDoc(doc(collection(userDocRef, 'waypoints'), 'data'), { wps });
+    setDoc(doc(collection(userDocRef, 'waypoints'), 'data'), { wps });
 }
 
 export async function saveSettings(s) {
   const userDocRef = await getUserRef();
-  await setDoc(doc(collection(userDocRef, 'settings'), 'app_settings'), s);
+  setDoc(doc(collection(userDocRef, 'settings'), 'app_settings'), s);
 }
 
 export async function loadSettings() {
@@ -117,7 +117,7 @@ export async function getTheme() {
 
 export async function setTheme(t) {
   const userDocRef = await getUserRef();
-  await setDoc(doc(collection(userDocRef, 'settings'), 'theme'), { value: t });
+  setDoc(doc(collection(userDocRef, 'settings'), 'theme'), { value: t });
 }
 
 export async function getBrightness() {
@@ -128,7 +128,7 @@ export async function getBrightness() {
 
 export async function setBrightness(v) {
   const userDocRef = await getUserRef();
-  await setDoc(doc(collection(userDocRef, 'settings'), 'brightness'), { value: v });
+  setDoc(doc(collection(userDocRef, 'settings'), 'brightness'), { value: v });
 }
 
 // MIGRATION UTILITY
