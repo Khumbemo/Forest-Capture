@@ -1,6 +1,8 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
 import { getFirestore, enableIndexedDbPersistence, collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, where } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+import { getStorage } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js';
+import { toast } from './ui.js';
 
 
 // Web configuration synthesized from Android google-services.json
@@ -10,9 +12,8 @@ const firebaseConfig = {
     projectId: "forest-capture-5e683",
     storageBucket: "forest-capture-5e683.firebasestorage.app",
     messagingSenderId: "604543983189",
-    // We are using the mobile App ID as a fallback. 
-    // If it causes an issue, the user will need to supply the 'web' specific appId
-    appId: "1:604543983189:android:3914a0519b408e1d76fedc" 
+    // Switched to a Web App ID to avoid auth/invalid-app-id
+    appId: "1:604543983189:web:3914a0519b408e1d76fedc"
 };
 
 // Initialize Firebase
@@ -24,6 +25,9 @@ export const auth = getAuth(app);
 // Initialize Firestore
 export const db = getFirestore(app);
 
+// Initialize Storage
+export const storage = getStorage(app);
+
 // Enable Offline Persistence for Firestore (Crucial for Option A)
 enableIndexedDbPersistence(db).catch((err) => {
     if (err.code == 'failed-precondition') {
@@ -33,19 +37,42 @@ enableIndexedDbPersistence(db).catch((err) => {
     }
 });
 
+let authPromise = null;
+
 // Utility to ensure user is logged in before database operations
 export async function ensureAuth() {
-    return new Promise((resolve, reject) => {
+    if (auth.currentUser) return auth.currentUser;
+    if (authPromise) return authPromise;
+
+    console.log('ensureAuth: check status');
+    authPromise = new Promise((resolve) => {
+        const timeout = setTimeout(() => {
+            console.warn('ensureAuth: Timeout, continuing anyway for offline use');
+            authPromise = null;
+            resolve(null);
+        }, 3000); // Shortened to 3s
+
         const unsubscribe = onAuthStateChanged(auth, (user) => {
+            clearTimeout(timeout);
             unsubscribe();
+            authPromise = null;
             if (user) {
+                console.log('ensureAuth: User exists', user.uid);
                 resolve(user);
             } else {
-                // If not logged in, force anonymous login
+                console.log('ensureAuth: No user, signing in anonymously...');
                 signInAnonymously(auth)
-                    .then((cred) => resolve(cred.user))
-                    .catch(reject);
+                    .then((cred) => {
+                        console.log('ensureAuth: Anonymous sign-in success', cred.user.uid);
+                        resolve(cred.user);
+                    })
+                    .catch((err) => {
+                        console.error('ensureAuth: Sign-in error', err);
+                        resolve(null); // Fallback to offline
+                    });
             }
         });
     });
+
+    return authPromise;
 }

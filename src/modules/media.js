@@ -3,6 +3,8 @@
 import { $, toast } from './ui.js';
 import { Store } from './storage.js';
 import { compress } from './utils.js';
+import { storage, ensureAuth } from './firebase.js';
+import { ref, uploadString, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js';
 
 export async function refreshPhotos() {
   const s = await Store.getActive();
@@ -11,13 +13,25 @@ export async function refreshPhotos() {
     if (g) g.innerHTML = '';
     return;
   }
-  g.innerHTML = s.photos.map((p, i) => `<div class="photo-thumb"><img src="${p.data}" alt="Photo" /><button class="photo-thumb-delete" data-i="${i}">✕</button></div>`).join('');
+  g.innerHTML = s.photos.map((p, i) => `<div class="photo-thumb"><img src="${p.url || p.data}" alt="Photo" /><button class="photo-thumb-delete" data-i="${i}">✕</button></div>`).join('');
   g.querySelectorAll('.photo-thumb-delete').forEach(b => {
-    b.addEventListener('click', () => {
-      s.photos.splice(+b.dataset.i, 1);
-      Store.update(s);
-      refreshPhotos();
-      toast('Deleted');
+    b.addEventListener('click', async () => {
+      const idx = +b.dataset.i;
+      const p = s.photos[idx];
+
+      try {
+        if (p.path) {
+          const storageRef = ref(storage, p.path);
+          await deleteObject(storageRef);
+        }
+        s.photos.splice(idx, 1);
+        await Store.update(s);
+        refreshPhotos();
+        toast('Deleted');
+      } catch (err) {
+        console.error(err);
+        toast('Delete failed', true);
+      }
     });
   });
 }
@@ -25,12 +39,34 @@ export async function refreshPhotos() {
 export async function handlePhotoInput(file) {
   const s = await Store.getActive();
   if (!s) { toast('Select survey', true); return; }
-    compress(file, 800, async d => {
-    if (!s.photos) s.photos = [];
-    s.photos.push({ data: d, quadrat: parseInt($('#photoQuadratRef').value) || null, time: new Date().toISOString() });
-    await Store.update(s);
-    refreshPhotos();
-    toast('Photo saved');
+
+  const user = await ensureAuth();
+  toast('Uploading photo...', false);
+
+  compress(file, 800, async d => {
+    try {
+      if (!s.photos) s.photos = [];
+      const fileName = `photo_${Date.now()}.jpg`;
+      const storageRef = ref(storage, `users/${user.uid}/surveys/${s.id}/photos/${fileName}`);
+
+      // Upload to Firebase Storage
+      const snapshot = await uploadString(storageRef, d, 'data_url');
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      s.photos.push({
+        url: downloadURL,
+        path: snapshot.ref.fullPath,
+        quadrat: parseInt($('#photoQuadratRef').value) || null,
+        time: new Date().toISOString()
+      });
+
+      await Store.update(s);
+      refreshPhotos();
+      toast('Photo uploaded');
+    } catch (err) {
+      console.error(err);
+      toast('Upload failed: ' + err.message, true);
+    }
   });
 }
 

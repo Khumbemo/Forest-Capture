@@ -25,7 +25,7 @@ self.addEventListener('activate', event => {
 });
 
 async function tileStrategy(request) {
-  const cache  = await caches.open('fc-v3-0-tiles');
+  const cache = await caches.open('fc-v3-0-tiles');
   const cached = await cache.match(request);
   if (cached) return cached;
   try {
