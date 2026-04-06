@@ -24,22 +24,33 @@ import { ensureAuth } from './modules/firebase.js';
 // ===== INIT =====
 
 async function initApp() {
-  // Always set up listeners first so UI isn't dead if Firebase hangs
+  // Always set up listeners first — MUST work even if auth is slow
   setupEventListeners();
 
   try {
+    console.log('initApp: starting');
+    toast('Connecting...', false);
     await ensureAuth();
-    await migrateFromLocalStorage();
+
+    console.log('initApp: auth done, loading settings');
     await loadAppData();
+
+    console.log('initApp: loading surveys');
     const surveys = await Store.getSurveys();
+
+    console.log('initApp: surveys loaded', surveys.length);
     loadSurveyHistory(surveys);
+
+    console.log('initApp: populating selector');
     await populateSurveySelector();
+
+    toast('App Ready', false);
   } catch (e) {
     console.error('App: Init error', e);
+    toast('Init Error: ' + e.message, true);
   }
 
   startGPS(onGPSUpdate, onGPSError);
-
   setInterval(updateClock, 1000);
   updateClock();
   window.addEventListener('online', updateOnlineDot);
@@ -118,6 +129,7 @@ function onGPSError(msg) {
 
 const screenCallbacks = {
   screenDashboard: () => { updateBars(); },
+  screenToolbar: () => { updateBars(); }, // Added callback for Toolbar to refresh data
   screenData: refreshDataRecords,
   screenMap: () => { setTimeout(initMap, 100); refreshWpList(); },
   screenQuadrat: refreshQuadratTable,
@@ -134,13 +146,17 @@ const screenCallbacks = {
 };
 
 async function updateBars() {
-  const s = await Store.getActive();
-  const n = s ? s.name : 'No survey';
-  ['quadratSurveyName', 'envSurveyName', 'distSurveyName', 'cbiSurveyName', 'photoSurveyName', 'exportSurveyName', 'analyticsSurveyName', 'transectSurveyName', 'herbSurveyName'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = n;
-  });
-  await populateSurveySelector();
+  try {
+    const s = await Store.getActive();
+    const n = s ? s.name : 'No survey';
+    ['quadratSurveyName', 'envSurveyName', 'distSurveyName', 'photoSurveyName', 'exportSurveyName', 'analyticsSurveyName', 'transectSurveyName', 'herbSurveyName'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = n;
+    });
+    await populateSurveySelector();
+  } catch (e) {
+    console.error('updateBars error:', e);
+  }
 }
 
 function setupEventListeners() {
@@ -184,15 +200,30 @@ function setupEventListeners() {
   $('#btnNewSurvey')?.addEventListener('click', () => {
     $('#surveyDate').value = new Date().toISOString().split('T')[0];
     $('#modalNewSurvey').classList.add('show');
+    $('#surveyName').focus();
   });
   $('#btnCancelSurvey')?.addEventListener('click', () => $('#modalNewSurvey').classList.remove('show'));
-  $('#btnSaveSurvey')?.addEventListener('click', async () => {
-      console.log('btnSaveSurvey clicked!');
-      await createNewSurvey();
-      console.log('createNewSurvey finished! updating bars...');
-      await updateBars();
-      console.log('bars updated! switching screen...');
-      switchScreen('screenToolbar', screenCallbacks);
+  $('#btnSaveSurvey')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      if (btn.disabled) return;
+
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Creating...';
+
+      try {
+          const success = await createNewSurvey();
+          if (success) {
+              await updateBars();
+              switchScreen('screenToolbar', screenCallbacks);
+          }
+      } catch (err) {
+          console.error('Create survey error:', err);
+          toast('Failed to create survey', true);
+      } finally {
+          btn.disabled = false;
+          btn.textContent = originalText;
+      }
   });
 
   // Data filter

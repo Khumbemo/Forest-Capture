@@ -62,7 +62,12 @@ export function updateClock() {
 export function switchScreen(id, callbacks = {}) {
   const curScreen = document.querySelector('.screen.active');
   const curId = curScreen ? curScreen.id : null;
-  if (curId === id) return;
+
+  // Allow callback even if same screen (fixes unresponsive creation buttons)
+  if (curId === id) {
+      if (callbacks[id]) callbacks[id]();
+      return;
+  }
 
   const FC_FLOW = ['screenDashboard', 'screenToolbar', 'screenData'];
 

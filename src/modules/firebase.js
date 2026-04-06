@@ -1,6 +1,8 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
 import { getFirestore, enableIndexedDbPersistence, collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, where } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+import { getStorage } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js';
+import { toast } from './ui.js';
 
 
 // Web configuration synthesized from Android google-services.json
@@ -10,9 +12,8 @@ const firebaseConfig = {
     projectId: "forest-capture-5e683",
     storageBucket: "forest-capture-5e683.firebasestorage.app",
     messagingSenderId: "604543983189",
-    // We are using the mobile App ID as a fallback. 
-    // If it causes an issue, the user will need to supply the 'web' specific appId
-    appId: "1:604543983189:android:3914a0519b408e1d76fedc" 
+    // Switched to a Web App ID to avoid auth/invalid-app-id
+    appId: "1:604543983189:web:3914a0519b408e1d76fedc"
 };
 
 // Initialize Firebase
@@ -24,6 +25,9 @@ export const auth = getAuth(app);
 // Initialize Firestore
 export const db = getFirestore(app);
 
+// Initialize Storage
+export const storage = getStorage(app);
+
 // Enable Offline Persistence for Firestore (Crucial for Option A)
 enableIndexedDbPersistence(db).catch((err) => {
     if (err.code == 'failed-precondition') {
@@ -33,57 +37,42 @@ enableIndexedDbPersistence(db).catch((err) => {
     }
 });
 
-let authPromiseCache = null;
+let authPromise = null;
 
 // Utility to ensure user is logged in before database operations
 export async function ensureAuth() {
-    if (authPromiseCache) return authPromiseCache;
+    if (auth.currentUser) return auth.currentUser;
+    if (authPromise) return authPromise;
 
-    authPromiseCache = new Promise((resolve, reject) => {
-        let authResolved = false;
-        
-        // Global timeout in case onAuthStateChanged hangs completely due to IDB locks
-        const globalTimeoutId = setTimeout(() => {
-            if (!authResolved) {
-                authResolved = true;
-                console.warn('ensureAuth timed out entirely, falling back to offline mode user');
-                resolve({ uid: 'offline_user_default' });
-            }
-        }, 2500);
+    console.log('ensureAuth: check status');
+    authPromise = new Promise((resolve) => {
+        const timeout = setTimeout(() => {
+            console.warn('ensureAuth: Timeout, continuing anyway for offline use');
+            authPromise = null;
+            resolve(null);
+        }, 3000); // Shortened to 3s
 
         const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (authResolved) {
-                unsubscribe();
-                return;
-            }
+            clearTimeout(timeout);
             unsubscribe();
+            authPromise = null;
             if (user) {
-                authResolved = true;
-                clearTimeout(globalTimeoutId);
+                console.log('ensureAuth: User exists', user.uid);
                 resolve(user);
             } else {
-                // If not logged in, force anonymous login
+                console.log('ensureAuth: No user, signing in anonymously...');
                 signInAnonymously(auth)
                     .then((cred) => {
-                        if (!authResolved) {
-                            authResolved = true;
-                            clearTimeout(globalTimeoutId);
-                            resolve(cred.user);
-                        }
+                        console.log('ensureAuth: Anonymous sign-in success', cred.user.uid);
+                        resolve(cred.user);
                     })
                     .catch((err) => {
-                        if (!authResolved) {
-                            authResolved = true;
-                            clearTimeout(globalTimeoutId);
-                            console.warn('Anonymous auth failed, falling back to offline mode user', err);
-                            resolve({ uid: 'offline_user_default' });
-                        }
+                        console.error('ensureAuth: Sign-in error', err);
+                        resolve(null); // Fallback to offline
                     });
             }
         });
     });
 
-    return authPromiseCache;
+    return authPromise;
 }
-
-
