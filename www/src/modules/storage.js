@@ -209,11 +209,17 @@ export const Store = {
 
       // We don't necessarily want to wait for the server acknowledgment if persistence is on.
       // Firestore's setDoc with persistence enabled resolves when written to local cache.
-      setDoc(surveyDocRef, s);
-      console.log('Store.add: Survey written to local cache');
+      const p = setDoc(surveyDocRef, s);
 
-      // Update active session
-      await this.setActive(s.id);
+      // Update active session locally first
+      localStorage.setItem('fc_active_survey', s.id);
+
+      // Attempt background Firestore update for activeId
+      setDoc(doc(collection(userDocRef, 'settings'), 'activeId'), { id: s.id }).catch(e => {
+        console.warn('Store.add: Background activeId sync failed', e);
+      });
+
+      console.log('Store.add: Survey written to local cache');
       return true;
     } catch (e) {
       console.error('Store.add: Error saving survey:', e);

@@ -304,7 +304,8 @@ function setupEventListeners() {
       localStorage.setItem('fc_user', JSON.stringify({ uid: user.uid, email: user.email, time: Date.now() }));
       hideLogin();
       toast(`Welcome back, ${user.email}`);
-      await loadAppData();
+      // Reload to ensure all modules (Store, GPS, etc.) re-initialize with new UID
+      setTimeout(() => location.reload(), 1500);
     } catch (err) {
       console.error('Sign-in error:', err);
       setLoginError(friendlyAuthError(err.code));
@@ -328,7 +329,8 @@ function setupEventListeners() {
       localStorage.setItem('fc_user', JSON.stringify({ uid: user.uid, email: user.email, time: Date.now() }));
       hideLogin();
       toast(`Account created! Welcome, ${user.email}`);
-      await loadAppData();
+      // Reload to ensure all modules (Store, GPS, etc.) re-initialize with new UID
+      setTimeout(() => location.reload(), 1500);
     } catch (err) {
       console.error('Register error:', err);
       setLoginError(friendlyAuthError(err.code));

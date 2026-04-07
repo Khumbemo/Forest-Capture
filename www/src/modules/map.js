@@ -71,10 +71,25 @@ export function setMapLayer(type) {
     }
 }
 
-export async function addWaypoint(name, type, notes = '') {
-    if (!curPos.lat) { toast('No GPS', true); return; }
+export async function addWaypoint(name, type, notes = '', manualLat = null, manualLng = null) {
+    let lat = manualLat || curPos.lat;
+    let lng = manualLng || curPos.lng;
+
+    if (!lat || !lng) {
+        // Prompt for manual coordinates when GPS is unavailable
+        const manual = prompt('No GPS signal. Enter coordinates manually (lat, lng):');
+        if (!manual) return;
+        const parts = manual.split(',').map(s => parseFloat(s.trim()));
+        if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) {
+            toast('Invalid coordinates. Use format: lat, lng', true);
+            return;
+        }
+        lat = parts[0];
+        lng = parts[1];
+    }
+
     const w = await getWps();
-    w.push({ name: name || 'Waypoint', type: type || 'plot', lat: curPos.lat, lng: curPos.lng, notes, time: new Date().toISOString() });
+    w.push({ name: name || 'Waypoint', type: type || 'plot', lat, lng, notes, time: new Date().toISOString() });
     await saveWps(w);
     await refreshMapWps();
     toast('Waypoint added');

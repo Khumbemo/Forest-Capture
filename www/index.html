@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#0a1f0a" />
   <meta name="description" content="Forest Capture — Ecological Field Data Collection" />
   <!-- Deprecated apple-mobile-web-app-capable removed -->
@@ -239,6 +239,11 @@
           <div class="form-group"><label for="waypointType">Type</label><select id="waypointType"><option value="plot">Plot Center</option><option value="sample">Sample Point</option><option value="landmark">Landmark</option><option value="trail">Trail Marker</option><option value="water">Water Source</option><option value="camp">Camp</option><option value="other">Other</option></select></div>
         </div>
         <div class="form-group"><label for="waypointNotes">Notes</label><input type="text" id="waypointNotes" placeholder="Optional" /></div>
+        <div class="form-row">
+          <div class="form-group"><label for="waypointLat">Latitude</label><input type="text" id="waypointLat" placeholder="e.g., 25.6120" /></div>
+          <div class="form-group"><label for="waypointLng">Longitude</label><input type="text" id="waypointLng" placeholder="e.g., 93.7320" /></div>
+          <div class="form-group" style="flex:0 0 auto; align-self:flex-end;"><button class="btn btn-accent btn-sm gps-fill-btn" id="btnWaypointGPS" title="Fill from GPS">⊕ GPS</button></div>
+        </div>
         <button class="btn btn-primary btn-block mt" id="btnSaveWaypointManual" style="margin-bottom: 1rem;">Save Waypoint</button>
         <div class="waypoint-list" id="waypointList"></div>
       </div>

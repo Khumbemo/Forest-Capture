@@ -39,17 +39,22 @@ try {
 export const storage = getStorage(app);
 
 let authPromise = null;
+let authInitialized = false;
+let lastUser = null;
 
 // Utility: resolves with cached/existing authenticated user (does NOT auto sign-in)
 // Returns null after timeout so the app can proceed offline if not yet logged in.
 export async function ensureAuth() {
     if (auth.currentUser) return auth.currentUser;
+    if (authInitialized) return lastUser;
     if (authPromise) return authPromise;
 
     console.log('ensureAuth: checking cached credentials');
     authPromise = new Promise((resolve) => {
         const timeout = setTimeout(() => {
             console.warn('ensureAuth: Timeout — proceeding offline/unauthenticated');
+            authInitialized = true;
+            lastUser = null;
             authPromise = null;
             resolve(null);
         }, 3000);
@@ -57,6 +62,8 @@ export async function ensureAuth() {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             clearTimeout(timeout);
             unsubscribe();
+            authInitialized = true;
+            lastUser = user;
             authPromise = null;
             if (user) {
                 console.log('ensureAuth: Restored session for', user.uid);
@@ -70,6 +77,12 @@ export async function ensureAuth() {
 
     return authPromise;
 }
+
+// Subscribe to auth changes to keep lastUser in sync
+onAuthStateChanged(auth, (user) => {
+    lastUser = user;
+    authInitialized = true;
+});
 
 // Sign in an existing user with email + password
 export async function EmailLogin(email, pwd) {
