@@ -25,8 +25,9 @@ export function compress(file, MX, cb) {
     img.onload = () => {
       const c = document.createElement('canvas');
       let w = img.width, h = img.height;
-      if (w > MX) { h = (MX / w) * h; w = MX; }
-      if (h > MX) { w = (MX / h) * w; h = MX; }
+      const scale = Math.min(MX / w, MX / h, 1);
+      w = Math.round(w * scale);
+      h = Math.round(h * scale);
       c.width = w; c.height = h;
       c.getContext('2d').drawImage(img, 0, 0, w, h);
       cb(c.toDataURL('image/jpeg', 0.6));

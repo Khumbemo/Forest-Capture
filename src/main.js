@@ -1,7 +1,7 @@
 // src/main.js
 
 import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot } from './modules/ui.js';
-import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, migrateFromLocalStorage } from './modules/storage.js';
+import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, resetUserRef } from './modules/storage.js';
 import { startGPS, fmtCoords } from './modules/gps.js';
 import { fetchWeather } from './modules/weather.js';
 import { refreshDataRecords, createNewSurvey, populateSurveySelector } from './modules/survey.js';
@@ -19,7 +19,7 @@ import { refreshPreview, exportSurveyCSV, exportSurveyJSON, exportAllSurveysCSV,
 import { initCompareScreen, runComparison, exportComparisonJSON } from './modules/analytics-compare.js';
 import { loadSurveyHistory } from './modules/species-autocomplete.js';
 import { initHerbarium, handleHerbariumPhoto, saveHerbarium } from './modules/herbarium.js';
-import { ensureAuth } from './modules/firebase.js';
+import { ensureAuth, EmailLogin, EmailSignup } from './modules/firebase.js';
 
 // ===== INIT =====
 
@@ -32,8 +32,16 @@ async function initApp() {
     toast('Connecting...', false);
     await ensureAuth();
 
-    console.log('initApp: auth done, loading settings');
-    await loadAppData();
+    // Load settings gracefully — don't let offline Firestore kill the init flow
+    try {
+      console.log('initApp: auth done, loading settings');
+      await loadAppData();
+    } catch (settingsErr) {
+      console.warn('App: Settings load failed (offline?), using defaults', settingsErr.message);
+      // Apply safe defaults so the app is still usable
+      applyTheme('night');
+      applyBrightness(100);
+    }
 
     console.log('initApp: loading surveys');
     const surveys = await Store.getSurveys();
@@ -47,8 +55,12 @@ async function initApp() {
     toast('App Ready', false);
   } catch (e) {
     console.error('App: Init error', e);
-    toast('Init Error: ' + e.message, true);
+    // Show a non-scary message — the app is still usable with cached data
+    toast('Working offline — cached data loaded', false);
   }
+
+  // Always dismiss splash after init completes (success or failure)
+  dismissSplash();
 
   startGPS(onGPSUpdate, onGPSError);
   setInterval(updateClock, 1000);
@@ -57,8 +69,11 @@ async function initApp() {
   window.addEventListener('offline', updateOnlineDot);
   setTimeout(updateOnlineDot, 500);
 
-  // Show login if not authenticated
-  if (!localStorage.getItem('fc_user')) {
+  // Show login if no valid Firebase session exists.
+  // Clear legacy anonymous sessions (those stored without a uid).
+  const storedUser = JSON.parse(localStorage.getItem('fc_user') || 'null');
+  if (!storedUser || !storedUser.uid) {
+    localStorage.removeItem('fc_user'); // clear stale anonymous entry
     setTimeout(showLogin, 2900);
   }
 
@@ -83,6 +98,20 @@ async function loadAppData() {
     if (el.type === 'checkbox') el.checked = val;
     else el.value = val;
   });
+}
+
+function friendlyAuthError(code) {
+  const map = {
+    'auth/invalid-email':            'Invalid email address.',
+    'auth/user-not-found':           'No account with that email. Please Register first.',
+    'auth/wrong-password':           'Incorrect password.',
+    'auth/invalid-credential':       'Incorrect email or password.',
+    'auth/email-already-in-use':     'This email is already registered. Try Sign In.',
+    'auth/weak-password':            'Password must be at least 6 characters.',
+    'auth/network-request-failed':   'No internet connection. Please try again.',
+    'auth/too-many-requests':        'Too many attempts. Please wait a moment.',
+  };
+  return map[code] || 'Authentication error. Please try again.';
 }
 
 function applyTheme(t) {
@@ -179,21 +208,57 @@ function setupEventListeners() {
     }
   });
 
-  // Login
-  $('#btnSignIn')?.addEventListener('click', () => {
-    const name = $('#loginEmail').value.trim();
-    if (!name) { alert('Please enter your name or researcher ID.'); return; }
-    localStorage.setItem('fc_user', JSON.stringify({ name, time: Date.now() }));
-    hideLogin();
-    toast(`Welcome, ${name}`);
+  // Login — Firebase Email Auth
+  function setLoginError(msg) {
+    const el = document.getElementById('loginError');
+    if (el) el.textContent = msg;
+  }
+
+  $('#btnSignIn')?.addEventListener('click', async () => {
+    const email = $('#loginEmail')?.value.trim();
+    const pwd   = $('#loginPassword')?.value;
+    if (!email || !pwd) { setLoginError('Please enter your email and password.'); return; }
+    setLoginError('');
+    $('#btnSignIn').disabled = true;
+    $('#btnSignIn').textContent = 'Signing in…';
+    try {
+      resetUserRef();
+      const user = await EmailLogin(email, pwd);
+      localStorage.setItem('fc_user', JSON.stringify({ uid: user.uid, email: user.email, time: Date.now() }));
+      hideLogin();
+      toast(`Welcome back, ${user.email}`);
+      await loadAppData();
+    } catch (err) {
+      console.error('Sign-in error:', err);
+      setLoginError(friendlyAuthError(err.code));
+    } finally {
+      $('#btnSignIn').disabled = false;
+      $('#btnSignIn').textContent = 'Sign In';
+    }
   });
-  $('#btnGoogleSignIn')?.addEventListener('click', () => {
-    toast('Google sign-in not available in offline mode. Use local login.');
-  });
-  $('#btnGuestLogin')?.addEventListener('click', () => {
-    localStorage.setItem('fc_user', JSON.stringify({ guest: true, time: Date.now() }));
-    hideLogin();
-    toast('Logged in as Guest');
+
+  $('#btnRegister')?.addEventListener('click', async () => {
+    const email = $('#loginEmail')?.value.trim();
+    const pwd   = $('#loginPassword')?.value;
+    if (!email || !pwd) { setLoginError('Please enter your email and password.'); return; }
+    if (pwd.length < 6)  { setLoginError('Password must be at least 6 characters.'); return; }
+    setLoginError('');
+    $('#btnRegister').disabled = true;
+    $('#btnRegister').textContent = 'Creating…';
+    try {
+      resetUserRef();
+      const user = await EmailSignup(email, pwd);
+      localStorage.setItem('fc_user', JSON.stringify({ uid: user.uid, email: user.email, time: Date.now() }));
+      hideLogin();
+      toast(`Account created! Welcome, ${user.email}`);
+      await loadAppData();
+    } catch (err) {
+      console.error('Register error:', err);
+      setLoginError(friendlyAuthError(err.code));
+    } finally {
+      $('#btnRegister').disabled = false;
+      $('#btnRegister').textContent = 'Register';
+    }
   });
 
   // Survey
@@ -258,12 +323,14 @@ function setupEventListeners() {
       const n = prompt('Waypoint name:');
       if(n) await addWaypoint(n, 'plot');
   });
-  $('#btnAddWaypointManual')?.addEventListener('click', async () => {
+  // Save Waypoint button (explicit form submit button)
+  $('#btnSaveWaypointManual')?.addEventListener('click', async () => {
       const n = $('#waypointName').value.trim();
-      if(!n) { toast('Enter name', true); return; }
+      if(!n) { toast('Enter waypoint name', true); return; }
       await addWaypoint(n, $('#waypointType').value, $('#waypointNotes').value.trim());
       $('#waypointName').value = ''; $('#waypointNotes').value = '';
       await refreshWpList();
+      toast('Waypoint saved');
   });
   $('#btnMapSatellite')?.addEventListener('click', () => setMapLayer('sat'));
   $('#btnMapTerrain')?.addEventListener('click', () => setMapLayer('ter'));
@@ -281,7 +348,6 @@ function setupEventListeners() {
   });
   $('#btnSaveQuadrat')?.addEventListener('click', async () => {
       await saveQuadrat();
-      switchScreen('screenToolbar', screenCallbacks);
   });
 
   // Transect
@@ -298,14 +364,12 @@ function setupEventListeners() {
   });
   $('#btnSaveTransect')?.addEventListener('click', async () => {
       await saveTransect();
-      switchScreen('screenToolbar', screenCallbacks);
   });
 
   // Environment
   $('#btnAutoFillEnv')?.addEventListener('click', autoFillEnv);
   $('#btnSaveEnv')?.addEventListener('click', async () => {
       await saveEnv();
-      switchScreen('screenToolbar', screenCallbacks);
   });
   $('#canopyPhotoInput')?.addEventListener('change', e => {
       if(e.target.files[0]) estimateCanopy(e.target.files[0]);
@@ -322,7 +386,6 @@ function setupEventListeners() {
   $$('.cbi-select').forEach(s => s.addEventListener('change', recalcCBI));
   $('#btnSaveDisturbCBI')?.addEventListener('click', async () => {
       await saveDisturbCBI();
-      switchScreen('screenToolbar', screenCallbacks);
   });
 
   // Media
@@ -381,7 +444,6 @@ function setupEventListeners() {
   });
   $('#btnAddNote')?.addEventListener('click', async () => {
       await addNote();
-      switchScreen('screenToolbar', screenCallbacks);
   });
 
   // Analytics Compare

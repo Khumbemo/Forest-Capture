@@ -45,12 +45,21 @@ export async function exportAllSurveysCSV() {
   toast('Exporting All Surveys CSV...');
 }
 
+function xmlEsc(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
 export async function exportGPX() {
   const w = await getWps();
   if (!w.length) { alert('No waypoints'); return; }
   let g = '<?xml version="1.0"?>\n<gpx version="1.1" creator="ForestCapture">\n';
   w.forEach(p => {
-    g += `<wpt lat="${p.lat}" lon="${p.lng}"><name>${esc(p.name)}</name><desc>${esc(p.type)}</desc><time>${p.time}</time></wpt>\n`;
+    g += `<wpt lat="${p.lat}" lon="${p.lng}"><name>${xmlEsc(p.name)}</name><desc>${xmlEsc(p.type)}</desc><time>${p.time}</time></wpt>\n`;
   });
   g += '</gpx>';
   dl(g, 'waypoints.gpx', 'application/gpx+xml');
@@ -137,99 +146,16 @@ export async function generateReport() {
 }
 
 export async function backupAll() {
-  const all = await Store._d();
+  const all = await Store.getBackupData();
   all.waypoints = await getWps();
   dl(JSON.stringify(all, null, 2), 'forest_survey_backup_' + new Date().toISOString().split('T')[0] + '.json', 'application/json');
-}
-
-// ─── Restore constants (must match storage.js) ──────────────────────────────
-const RESTORE_DB_NAME    = 'ForestCaptureDB';
-const RESTORE_DB_VERSION = 1;
-
-/**
- * Validates that a parsed backup object looks like a Forest Capture export.
- */
-function _validateBackup(data) {
-  if (!data || typeof data !== 'object') {
-    return { valid: false, reason: 'File does not contain a valid JSON object.' };
-  }
-  // Must have surveys array or waypoints array
-  if (!Array.isArray(data.surveys) && !Array.isArray(data.waypoints)) {
-    return {
-      valid: false,
-      reason: 'Backup file does not contain any recognisable Forest Capture data. ' +
-              'Expected at least surveys or waypoints.'
-    };
-  }
-  return { valid: true };
-}
-
-/**
- * Opens the IndexedDB database for restore.
- */
-function _openDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(RESTORE_DB_NAME, RESTORE_DB_VERSION);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror   = () => reject(req.error);
-    req.onupgradeneeded = () => {
-      req.transaction.abort();
-      reject(new Error(
-        'IndexedDB schema upgrade triggered unexpectedly during restore. ' +
-        'Open the app normally once before attempting a restore.'
-      ));
-    };
-  });
-}
-
-/**
- * Clears an object store and writes all records into it.
- */
-function _writeToStore(db, storeName, records) {
-  return new Promise((resolve, reject) => {
-    if (!db.objectStoreNames.contains(storeName)) {
-      console.warn(`[restoreData] Skipping unknown store: "${storeName}"`);
-      return resolve();
-    }
-    if (!Array.isArray(records) || records.length === 0) {
-      return resolve();
-    }
-    const tx    = db.transaction(storeName, 'readwrite');
-    const store = tx.objectStore(storeName);
-    tx.oncomplete = () => resolve();
-    tx.onerror    = () => reject(tx.error);
-    tx.onabort    = () => reject(new Error(`Transaction aborted while writing "${storeName}".`));
-    const clearReq = store.clear();
-    clearReq.onsuccess = () => {
-      for (const record of records) {
-        store.put(record);
-      }
-    };
-    clearReq.onerror = () => reject(clearReq.error);
-  });
-}
-
-/**
- * Writes key/value pairs to the settings store individually.
- */
-function _writeSettings(db, settings) {
-  return new Promise((resolve, reject) => {
-    if (!db.objectStoreNames.contains('settings')) return resolve();
-    const tx    = db.transaction('settings', 'readwrite');
-    const store = tx.objectStore('settings');
-    tx.oncomplete = () => resolve();
-    tx.onerror    = () => reject(tx.error);
-    for (const [key, value] of Object.entries(settings)) {
-      store.put(value, key);
-    }
-  });
 }
 
 /**
  * restoreData(file)
  *
  * Reads a Forest Capture JSON backup file, validates it, then writes each
- * store's records directly into IndexedDB — no localStorage detour.
+ * survey into Firestore via Store.add() — compatible with the current storage layer.
  *
  * @param {File} file — The .json backup file selected by the user.
  * @returns {Promise<void>}
@@ -247,8 +173,12 @@ export async function restoreData(file) {
   }
 
   // 2. Validate
-  const { valid, reason } = _validateBackup(backupData);
-  if (!valid) throw new Error(reason);
+  if (!backupData || typeof backupData !== 'object') {
+    throw new Error('File does not contain a valid JSON object.');
+  }
+  if (!Array.isArray(backupData.surveys) && !Array.isArray(backupData.waypoints)) {
+    throw new Error('Backup file does not contain any recognisable Forest Capture data.');
+  }
 
   // 3. Confirm with user
   const surveyCount   = Array.isArray(backupData.surveys)   ? backupData.surveys.length   : 0;
@@ -256,52 +186,36 @@ export async function restoreData(file) {
   const totalRecords  = surveyCount + waypointCount;
 
   const confirmed = window.confirm(
-    `This will replace all current data with the backup contents:\n\n` +
+    `This will import the backup contents:\n\n` +
     `  • ${surveyCount} survey${surveyCount !== 1 ? 's' : ''}\n` +
     `  • ${waypointCount} waypoint${waypointCount !== 1 ? 's' : ''}\n\n` +
-    `This cannot be undone. Continue?`
+    `Existing data will NOT be deleted. Continue?`
   );
   if (!confirmed) return;
 
-  // 4. Open database
-  let db;
+  // 4. Import surveys via Store.add()
   try {
-    db = await _openDB();
-  } catch (err) {
-    throw new Error('Could not open the local database. ' + err.message);
-  }
-
-  // 5. Write stores
-  try {
-    const writes = [];
-
-    if (Array.isArray(backupData.surveys) && backupData.surveys.length > 0) {
-      writes.push(_writeToStore(db, 'surveys', backupData.surveys));
+    if (Array.isArray(backupData.surveys)) {
+      for (const survey of backupData.surveys) {
+        // Ensure each survey has an ID (preserve original or generate new)
+        if (!survey.id) {
+          survey.id = Date.now().toString(36) + Math.random().toString(36).substr(2, 4);
+        }
+        await Store.add(survey);
+      }
     }
 
+    // Import waypoints if present
     if (Array.isArray(backupData.waypoints) && backupData.waypoints.length > 0) {
-      writes.push(_writeToStore(db, 'waypoints', backupData.waypoints));
+      const { getWps, saveWps } = await import('./storage.js');
+      const existing = await getWps();
+      await saveWps([...existing, ...backupData.waypoints]);
     }
-
-    // Restore settings (activeId, theme, etc.)
-    const settingsToRestore = {};
-    if (backupData.activeId !== undefined) settingsToRestore.activeId = backupData.activeId;
-    if (backupData.theme)                  settingsToRestore.theme    = backupData.theme;
-    if (Object.keys(settingsToRestore).length > 0) {
-      writes.push(_writeSettings(db, settingsToRestore));
-    }
-
-    await Promise.all(writes);
   } catch (err) {
-    throw new Error(
-      'Restore failed while writing to the database. Your data may be in a ' +
-      'partial state — please try restoring again. Detail: ' + err.message
-    );
-  } finally {
-    db.close();
+    throw new Error('Restore failed during import: ' + err.message);
   }
 
-  // 6. Success
+  // 5. Success
   toast(
     `Restore complete — ${totalRecords} record${totalRecords !== 1 ? 's' : ''} imported from backup.`,
     false

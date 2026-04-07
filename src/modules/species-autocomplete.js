@@ -60,6 +60,7 @@ export function attachAutocomplete(inputId, options = {}) {
     if (_currentResults.length === 0) { _hide(dropdown); return; }
 
     _activeIndex = -1;
+    dropdown._query = query;
     _render(dropdown, _currentResults, _activeIndex, (entry) => {
       _select(input, entry, dropdown, onSelect);
     });

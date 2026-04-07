@@ -13,19 +13,29 @@ export function autoFillEnv() {
   toast('Auto-filled');
 }
 
+function numOrNull(v) {
+  const n = parseFloat(v);
+  return isNaN(n) ? null : n;
+}
+
 export async function saveEnv() {
   const s = await Store.getActive();
   if (!s) { toast('Select survey', true); return; }
   s.environment = {
-    slope: parseFloat($('#envSlope').value) || null,
+    slope: numOrNull($('#envSlope').value),
     aspect: $('#envAspect').value,
-    elevation: parseFloat($('#envElevation').value) || null,
-    canopyCover: parseFloat($('#envCanopyCover').value) || null,
+    elevation: numOrNull($('#envElevation').value),
+    canopyCover: numOrNull($('#envCanopyCover').value),
+    forestType: $('#envForestType') ? $('#envForestType').value : '',
     soilType: $('#envSoilType').value,
     soilMoisture: $('#envSoilMoisture').value,
     soilColor: $('#envSoilColor').value.trim(),
-    temperature: parseFloat($('#envTemperature').value) || null,
-    humidity: parseFloat($('#envHumidity').value) || null,
+    soilPH: numOrNull($('#envSoilPH') ? $('#envSoilPH').value : ''),
+    litterDepth: numOrNull($('#envLitterDepth') ? $('#envLitterDepth').value : ''),
+    temperature: numOrNull($('#envTemperature').value),
+    humidity: numOrNull($('#envHumidity').value),
+    windSpeed: numOrNull($('#envWindSpeed') ? $('#envWindSpeed').value : ''),
+    lightCondition: $('#envLightCondition') ? $('#envLightCondition').value : '',
     weather: $('#envWeather').value
   };
   await Store.update(s);
@@ -36,15 +46,20 @@ export async function loadEnvData() {
   const s = await Store.getActive();
   if (!s || !s.environment) return;
   const e = s.environment;
-  if (e.slope) $('#envSlope').value = e.slope;
+  if (e.slope != null) $('#envSlope').value = e.slope;
   if (e.aspect) $('#envAspect').value = e.aspect;
-  if (e.elevation) $('#envElevation').value = e.elevation;
-  if (e.canopyCover) $('#envCanopyCover').value = e.canopyCover;
+  if (e.elevation != null) $('#envElevation').value = e.elevation;
+  if (e.canopyCover != null) $('#envCanopyCover').value = e.canopyCover;
+  if (e.forestType && $('#envForestType')) $('#envForestType').value = e.forestType;
   if (e.soilType) $('#envSoilType').value = e.soilType;
   if (e.soilMoisture) $('#envSoilMoisture').value = e.soilMoisture;
   if (e.soilColor) $('#envSoilColor').value = e.soilColor;
-  if (e.temperature) $('#envTemperature').value = e.temperature;
-  if (e.humidity) $('#envHumidity').value = e.humidity;
+  if (e.soilPH != null && $('#envSoilPH')) $('#envSoilPH').value = e.soilPH;
+  if (e.litterDepth != null && $('#envLitterDepth')) $('#envLitterDepth').value = e.litterDepth;
+  if (e.temperature != null) $('#envTemperature').value = e.temperature;
+  if (e.humidity != null) $('#envHumidity').value = e.humidity;
+  if (e.windSpeed != null && $('#envWindSpeed')) $('#envWindSpeed').value = e.windSpeed;
+  if (e.lightCondition && $('#envLightCondition')) $('#envLightCondition').value = e.lightCondition;
   if (e.weather) $('#envWeather').value = e.weather;
 }
 

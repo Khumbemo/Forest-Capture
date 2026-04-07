@@ -1,12 +1,34 @@
-// Forest Capture — Service Worker v8
-const CACHE_NAME = 'forest-capture-v19';
+// Forest Capture — Service Worker v10
+const CACHE_NAME = 'forest-capture-v23';
 const ASSETS = [
   './index.html',
   './index.css',
   './src/main.js',
   './manifest.json',
   './vendor/leaflet/leaflet.css',
-  './vendor/leaflet/leaflet.js'
+  './vendor/leaflet/leaflet.js',
+  './src/modules/ui.js',
+  './src/modules/storage.js',
+  './src/modules/firebase.js',
+  './src/modules/gps.js',
+  './src/modules/weather.js',
+  './src/modules/survey.js',
+  './src/modules/symbols.js',
+  './src/modules/map.js',
+  './src/modules/map-offline.js',
+  './src/modules/waypoints.js',
+  './src/modules/quadrat.js',
+  './src/modules/transect.js',
+  './src/modules/environment.js',
+  './src/modules/disturbance.js',
+  './src/modules/media.js',
+  './src/modules/notes.js',
+  './src/modules/analytics.js',
+  './src/modules/analytics-compare.js',
+  './src/modules/export.js',
+  './src/modules/herbarium.js',
+  './src/modules/species-autocomplete.js',
+  './src/modules/utils.js'
 ];
 
 self.addEventListener('install', event => {
@@ -54,16 +76,17 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // For app shell files: network-first (so updates show immediately)
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(response => {
-        if (response.ok && response.type === 'basic') {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        }
-        return response;
-      }).catch(() => {
+    fetch(event.request).then(response => {
+      if (response.ok && response.type === 'basic') {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+      }
+      return response;
+    }).catch(() => {
+      return caches.match(event.request).then(cached => {
+        if (cached) return cached;
         if (event.request.mode === 'navigate') return caches.match('./index.html');
       });
     })

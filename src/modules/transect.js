@@ -13,7 +13,8 @@ export function addIntercept() {
   const inputId = `transect-intname-${intCount}`;
   d.innerHTML = `<div class="species-entry-header"><span class="species-entry-num">Intercept #${intCount}</span><button class="species-remove" type="button">✕</button></div>
 <div class="form-group"><label>Species</label><input type="text" class="int-name" id="${inputId}" placeholder="Species name" /></div>
-<div class="form-row"><div class="form-group"><label>Distance (m)</label><input type="number" class="int-dist" min="0" step="0.1" /></div><div class="form-group"><label>Cover %</label><input type="number" class="int-cover" min="0" max="100" /></div></div>`;
+<div class="form-row"><div class="form-group"><label>Distance (m)</label><input type="number" class="int-dist" min="0" step="0.1" /></div><div class="form-group"><label>Cover %</label><input type="number" class="int-cover" min="0" max="100" /></div></div>
+<div class="form-row"><div class="form-group"><label>Height (m)</label><input type="number" class="int-height" min="0" step="0.1" /></div><div class="form-group"><label>Stratum</label><select class="int-stratum"><option value="">—</option><option value="canopy">Canopy</option><option value="sub-canopy">Sub-canopy</option><option value="shrub">Shrub layer</option><option value="herb">Herb layer</option><option value="ground">Ground cover</option></select></div></div>`;
   d.querySelector('.species-remove').addEventListener('click', () => d.remove());
   $('#interceptList').appendChild(d);
 
@@ -33,7 +34,9 @@ export async function saveTransect() {
     intercepts: Array.from($$('#interceptList .species-entry')).map(e => ({
       name: e.querySelector('.int-name').value.trim(),
       distance: parseFloat(e.querySelector('.int-dist').value) || 0,
-      cover: parseFloat(e.querySelector('.int-cover').value) || 0
+      cover: parseFloat(e.querySelector('.int-cover').value) || 0,
+      height: parseFloat(e.querySelector('.int-height').value) || 0,
+      stratum: e.querySelector('.int-stratum').value
     }))
   };
   if (!s.transects) s.transects = [];
@@ -93,6 +96,8 @@ export async function refreshTransectTable() {
         last.querySelector('.int-name').value = int.name;
         last.querySelector('.int-dist').value = int.distance;
         last.querySelector('.int-cover').value = int.cover;
+        last.querySelector('.int-height').value = int.height || 0;
+        last.querySelector('.int-stratum').value = int.stratum || '';
       });
       $('#btnSaveTransect').textContent = 'Update Transect';
       $('#btnSaveTransect').dataset.editIdx = idx;

@@ -19,6 +19,21 @@
 </head>
 <body>
 
+  <!-- 3D ANIMATED BACKGROUND -->
+  <div class="bg-particles" id="bgParticles" aria-hidden="true">
+    <div class="particle p1"></div>
+    <div class="particle p2"></div>
+    <div class="particle p3"></div>
+    <div class="particle p4"></div>
+    <div class="particle p5"></div>
+    <div class="particle p6"></div>
+    <div class="particle p7"></div>
+    <div class="particle p8"></div>
+    <div class="particle p9"></div>
+    <div class="particle p10"></div>
+    <div class="particle p11"></div>
+    <div class="particle p12"></div>
+  </div>
   <!-- SPLASH SCREEN -->
   <div class="splash-screen" id="splashScreen">
     <div class="splash-leaf"><svg viewBox="0 0 24 24" width="72" height="72" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 5,10 8,10 3,17 8,17 6,22 18,22 16,17 21,17 16,10 19,10" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" fill="none"/><line x1="12" y1="17" x2="12" y2="22" stroke="currentColor" stroke-width="1.5"/></svg></div>
@@ -53,18 +68,26 @@
       <div class="login-header">
         <div class="login-logo"><svg viewBox="0 0 24 24" width="60" height="60" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 5,10 8,10 3,17 8,17 6,22 18,22 16,17 21,17 16,10 19,10" stroke="var(--emerald)" stroke-width="1.2" stroke-linejoin="round" fill="none"/><line x1="12" y1="17" x2="12" y2="22" stroke="var(--emerald)" stroke-width="1.5"/></svg></div>
         <h1 class="login-title">Forest Capture</h1>
-        <p class="login-subtitle">Ecological Field Survey (Offline Mode)</p>
+        <p class="login-subtitle">Ecological Field Survey &amp; Cloud Sync</p>
       </div>
       <div class="login-form-card">
-        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px; text-align: center;">Data is stored locally on this device. No cloud sync is active in this version.</p>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px; text-align: center;">Sign in to sync your surveys across devices. Works offline after first login.</p>
         <div class="login-form-group">
-          <label for="loginEmail" class="login-label">Researcher Name / ID</label>
-          <input type="text" id="loginEmail" placeholder="e.g., John Doe" class="login-input" />
+          <label for="loginEmail" class="login-label">Email</label>
+          <input type="email" id="loginEmail" placeholder="researcher@institute.org" class="login-input" autocomplete="email" />
         </div>
-        <button class="btn btn-primary btn-block login-btn-signin" id="btnSignIn">Start Session</button>
+        <div class="login-form-group" style="margin-top: 12px;">
+          <label for="loginPassword" class="login-label">Password</label>
+          <input type="password" id="loginPassword" placeholder="Your password" class="login-input" autocomplete="current-password" />
+        </div>
+        <div id="loginError" style="color: var(--red, #ef4444); font-size: 0.8rem; min-height: 1.2em; margin: 8px 0; text-align: center;"></div>
+        <div style="display: flex; gap: 10px; margin-top: 4px;">
+          <button class="btn btn-primary" style="flex: 1;" id="btnSignIn">Sign In</button>
+          <button class="btn btn-ghost" style="flex: 1; border: 1px solid rgba(16,185,129,0.4);" id="btnRegister">Register</button>
+        </div>
         <div class="login-footer" style="margin-top: 20px;">
           <p class="login-terms">
-            By continuing, you agree to store research data on this local device.
+            By continuing, you agree to store research data securely in the cloud.
           </p>
         </div>
       </div>
@@ -216,6 +239,7 @@
           <div class="form-group"><label for="waypointType">Type</label><select id="waypointType"><option value="plot">Plot Center</option><option value="sample">Sample Point</option><option value="landmark">Landmark</option><option value="trail">Trail Marker</option><option value="water">Water Source</option><option value="camp">Camp</option><option value="other">Other</option></select></div>
         </div>
         <div class="form-group"><label for="waypointNotes">Notes</label><input type="text" id="waypointNotes" placeholder="Optional" /></div>
+        <button class="btn btn-primary btn-block mt" id="btnSaveWaypointManual" style="margin-bottom: 1rem;">Save Waypoint</button>
         <div class="waypoint-list" id="waypointList"></div>
       </div>
     </section>
@@ -232,8 +256,9 @@
         </div>
         <div class="form-row">
           <div class="form-group"><label for="quadratShape">Shape</label><select id="quadratShape"><option value="square">Square</option><option value="rectangular">Rectangular</option><option value="circular">Circular</option></select></div>
-          <div class="form-group"><label for="quadratGPS">GPS</label><div class="flex-gap-xs"><input type="text" id="quadratGPS" placeholder="Lat, Long" class="flex-1" /><button class="btn btn-accent btn-sm" id="btnQuadratGPS">GPS</button></div></div>
+          <div class="form-group"><label for="quadratVegType">Vegetation Type</label><select id="quadratVegType"><option value="">—</option><option value="tropical-wet-evergreen">Tropical Wet Evergreen</option><option value="tropical-semi-evergreen">Tropical Semi-Evergreen</option><option value="tropical-moist-deciduous">Tropical Moist Deciduous</option><option value="tropical-dry-deciduous">Tropical Dry Deciduous</option><option value="subtropical-broadleaf">Subtropical Broadleaf</option><option value="subtropical-pine">Subtropical Pine</option><option value="temperate-broadleaf">Temperate Broadleaf</option><option value="temperate-conifer">Temperate Conifer</option><option value="subalpine">Sub-alpine</option><option value="alpine-meadow">Alpine Meadow</option><option value="grassland">Grassland</option><option value="scrubland">Scrubland</option><option value="mangrove">Mangrove</option><option value="riparian">Riparian</option><option value="plantation">Plantation</option><option value="other">Other</option></select></div>
         </div>
+        <div class="form-group"><label for="quadratGPS">GPS</label><div class="flex-gap-xs"><input type="text" id="quadratGPS" placeholder="Lat, Long" class="flex-1" /><button class="btn btn-accent btn-sm" id="btnQuadratGPS">GPS</button></div></div>
       </div>
       <div class="form-card">
         <div class="section-title-row"><h3 class="card-title">Species Entries</h3><button class="btn btn-accent btn-sm" id="btnAddSpecies">＋ Add Species</button></div>
@@ -282,6 +307,7 @@
         <div class="section-title-row"><h3 class="card-title">Topography</h3><button class="btn btn-accent btn-sm" id="btnAutoFillEnv">Auto-Fill</button></div>
         <div class="form-row"><div class="form-group"><label for="envSlope">Slope (°)</label><input type="number" id="envSlope" min="0" max="90" step="0.1" placeholder="0–90" /></div><div class="form-group"><label for="envAspect">Aspect</label><select id="envAspect"><option value="">—</option><option value="N">N</option><option value="NE">NE</option><option value="E">E</option><option value="SE">SE</option><option value="S">S</option><option value="SW">SW</option><option value="W">W</option><option value="NW">NW</option><option value="flat">Flat</option></select></div></div>
         <div class="form-row"><div class="form-group"><label for="envElevation">Elevation (m)</label><input type="number" id="envElevation" min="0" max="9000" placeholder="e.g., 1250" /></div><div class="form-group"><label for="envCanopyCover">Canopy Cover (%)</label><input type="number" id="envCanopyCover" min="0" max="100" placeholder="0–100" /></div></div>
+        <div class="form-group"><label for="envForestType">Forest Type</label><select id="envForestType"><option value="">—</option><option value="tropical-wet-evergreen">Tropical Wet Evergreen</option><option value="tropical-semi-evergreen">Tropical Semi-Evergreen</option><option value="tropical-moist-deciduous">Tropical Moist Deciduous</option><option value="tropical-dry-deciduous">Tropical Dry Deciduous</option><option value="subtropical-broadleaf">Subtropical Broadleaf</option><option value="subtropical-pine">Subtropical Pine</option><option value="temperate-broadleaf">Temperate Broadleaf</option><option value="temperate-conifer">Temperate Conifer</option><option value="subalpine">Sub-alpine</option><option value="alpine">Alpine</option><option value="grassland">Grassland</option><option value="scrubland">Scrubland</option><option value="mangrove">Mangrove</option><option value="plantation">Plantation</option></select></div>
       </div>
       <div class="form-card">
         <h3 class="card-title">Canopy Cover Estimation</h3>
@@ -295,13 +321,15 @@
       </div>
       <div class="form-card">
         <h3 class="card-title">Soil & Moisture</h3>
-        <div class="form-row"><div class="form-group"><label for="envSoilType">Soil</label><select id="envSoilType"><option value="">—</option><option value="clay">Clay</option><option value="silt">Silt</option><option value="sand">Sandy</option><option value="loam">Loam</option><option value="clay-loam">Clay-Loam</option><option value="sandy-loam">Sandy-Loam</option><option value="peat">Peat</option><option value="rocky">Rocky</option></select></div><div class="form-group"><label for="envSoilMoisture">Moisture</label><select id="envSoilMoisture"><option value="">—</option><option value="dry">Dry</option><option value="moist">Moist</option><option value="wet">Wet</option><option value="waterlogged">Waterlogged</option></select></div></div>
-        <div class="form-group"><label for="envSoilColor">Soil Color</label><input type="text" id="envSoilColor" placeholder="e.g., Dark brown" /></div>
+        <div class="form-row"><div class="form-group"><label for="envSoilType">Soil</label><select id="envSoilType"><option value="">—</option><option value="clay">Clay</option><option value="silt">Silt</option><option value="sand">Sandy</option><option value="loam">Loam</option><option value="clay-loam">Clay-Loam</option><option value="sandy-loam">Sandy-Loam</option><option value="silt-loam">Silt-Loam</option><option value="peat">Peat</option><option value="laterite">Laterite</option><option value="alluvial">Alluvial</option><option value="rocky">Rocky</option></select></div><div class="form-group"><label for="envSoilMoisture">Moisture</label><select id="envSoilMoisture"><option value="">—</option><option value="dry">Dry</option><option value="moist">Moist</option><option value="wet">Wet</option><option value="waterlogged">Waterlogged</option></select></div></div>
+        <div class="form-row"><div class="form-group"><label for="envSoilColor">Soil Color</label><input type="text" id="envSoilColor" placeholder="e.g., Dark brown (Munsell: 7.5YR 3/2)" /></div><div class="form-group"><label for="envSoilPH">Soil pH</label><input type="number" id="envSoilPH" min="0" max="14" step="0.1" placeholder="0–14" /></div></div>
+        <div class="form-group"><label for="envLitterDepth">Litter Depth (cm)</label><input type="number" id="envLitterDepth" min="0" step="0.1" placeholder="e.g., 4.5" /></div>
       </div>
       <div class="form-card">
         <h3 class="card-title">Weather</h3>
         <div class="form-row"><div class="form-group"><label for="envTemperature">Temp (°C)</label><input type="number" id="envTemperature" step="0.1" placeholder="e.g., 28.5" /></div><div class="form-group"><label for="envHumidity">Humidity (%)</label><input type="number" id="envHumidity" min="0" max="100" placeholder="0–100" /></div></div>
-        <div class="form-group"><label for="envWeather">Weather</label><select id="envWeather"><option value="">—</option><option value="clear">Clear</option><option value="partly-cloudy">Partly Cloudy</option><option value="overcast">Overcast</option><option value="rain">Rain</option><option value="fog">Fog</option><option value="snow">Snow</option></select></div>
+        <div class="form-row"><div class="form-group"><label for="envWindSpeed">Wind (km/h)</label><input type="number" id="envWindSpeed" min="0" step="0.1" placeholder="e.g., 12" /></div><div class="form-group"><label for="envLightCondition">Light</label><select id="envLightCondition"><option value="">—</option><option value="full-sun">Full Sun</option><option value="partial-shade">Partial Shade</option><option value="deep-shade">Deep Shade</option><option value="dappled">Dappled Light</option></select></div></div>
+        <div class="form-group"><label for="envWeather">Weather</label><select id="envWeather"><option value="">—</option><option value="clear">Clear</option><option value="partly-cloudy">Partly Cloudy</option><option value="overcast">Overcast</option><option value="light-rain">Light Rain</option><option value="rain">Rain</option><option value="heavy-rain">Heavy Rain</option><option value="drizzle">Drizzle</option><option value="fog">Fog</option><option value="mist">Mist</option><option value="hail">Hail</option><option value="snow">Snow</option><option value="thunderstorm">Thunderstorm</option></select></div>
       </div>
       <button class="btn btn-primary btn-block" id="btnSaveEnv">Save Environmental Data</button>
     </section>
@@ -567,17 +595,89 @@
 
       <!-- GUIDE TAB -->
       <div class="settings-tab-pane hidden" id="setGuide">
-        <div class="settings-section"><div class="settings-section-title">Help & Guide</div>
+        <div class="settings-section"><div class="settings-section-title">Quick Start Guide</div>
           <div class="help-section" id="helpSection">
-            <div class="help-item"><div class="help-item-title">1. Getting Started <span class="help-chevron">▶</span></div><div class="help-item-content">Tap <strong>New Survey</strong> on the Tools page to begin. Once a session is created, select any of the 8 tool modules to record field data. Data auto-saves to your offline database.</div></div>
-            <div class="help-item"><div class="help-item-title">2. Map & GPS <span class="help-chevron">▶</span></div><div class="help-item-content">Drop custom waypoints, track your live path, and switch between Satellite, Terrain, and Hybrid layers. Auto-logs altitude, precision, and UTM formatting.</div></div>
-            <div class="help-item"><div class="help-item-title">3. Quadrat Sampling <span class="help-chevron">▶</span></div><div class="help-item-content">Define quadrat dimensions. Enter species lists with Abundance, DBH (cm), Height (m), and Phenology stages.</div></div>
-            <div class="help-item"><div class="help-item-title">4. Belt Transect <span class="help-chevron">▶</span></div><div class="help-item-content">Set heading bearing and total length. Add interval intercepts documenting canopy cover and discrete distance.</div></div>
-            <div class="help-item"><div class="help-item-title">5. Environment <span class="help-chevron">▶</span></div><div class="help-item-content">One-tap auto-fill pulls live Temperature, Humidity, and Altitude. Manually log Slope, Aspect, Canopy Cover, and Soil type.</div></div>
-            <div class="help-item"><div class="help-item-title">6. Disturbance & CBI <span class="help-chevron">▶</span></div><div class="help-item-content">Record human/fire/grazing disturbances (severity 0-5). Calculate Composite Burn Index via Strata grading matrices.</div></div>
-            <div class="help-item"><div class="help-item-title">7. Media (Photos & Voice) <span class="help-chevron">▶</span></div><div class="help-item-content">Capture localized site images (auto-compressed) and record acoustic environmental voice notes directly to the survey.</div></div>
-            <div class="help-item"><div class="help-item-title">8. Analytics Engine <span class="help-chevron">▶</span></div><div class="help-item-content">Calculates Shannon-Wiener Diversity (H'), Simpson’s Index (D), Evenness (J'), and Importance Value Index (IVI). Displays DBH histograms and species accumulation.</div></div>
-            <div class="help-item"><div class="help-item-title">About Developer <span class="help-chevron">▶</span></div><div class="help-item-content"><strong>Forest Capture v3.0</strong><br>Research-Grade Field App<br><br>Khumbemo T Humtsoe<br>khumbemo.t.humtsoe@gmail.com</div></div>
+
+            <div class="help-item"><div class="help-item-title">🚀 Getting Started <span class="help-chevron">▶</span></div><div class="help-item-content">
+              <strong>Step 1:</strong> Go to <em>Tools</em> tab (bottom navigation).<br>
+              <strong>Step 2:</strong> Tap <strong>+ New</strong> to create a survey session. Give it a name (e.g., "Plot A — Sal Forest"), location, and investigator name.<br>
+              <strong>Step 3:</strong> Your new survey becomes the <em>Active Survey</em>. All data you record will be linked to it.<br>
+              <strong>Step 4:</strong> Tap any of the 9 tool cards to start collecting data.<br><br>
+              <em>💡 Tip:</em> You can switch between surveys anytime using the dropdown at the top of the Tools screen.
+            </div></div>
+
+            <div class="help-item"><div class="help-item-title">🗺️ Map &amp; GPS <span class="help-chevron">▶</span></div><div class="help-item-content">
+              • View your <strong>live position</strong> on an interactive map with satellite, terrain, and hybrid layers.<br>
+              • Tap <em>⊕ Locate Me</em> to center on your GPS position.<br>
+              • <strong>Drop waypoints</strong> — name them and they're saved to your survey.<br>
+              • GPS data includes <em>coordinates, accuracy (±m), altitude</em>, and <em>UTM</em> format.<br>
+              • <strong>Offline tiles:</strong> Download map tiles for your area before going to the field.
+            </div></div>
+
+            <div class="help-item"><div class="help-item-title">📐 Quadrat Sampling <span class="help-chevron">▶</span></div><div class="help-item-content">
+              • Set quadrat <strong>size</strong> (m²), <strong>number</strong>, and <strong>shape</strong>.<br>
+              • Add <strong>species entries</strong> with: scientific name, count, DBH (cm), height (m), growth stage, and phenology.<br>
+              • Species autocomplete draws from a built-in database + your survey history.<br>
+              • Each quadrat is saved to a table — tap to edit or delete entries.<br><br>
+              <em>💡 Tip:</em> The Analytics module calculates diversity indices from quadrat data.
+            </div></div>
+
+            <div class="help-item"><div class="help-item-title">📏 Belt Transect <span class="help-chevron">▶</span></div><div class="help-item-content">
+              • Define transect <strong>length</strong>, <strong>width</strong>, and <strong>bearing</strong> (0–360°).<br>
+              • Record <strong>start/end GPS</strong> with one tap.<br>
+              • Add <strong>intercept entries</strong> — species, distance, and canopy cover %.<br>
+              • Multiple transects can be saved per survey.
+            </div></div>
+
+            <div class="help-item"><div class="help-item-title">🌡️ Environment <span class="help-chevron">▶</span></div><div class="help-item-content">
+              • <strong>Auto-Fill</strong> pulls live temperature, humidity, and altitude.<br>
+              • Record slope, aspect, elevation, and canopy cover %.<br>
+              • <strong>Canopy estimation:</strong> Take an upward photo for green fraction proxy.<br>
+              • Log soil type, moisture level, and soil color.
+            </div></div>
+
+            <div class="help-item"><div class="help-item-title">🔥 Disturbance &amp; CBI <span class="help-chevron">▶</span></div><div class="help-item-content">
+              <strong>Disturbance:</strong> Toggle grazing, logging, fire, human activity with severity (1–5).<br><br>
+              <strong>CBI:</strong> Rate burn severity across 5 strata. Composite score (0–3) auto-calculated.<br>
+              0 = Unburned → 3 = High severity burn.
+            </div></div>
+
+            <div class="help-item"><div class="help-item-title">📸 Media <span class="help-chevron">▶</span></div><div class="help-item-content">
+              <strong>Photos:</strong> Auto-compressed and uploaded to cloud. Link to quadrat numbers.<br>
+              <strong>Voice Notes:</strong> Record audio observations in the field.<br>
+              <strong>Field Notes:</strong> Categorized text notes with optional GPS auto-fill.
+            </div></div>
+
+            <div class="help-item"><div class="help-item-title">📊 Analytics <span class="help-chevron">▶</span></div><div class="help-item-content">
+              Auto-computed from quadrat data:<br>
+              • <strong>Shannon-Wiener H′</strong> — diversity index<br>
+              • <strong>Simpson's Index</strong> — dominance measure<br>
+              • <strong>Pielou's J′</strong> — evenness<br>
+              • <strong>IVI</strong> — Importance Value Index<br>
+              • <strong>DBH Histogram</strong> — diameter distribution<br><br>
+              <strong>Compare Surveys:</strong> Side-by-side biodiversity comparison.
+            </div></div>
+
+            <div class="help-item"><div class="help-item-title">📤 Export &amp; Backup <span class="help-chevron">▶</span></div><div class="help-item-content">
+              Export as CSV, JSON, GPX, or HTML report.<br>
+              <strong>Backup:</strong> Export entire database. Restore anytime — data is preserved.
+            </div></div>
+
+            <div class="help-item"><div class="help-item-title">🌿 E-Herbarium <span class="help-chevron">▶</span></div><div class="help-item-content">
+              Create digital herbarium vouchers with full taxonomy, GPS, ecology data, and specimen photos.<br>
+              <strong>Export as .doc</strong> — formatted label ready for printing.
+            </div></div>
+
+            <div class="help-item"><div class="help-item-title">📶 Offline &amp; Sync <span class="help-chevron">▶</span></div><div class="help-item-content">
+              • <strong>Offline-first:</strong> All data saved locally. No internet needed.<br>
+              • Data syncs to Firebase when online.<br>
+              • Login once — session persists offline.<br>
+              • Pre-download map tiles for remote areas.<br><br>
+              <em>💡 Tip:</em> Back up data before remote field sites.
+            </div></div>
+
+            <div class="help-item"><div class="help-item-title">👨‍💻 About <span class="help-chevron">▶</span></div><div class="help-item-content"><strong>Forest Capture v3.1</strong><br>Research-Grade Ecological Field Survey App<br><br>Khumbemo T Humtsoe<br>khumbemo.t.humtsoe@gmail.com</div></div>
+
           </div>
         </div>
       </div>

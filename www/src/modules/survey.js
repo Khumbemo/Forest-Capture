@@ -120,12 +120,21 @@ export async function refreshDataRecords() {
 }
 
 export async function createNewSurvey() {
+  console.log('createNewSurvey: Starting');
   const nameInput = $('#surveyName');
+  if (!nameInput) {
+    console.error('createNewSurvey: surveyName input not found');
+    return false;
+  }
   const name = nameInput.value.trim();
-  if (!name) { toast('Name required', true); return false; }
+  if (!name) {
+    toast('Name required', true);
+    return false;
+  }
 
   const nameLower = name.toLowerCase();
   if (nameLower.includes('mock test')) {
+    console.log('createNewSurvey: Generating mock survey');
     await generateMockSurvey();
     return true;
   }
@@ -134,24 +143,45 @@ export async function createNewSurvey() {
     const sv = {
       id: Date.now().toString(36) + Math.random().toString(36).substr(2, 4),
       name,
-      location: $('#surveyLocation').value.trim(),
-      investigator: $('#surveyInvestigator').value.trim(),
-      date: $('#surveyDate').value,
-      quadrats: [], transects: [], environment: null, disturbance: null, cbi: null, photos: [], notes: [], audioNotes: [], waypoints: []
+      location: ($('#surveyLocation') ? $('#surveyLocation').value.trim() : ''),
+      investigator: ($('#surveyInvestigator') ? $('#surveyInvestigator').value.trim() : ''),
+      date: ($('#surveyDate') ? $('#surveyDate').value : new Date().toISOString().split('T')[0]),
+      quadrats: [],
+      transects: [],
+      environment: null,
+      disturbance: null,
+      cbi: null,
+      photos: [],
+      notes: [],
+      audioNotes: [],
+      waypoints: []
     };
-    if ($('#surveyAutoGPS').checked && curPos.lat) {
-      const fmt = document.getElementById('settingCoordFormat')?.value || 'dd';
+
+    if ($('#surveyAutoGPS') && $('#surveyAutoGPS').checked && curPos.lat) {
+      const fmtEl = document.getElementById('settingCoordFormat');
+      const fmt = fmtEl ? fmtEl.value : 'dd';
       sv.gpsCoords = fmtCoords(curPos.lat, curPos.lng, fmt);
       sv.location = sv.location || sv.gpsCoords;
     }
+
+    console.log('createNewSurvey: Adding survey to Store', sv);
     await Store.add(sv);
+
+    console.log('createNewSurvey: Survey added successfully');
     $('#modalNewSurvey').classList.remove('show');
-    $('#surveyName').value = '';
-    $('#surveyLocation').value = '';
-    $('#surveyInvestigator').value = '';
+
+    // Clear inputs safely
+    ['surveyName', 'surveyLocation', 'surveyInvestigator'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+
     toast(`"${name}" created`);
-    await populateSurveySelector();
-    refreshDataRecords();
+
+    // Run UI refreshes without blocking the main success path too much
+    populateSurveySelector().catch(e => console.warn('Refresh selector failed', e));
+    refreshDataRecords().catch(e => console.warn('Refresh records failed', e));
+
     return true;
   } catch (err) {
       console.error('createNewSurvey error:', err);
@@ -161,6 +191,7 @@ export async function createNewSurvey() {
 }
 
 async function generateMockSurvey() {
+  console.log('generateMockSurvey: start');
   try {
     const mockId = 'mock_' + Date.now().toString(36);
     const survey = {
@@ -187,15 +218,6 @@ async function generateMockSurvey() {
             { name: "Abies balsamea", abundance: 10, dbh: 11.5 },
             { name: "Betula papyrifera", abundance: 5, dbh: 18.2 }
           ]
-        },
-        {
-          number: 3,
-          size: 100,
-          species: [
-            { name: "Picea mariana", abundance: 9, dbh: 16.2 },
-            { name: "Pinus banksiana", abundance: 7, dbh: 24.5 },
-            { name: "Populus tremuloides", abundance: 4, dbh: 20.1 }
-          ]
         }
       ],
       environment: {
@@ -213,19 +235,25 @@ async function generateMockSurvey() {
       },
       notes: [
         { category: "Habitat", text: "Healthy moss layer, signs of recent selective logging.", time: new Date().toISOString() }
-      ]
+      ],
+      transects: [], photos: [], audioNotes: [], waypoints: []
     };
 
-    console.log('Generating mock survey...', survey);
+    console.log('generateMockSurvey: Adding to store');
     await Store.add(survey);
+    console.log('generateMockSurvey: Set active');
     await Store.setActive(mockId);
 
-    $('#modalNewSurvey').classList.remove('show');
-    $('#surveyName').value = '';
+    const modal = $('#modalNewSurvey');
+    if (modal) modal.classList.remove('show');
+
+    const nameInput = $('#surveyName');
+    if (nameInput) nameInput.value = '';
+
     toast("Mock Survey Generated!");
 
-    await populateSurveySelector();
-    if (typeof refreshDataRecords === 'function') refreshDataRecords();
+    populateSurveySelector().catch(e => console.warn(e));
+    refreshDataRecords().catch(e => console.warn(e));
 
     // Trigger analytics refresh if UI module is available
     try {

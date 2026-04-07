@@ -5,6 +5,8 @@ import { Store } from './storage.js';
 import { fmtCoords, curPos } from './gps.js';
 import { dl } from './utils.js';
 import { attachAutocomplete } from './species-autocomplete.js';
+import { storage, ensureAuth } from './firebase.js';
+import { ref, uploadString, getDownloadURL } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js';
 
 let currentImageBase64 = null;
 
@@ -15,7 +17,7 @@ export function initHerbarium() {
   refreshHerbariumTable();
 }
 
-export function handleHerbariumPhoto(file) {
+export async function handleHerbariumPhoto(file) {
   if (!file) {
     currentImageBase64 = null;
     $('#herbPhotoPreview').style.display = 'none';
@@ -24,24 +26,15 @@ export function handleHerbariumPhoto(file) {
   const reader = new FileReader();
   reader.onload = ev => {
     const img = new Image();
-    img.onload = () => {
-      // Compress image via canvas
+    img.onload = async () => {
       const MAX_WIDTH = 800;
       const MAX_HEIGHT = 800;
       let width = img.width;
       let height = img.height;
 
-      if (width > height) {
-        if (width > MAX_WIDTH) {
-          height = Math.round((height *= MAX_WIDTH / width));
-          width = MAX_WIDTH;
-        }
-      } else {
-        if (height > MAX_HEIGHT) {
-          width = Math.round((width *= MAX_HEIGHT / height));
-          height = MAX_HEIGHT;
-        }
-      }
+      const scale = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height, 1);
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
 
       const canvas = document.getElementById('herbCanvas');
       canvas.width = width;
@@ -49,8 +42,26 @@ export function handleHerbariumPhoto(file) {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, width, height);
 
-      currentImageBase64 = canvas.toDataURL('image/jpeg', 0.8);
-      
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+
+      // Try uploading to Firebase Storage
+      const user = await ensureAuth();
+      const s = await Store.getActive();
+      if (user && s) {
+        try {
+          const fileName = `herb_${Date.now()}.jpg`;
+          const storageRef = ref(storage, `users/${user.uid}/surveys/${s.id}/herbarium/${fileName}`);
+          const snapshot = await uploadString(storageRef, dataUrl, 'data_url');
+          const downloadURL = await getDownloadURL(snapshot.ref);
+          currentImageBase64 = downloadURL; // Store URL, not base64
+        } catch (err) {
+          console.warn('Herbarium photo upload failed, using local', err);
+          currentImageBase64 = dataUrl;
+        }
+      } else {
+        currentImageBase64 = dataUrl;
+      }
+
       const imgEl = document.getElementById('herbImgEl');
       imgEl.src = currentImageBase64;
       $('#herbPhotoPreview').style.display = 'flex';
@@ -266,6 +277,11 @@ function exportHerbariumWord(data) {
   `;
   
   const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
   const filename = (data.scientific || 'herbarium').replace(/\W/g, '_') + '_Voucher.doc';
-  dl(URL.createObjectURL(blob), filename);
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }

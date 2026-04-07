@@ -18,14 +18,15 @@ export async function fetchWeather(lat, lng, onUpdate) {
     const wm = { 0: 'Clear', 1: 'Mostly Clear', 2: 'Partly Cloudy', 3: 'Overcast', 45: 'Fog', 48: 'Rime Fog', 51: 'Light Drizzle', 53: 'Drizzle', 55: 'Dense Drizzle', 61: 'Light Rain', 63: 'Rain', 65: 'Heavy Rain', 71: 'Light Snow', 73: 'Snow', 75: 'Heavy Snow', 80: 'Showers', 95: 'Thunderstorm' };
 
     let wi = '☀︎';
-    if (c.weather_code <= 3) wi = '⛅︎';
-    if (c.weather_code <= 0) wi = '☀︎';
-    else if (c.weather_code <= 48) wi = '🌫︎';
-    else if (c.weather_code <= 55) wi = '🌦︎';
-    else if (c.weather_code <= 65) wi = '🌧︎';
-    else if (c.weather_code <= 75) wi = '❄︎';
-    else if (c.weather_code <= 80) wi = '☔︎';
-    else if (c.weather_code >= 95) wi = '⚡︎';
+    const wc = c.weather_code;
+    if (wc >= 95) wi = '⚡︎';
+    else if (wc >= 80) wi = '☔︎';
+    else if (wc >= 71) wi = '❄︎';
+    else if (wc >= 56) wi = '🌧︎';
+    else if (wc >= 51) wi = '🌦︎';
+    else if (wc >= 45) wi = '🌫︎';
+    else if (wc >= 1) wi = '⛅︎';
+    else wi = '☀︎';
 
     setHeaderWeatherIcon(wi);
     if (onUpdate) onUpdate({

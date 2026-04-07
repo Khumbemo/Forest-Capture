@@ -12,9 +12,9 @@ export async function refreshNotes() {
   }
   l.innerHTML = s.notes.map((n, i) => `<div class="note-item"><div class="note-item-header"><span class="note-badge">${esc(n.category)}</span><span>${n.quadrat ? 'Q#' + n.quadrat : ''}</span></div><p>${esc(n.text)}</p><button class="note-item-delete" data-i="${i}">Delete</button></div>`).join('');
   l.querySelectorAll('.note-item-delete').forEach(b => {
-    b.addEventListener('click', () => {
+    b.addEventListener('click', async () => {
       s.notes.splice(+b.dataset.i, 1);
-      Store.update(s);
+      await Store.update(s);
       refreshNotes();
       toast('Deleted');
     });

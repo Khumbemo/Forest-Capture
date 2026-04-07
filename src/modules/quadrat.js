@@ -13,9 +13,10 @@ export function addSpeciesEntry() {
   const inputId = `quadrat-spname-${spCount}`;
   d.innerHTML = `<div class="species-entry-header"><span class="species-entry-num">Species #${spCount}</span><button class="species-remove" type="button">✕</button></div>
 <div class="form-group"><label>Species Name</label><input type="text" class="sp-name" id="${inputId}" placeholder="e.g., Shorea robusta" /></div>
-<div class="form-row"><div class="form-group"><label>Life Stage</label><select class="sp-stage"><option value="tree">Tree</option><option value="sapling">Sapling</option><option value="seedling">Seedling</option></select></div><div class="form-group"><label>Abundance</label><input type="number" class="sp-abundance" min="0" placeholder="Count" /></div></div>
-<div class="form-row"><div class="form-group"><label>DBH (cm)</label><input type="number" class="sp-dbh" min="0" step="0.1" /></div><div class="form-group"><label>Height (m)</label><input type="number" class="sp-height" min="0" step="0.1" /></div></div>
-<div class="form-row"><div class="form-group"><label>Phenology</label><select class="sp-phenology"><option value="">—</option><option value="flowering">Flowering</option><option value="fruiting">Fruiting</option><option value="leaf-flush">Leaf Flush</option><option value="leaf-fall">Leaf Fall</option><option value="dormant">Dormant</option><option value="vegetative">Vegetative</option></select></div><div class="form-group"><label>Health</label><input type="text" class="sp-health" placeholder="e.g., Healthy" /></div></div>`;
+<div class="form-row"><div class="form-group"><label>Life Stage</label><select class="sp-stage"><option value="tree">Tree</option><option value="sapling">Sapling</option><option value="seedling">Seedling</option><option value="climber">Climber</option><option value="shrub">Shrub</option><option value="herb">Herb</option></select></div><div class="form-group"><label>Abundance</label><input type="number" class="sp-abundance" min="0" placeholder="Count" /></div></div>
+<div class="form-row"><div class="form-group"><label>DBH (cm)</label><input type="number" class="sp-dbh" min="0" step="0.1" placeholder="Diameter" /></div><div class="form-group"><label>GBH (cm)</label><input type="number" class="sp-gbh" min="0" step="0.1" placeholder="Girth" /></div></div>
+<div class="form-row"><div class="form-group"><label>Height (m)</label><input type="number" class="sp-height" min="0" step="0.1" /></div><div class="form-group"><label>Crown Class</label><select class="sp-crown"><option value="">—</option><option value="dominant">Dominant</option><option value="codominant">Co-dominant</option><option value="intermediate">Intermediate</option><option value="suppressed">Suppressed</option></select></div></div>
+<div class="form-row"><div class="form-group"><label>Phenology</label><select class="sp-phenology"><option value="">—</option><option value="flowering">Flowering</option><option value="fruiting">Fruiting</option><option value="leaf-flush">Leaf Flush</option><option value="leaf-fall">Leaf Fall</option><option value="dormant">Dormant</option><option value="vegetative">Vegetative</option></select></div><div class="form-group"><label>Health</label><select class="sp-health"><option value="">—</option><option value="healthy">Healthy</option><option value="stressed">Stressed</option><option value="diseased">Diseased</option><option value="dead-standing">Dead Standing</option><option value="fallen">Fallen</option><option value="cut-stump">Cut Stump</option></select></div></div>`;
   d.querySelector('.species-remove').addEventListener('click', () => d.remove());
   $('#speciesList').appendChild(d);
 
@@ -32,15 +33,18 @@ export async function saveQuadrat() {
     number: parseInt($('#quadratNumber').value) || 1,
     size: parseFloat($('#quadratSize').value) || 0,
     shape: $('#quadratShape').value,
+    vegType: $('#quadratVegType') ? $('#quadratVegType').value : '',
     gps: $('#quadratGPS').value,
     species: Array.from(entries).map(e => ({
       name: e.querySelector('.sp-name').value.trim(),
       stage: e.querySelector('.sp-stage').value,
       abundance: parseInt(e.querySelector('.sp-abundance').value) || 0,
       dbh: parseFloat(e.querySelector('.sp-dbh').value) || 0,
+      gbh: parseFloat(e.querySelector('.sp-gbh').value) || 0,
       height: parseFloat(e.querySelector('.sp-height').value) || 0,
+      crownClass: e.querySelector('.sp-crown').value,
       phenology: e.querySelector('.sp-phenology').value,
-      health: e.querySelector('.sp-health').value.trim()
+      health: e.querySelector('.sp-health').value
     }))
   };
 
@@ -92,6 +96,7 @@ export async function refreshQuadratTable() {
           $('#quadratNumber').value = q.number;
           $('#quadratSize').value = q.size;
           $('#quadratShape').value = q.shape;
+          if (q.vegType && $('#quadratVegType')) $('#quadratVegType').value = q.vegType;
           $('#quadratGPS').value = q.gps;
           $('#speciesList').innerHTML = '';
           spCount = 0;
@@ -102,9 +107,11 @@ export async function refreshQuadratTable() {
               last.querySelector('.sp-stage').value = sp.stage;
               last.querySelector('.sp-abundance').value = sp.abundance;
               last.querySelector('.sp-dbh').value = sp.dbh;
+              last.querySelector('.sp-gbh').value = sp.gbh || 0;
               last.querySelector('.sp-height').value = sp.height;
+              last.querySelector('.sp-crown').value = sp.crownClass || '';
               last.querySelector('.sp-phenology').value = sp.phenology;
-              last.querySelector('.sp-health').value = sp.health;
+              last.querySelector('.sp-health').value = sp.health || '';
           });
           $('#btnSaveQuadrat').textContent = 'Update Quadrat Data';
           $('#btnSaveQuadrat').dataset.editIdx = idx;

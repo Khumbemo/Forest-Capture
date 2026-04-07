@@ -245,7 +245,7 @@ function _bindPanelEvents(map) {
         (result.skipped > 0 ? ` (${result.skipped} already cached)` : '') +
         (result.failed  > 0 ? `. ${result.failed} failed.` : '.');
       // Use your app's toast function
-      if (typeof toast !== 'undefined') toast(msg, result.failed > 0 ? 'warning' : 'success');
+      if (typeof toast !== 'undefined') toast(msg, result.failed > 0);
       _loadCacheStats();
     }
   });
@@ -260,7 +260,7 @@ function _bindPanelEvents(map) {
     if (!confirm('Delete all cached map tiles?')) return;
     await clearTileCache();
     _loadCacheStats();
-    if (typeof toast !== 'undefined') toast('Tile cache cleared.', 'success');
+    if (typeof toast !== 'undefined') toast('Tile cache cleared.', false);
   });
 }
 
