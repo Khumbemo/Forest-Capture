@@ -1,6 +1,6 @@
 // src/main.js
 
-import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot } from './modules/ui.js';
+import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot, isOnline, updateConnectivityBanner } from './modules/ui.js';
 import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, resetUserRef } from './modules/storage.js';
 import { startGPS, fmtCoords } from './modules/gps.js';
 import { fetchWeather } from './modules/weather.js';
@@ -65,9 +65,17 @@ async function initApp() {
   startGPS(onGPSUpdate, onGPSError);
   setInterval(updateClock, 1000);
   updateClock();
-  window.addEventListener('online', updateOnlineDot);
-  window.addEventListener('offline', updateOnlineDot);
+  window.addEventListener('online', () => {
+    updateOnlineDot();
+    _updateWelcomeStatus();
+  });
+  window.addEventListener('offline', () => {
+    updateOnlineDot();
+    _updateWelcomeStatus();
+  });
   setTimeout(updateOnlineDot, 500);
+  setTimeout(updateConnectivityBanner, 600);
+  setTimeout(_updateWelcomeStatus, 700);
 
   // Show login if no valid Firebase session exists.
   // Clear legacy anonymous sessions (those stored without a uid).
@@ -139,6 +147,25 @@ function onGPSUpdate(pos) {
   const utmFmt = fmtCoords(pos.lat, pos.lng, 'utm');
   if ($('#gpsOptionUTM')) $('#gpsOptionUTM').textContent = utmFmt;
 
+  // ─── AUTO-FILL GPS FIELDS WHEN SIGNAL IS AVAILABLE ───
+  // Auto-fill coordinate inputs across all forms if they are empty or were auto-filled previously
+  autoFillGPSField('#quadratGPS', fmt);
+  autoFillGPSField('#transectStartGPS', fmt);
+  autoFillGPSField('#herbGPS', pos.alt !== null
+    ? fmt + ` (${Math.round(pos.alt)}m)`
+    : fmt);
+  // Auto-fill waypoint lat/lng fields
+  autoFillGPSField('#waypointLat', pos.lat.toFixed(6));
+  autoFillGPSField('#waypointLng', pos.lng.toFixed(6));
+  // Auto-fill survey location input if it's empty
+  if ($('#surveyLocation') && !$('#surveyLocation').value.trim()) {
+    $('#surveyLocation').dataset.autoFilled = 'true';
+    $('#surveyLocation').value = fmt;
+  }
+
+  // Mark GPS-equipped buttons with a green indicator
+  _setGPSButtonState(true);
+
   fetchWeather(pos.lat, pos.lng, w => {
     if (w) {
       if ($('#teleTemp')) $('#teleTemp').textContent = `${w.temp}${SYMBOLS.temperature}`;
@@ -152,8 +179,58 @@ function onGPSUpdate(pos) {
   });
 }
 
+/**
+ * Auto-fill a GPS text input. Only fills if the field is empty or was previously
+ * auto-filled (tracked via data-auto-filled attribute). This allows manual overrides
+ * to be preserved.
+ */
+function autoFillGPSField(selector, value) {
+  const el = $(selector);
+  if (!el) return;
+  // Only auto-fill if field is empty OR was auto-filled before (not manually edited)
+  if (!el.value.trim() || el.dataset.autoFilled === 'true') {
+    el.value = value;
+    el.dataset.autoFilled = 'true';
+  }
+}
+
+/**
+ * Visual feedback: update GPS fill buttons to show whether GPS signal is active.
+ * When GPS is active, buttons show a green pulse; when not, they show a grey state.
+ */
+function _setGPSButtonState(hasSignal) {
+  const gpsBtns = ['#btnQuadratGPS', '#btnTransectStartGPS', '#btnTransectEndGPS', '#btnHerbGPS', '#btnWaypointGPS'];
+  gpsBtns.forEach(sel => {
+    const btn = $(sel);
+    if (!btn) return;
+    if (hasSignal) {
+      btn.classList.add('gps-active');
+      btn.title = 'GPS Active — tap to fill';
+    } else {
+      btn.classList.remove('gps-active');
+      btn.title = 'No GPS signal — enter manually';
+    }
+  });
+}
+
 function onGPSError(msg) {
   if ($('#gpsOptionStatus')) $('#gpsOptionStatus').textContent = msg;
+  _setGPSButtonState(false);
+}
+
+/**
+ * Updates the dashboard welcome subtitle to reflect the current connectivity status.
+ */
+function _updateWelcomeStatus() {
+  const subtitle = $('.welcome-subtitle');
+  if (!subtitle) return;
+  if (navigator.onLine) {
+    subtitle.textContent = 'Online · GPS auto-fill enabled · Session active';
+    subtitle.style.color = '';
+  } else {
+    subtitle.textContent = 'Offline · Manual entry mode · Data saved locally';
+    subtitle.style.color = 'var(--amber)';
+  }
 }
 
 const screenCallbacks = {
@@ -327,10 +404,29 @@ function setupEventListeners() {
   $('#btnSaveWaypointManual')?.addEventListener('click', async () => {
       const n = $('#waypointName').value.trim();
       if(!n) { toast('Enter waypoint name', true); return; }
-      await addWaypoint(n, $('#waypointType').value, $('#waypointNotes').value.trim());
+      const manualLat = parseFloat($('#waypointLat')?.value);
+      const manualLng = parseFloat($('#waypointLng')?.value);
+      const lat = !isNaN(manualLat) ? manualLat : null;
+      const lng = !isNaN(manualLng) ? manualLng : null;
+      await addWaypoint(n, $('#waypointType').value, $('#waypointNotes').value.trim(), lat, lng);
       $('#waypointName').value = ''; $('#waypointNotes').value = '';
+      if ($('#waypointLat')) $('#waypointLat').value = '';
+      if ($('#waypointLng')) $('#waypointLng').value = '';
       await refreshWpList();
       toast('Waypoint saved');
+  });
+
+  // GPS auto-fill button for waypoint lat/lng fields
+  $('#btnWaypointGPS')?.addEventListener('click', () => {
+      import('./modules/gps.js').then(gps => {
+          if (gps.curPos.lat) {
+              if ($('#waypointLat')) $('#waypointLat').value = gps.curPos.lat.toFixed(6);
+              if ($('#waypointLng')) $('#waypointLng').value = gps.curPos.lng.toFixed(6);
+              toast('GPS coordinates filled');
+          } else {
+              toast('No GPS signal — enter coordinates manually', true);
+          }
+      });
   });
   $('#btnMapSatellite')?.addEventListener('click', () => setMapLayer('sat'));
   $('#btnMapTerrain')?.addEventListener('click', () => setMapLayer('ter'));

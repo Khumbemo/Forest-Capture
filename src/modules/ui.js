@@ -42,6 +42,10 @@ export function setHeaderWeatherIcon(icon) {
   if (el) el.textContent = icon;
 }
 
+export function isOnline() {
+  return navigator.onLine;
+}
+
 export function updateOnlineDot() {
   const d = $('#onlineDot');
   const online = navigator.onLine;
@@ -49,6 +53,29 @@ export function updateOnlineDot() {
     online ? d.classList.remove('offline') : d.classList.add('offline');
   }
   setHeaderWeatherIcon(online ? '📡' : '∅');
+  updateConnectivityBanner();
+}
+
+export function updateConnectivityBanner() {
+  const online = navigator.onLine;
+  let banner = $('#connectivityBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'connectivityBanner';
+    const header = $('#appHeader');
+    if (header && header.parentNode) {
+      header.parentNode.insertBefore(banner, header.nextSibling);
+    } else {
+      document.body.appendChild(banner);
+    }
+  }
+  if (online) {
+    banner.className = 'connectivity-banner online';
+    banner.innerHTML = '<span class="conn-dot online"></span> Online — GPS & weather auto-fill active';
+  } else {
+    banner.className = 'connectivity-banner offline';
+    banner.innerHTML = '<span class="conn-dot offline"></span> Offline — Manual entry mode';
+  }
 }
 
 export function updateClock() {
