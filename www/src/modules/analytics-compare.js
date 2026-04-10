@@ -190,7 +190,7 @@ function _calculateIndices(survey) {
 
   return {
     H: parseFloat(H.toFixed(3)),
-    D: parseFloat(D.toFixed(3)),
+    D: parseFloat((D > 0 ? 1 / D : 0).toFixed(3)),
     J: parseFloat(J.toFixed(3)),
     S,
     N,
@@ -205,7 +205,7 @@ function _renderIndicesChart(data) {
   if (!canvas) return;
   _destroyChart('compareIndicesChart');
 
-  const labels   = ["Shannon H′", "Simpson λ", "Pielou J′"];
+  const labels   = ["Shannon H′", "1/λ (reciprocal)", "Pielou J′"];
   const datasets = data.map(({ survey, color, indices }) => ({
     label:           survey.name,
     data:            [indices.H, indices.D, indices.J],

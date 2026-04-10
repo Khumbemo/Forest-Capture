@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^6.2.0",
+    "eslint": "^10.2.0",
     "puppeteer": "^24.40.0"
   }
 }

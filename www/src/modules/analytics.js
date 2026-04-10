@@ -70,7 +70,7 @@ export function refreshAnalytics(s) {
   if ($('#analyticRichness')) $('#analyticRichness').textContent = S;
   if ($('#analyticShannon')) $('#analyticShannon').textContent = totalN > 0 ? H.toFixed(3) : '0.000';
   if ($('#analyticSimpson')) $('#analyticSimpson').textContent = D.toFixed(3);
-  if ($('#analyticSimpsonDiv')) $('#analyticSimpsonDiv').textContent = (1 - D).toFixed(3);
+  if ($('#analyticSimpsonDiv')) $('#analyticSimpsonDiv').textContent = D > 0 ? (1 / D).toFixed(3) : '0.000';
   if ($('#analyticEvenness')) $('#analyticEvenness').textContent = E.toFixed(3);
   if ($('#analyticTotalN')) $('#analyticTotalN').textContent = totalN;
   if ($('#analyticBasalTotal')) $('#analyticBasalTotal').textContent = totalBA.toFixed(4) + ' m²';

@@ -93,12 +93,17 @@ export async function startRecording(onStart) {
           const storageRef = ref(storage, `users/${user.uid}/surveys/${s.id}/audio/${fileName}`);
           const reader = new FileReader();
           reader.onload = async ev => {
-            const snapshot = await uploadString(storageRef, ev.target.result, 'data_url');
-            const downloadURL = await getDownloadURL(snapshot.ref);
-            s.audioNotes.push({ url: downloadURL, path: snapshot.ref.fullPath, time: new Date().toISOString() });
-            await Store.update(s);
-            refreshAudio();
-            toast('Voice note saved');
+            try {
+              const snapshot = await uploadString(storageRef, ev.target.result, 'data_url');
+              const downloadURL = await getDownloadURL(snapshot.ref);
+              s.audioNotes.push({ url: downloadURL, path: snapshot.ref.fullPath, time: new Date().toISOString() });
+              await Store.update(s);
+              refreshAudio();
+              toast('Voice note saved');
+            } catch (innerErr) {
+              console.error('Audio upload failed internally', innerErr);
+              toast('Voice note save failed to sync', true);
+            }
           };
           reader.readAsDataURL(blob);
         } catch (err) {
