@@ -1,672 +1,369 @@
+﻿commit a703e52783ba45bc76e4e62681ca290d392316e5
+Author: Khumbemo <khumbemothumtsoe@gmail.com>
+Date:   Tue Apr 7 08:54:11 2026 +0530
+
+    feat: add online/offline dual-mode with GPS auto-fill and connectivity banner
+    
+    - Add connectivity banner showing online/offline status below header
+    - Auto-fill GPS coordinates across all forms (quadrat, transect, herbarium, waypoints)
+    - Auto-fill weather data (temperature, humidity, wind) from open-meteo API
+    - Add manual lat/lng input fields for waypoints when GPS unavailable
+    - GPS buttons show green pulse indicator when signal is active
+    - Dashboard welcome subtitle updates dynamically with connectivity state
+    - Smart override protection: manual edits are never overwritten by auto-fill
+    - Waypoint addWaypoint() accepts manual coordinates for offline use
+
 diff --git a/index.css b/index.css
-index ce5a41f..48cd281 100644
+index 5c999ff..c61d488 100644
 --- a/index.css
 +++ b/index.css
-@@ -58,7 +58,7 @@
- /* ---------- Reset ---------- */
- *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
- html{font-size:15px;-webkit-text-size-adjust:100%;}
--body{font-family:'Roboto',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg-deep);color:var(--text-primary);min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;filter:brightness(var(--brightness,1));}
-+body{font-family:'Roboto',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg-deep);color:var(--text-primary);min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;}
- 
- /* =========== SPLASH SCREEN =========== */
- .splash-screen{
-@@ -458,6 +458,8 @@ input,select,textarea,button{font-family:'Roboto',-apple-system,BlinkMacSystemFo
- .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
- .toast.error{background:var(--red);color:white;box-shadow:0 4px 16px rgba(239,68,68,.3);}
- 
-+.brightness-overlay{position:fixed;inset:0;z-index:999999;pointer-events:none;background:rgba(0,0,0,calc(1 - var(--brightness, 1))); transition:background 0.2s ease;}
+@@ -870,3 +870,106 @@ button,.btn,.nav-btn,.stat-card,.map-ctrl-btn,a,input,select,textarea{
+ .overlap-row--shared { background: rgba(52, 211, 153, 0.05); }
+ .overlap-legend { font-size: 11px; color: var(--text-muted); margin-top: 8px; font-style: italic; }
+ .compare-empty { color: var(--text-muted); padding: 32px 0; text-align: center; font-size: 13px; }
 +
- /* Touch responsiveness */
- button,.btn,.nav-btn,.stat-card,.map-ctrl-btn,a,input,select,textarea{
-   -webkit-tap-highlight-color:transparent;
++/* =========== CONNECTIVITY BANNER =========== */
++.connectivity-banner {
++  position: fixed;
++  top: var(--header-h);
++  left: 0; right: 0;
++  z-index: 99;
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  gap: 8px;
++  padding: 6px 16px;
++  font-size: .72rem;
++  font-weight: 600;
++  letter-spacing: .3px;
++  text-transform: uppercase;
++  transition: background .4s ease, color .4s ease;
++  backdrop-filter: blur(10px);
++  -webkit-backdrop-filter: blur(10px);
++}
++.connectivity-banner.online {
++  background: linear-gradient(90deg, rgba(16,185,129,0.15), rgba(34,211,238,0.1));
++  color: var(--emerald);
++  border-bottom: 1px solid rgba(16,185,129,0.25);
++}
++.connectivity-banner.offline {
++  background: linear-gradient(90deg, rgba(239,68,68,0.12), rgba(245,158,11,0.08));
++  color: var(--amber);
++  border-bottom: 1px solid rgba(245,158,11,0.25);
++}
++.conn-dot {
++  width: 8px; height: 8px;
++  border-radius: 50%;
++  display: inline-block;
++  flex-shrink: 0;
++}
++.conn-dot.online {
++  background: var(--emerald);
++  box-shadow: 0 0 8px rgba(16,185,129,0.5);
++  animation: connPulse 2s ease-in-out infinite;
++}
++.conn-dot.offline {
++  background: var(--amber);
++  box-shadow: 0 0 6px rgba(245,158,11,0.4);
++}
++@keyframes connPulse {
++  0%, 100% { opacity: 1; transform: scale(1); }
++  50% { opacity: 0.6; transform: scale(1.3); }
++}
++
++/* Adjust main content to account for banner */
++.app-main {
++  padding-top: calc(var(--header-h) + 28px + 14px) !important;
++}
++
++/* =========== GPS ACTIVE BUTTON INDICATOR =========== */
++.btn.gps-active,
++.gps-fill-btn.gps-active {
++  border-color: var(--emerald) !important;
++  color: var(--emerald) !important;
++  position: relative;
++  overflow: visible;
++}
++.btn.gps-active::before,
++.gps-fill-btn.gps-active::before {
++  content: '';
++  position: absolute;
++  top: -3px; right: -3px;
++  width: 8px; height: 8px;
++  background: var(--emerald);
++  border-radius: 50%;
++  box-shadow: 0 0 6px rgba(16,185,129,0.6);
++  animation: gpsPulse 1.5s ease-in-out infinite;
++}
++@keyframes gpsPulse {
++  0%, 100% { opacity: 1; box-shadow: 0 0 4px rgba(16,185,129,0.4); }
++  50% { opacity: 0.5; box-shadow: 0 0 10px rgba(16,185,129,0.8); }
++}
++
++/* GPS fill button base */
++.gps-fill-btn {
++  white-space: nowrap;
++  min-width: 60px;
++}
++@media(max-width:480px) {
++  .connectivity-banner { font-size: .65rem; padding: 5px 12px; }
++}
++@media(min-width:600px) {
++  .connectivity-banner {
++    max-width: 500px;
++    margin: 0 auto;
++    left: 50% !important;
++    transform: translateX(-50%);
++    right: auto !important;
++    width: 100%;
++    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
++  }
++}
++
++@keyframes fadeUp {
++  from { opacity: 0; transform: translateY(8px); }
++  to   { opacity: 1; transform: translateY(0); }
++}
 diff --git a/index.html b/index.html
-index d6a6cde..68e9b28 100644
+index 2c2d1bb..f49b72b 100644
 --- a/index.html
 +++ b/index.html
-@@ -19,21 +19,6 @@
- </head>
- <body>
- 
--  <!-- SW cache-buster: runs immediately, before anything else -->
--  <script>
--    // Unregister ALL service workers and wipe caches so updates are always picked up
--    if ('serviceWorker' in navigator) {
--      navigator.serviceWorker.getRegistrations().then(function(regs) {
--        regs.forEach(function(r) { r.unregister(); });
--      });
--    }
--    if ('caches' in window) {
--      caches.keys().then(function(names) {
--        names.forEach(function(n) { caches.delete(n); });
--      });
--    }
--  </script>
--
-   <!-- SPLASH SCREEN -->
-   <div class="splash-screen" id="splashScreen">
-     <div class="splash-leaf"><svg viewBox="0 0 24 24" width="72" height="72" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 5,10 8,10 3,17 8,17 6,22 18,22 16,17 21,17 16,10 19,10" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" fill="none"/><line x1="12" y1="17" x2="12" y2="22" stroke="currentColor" stroke-width="1.5"/></svg></div>
-@@ -42,7 +27,6 @@
-     <div class="splash-bar"><div class="splash-bar-fill"></div></div>
-   </div>
- 
--  <!-- Splash dismiss — zero-dependency, no module imports needed -->
-   <script>
-     (function () {
-       function hideSplash() {
-@@ -55,9 +39,7 @@
-         s.style.pointerEvents = 'none';
-         setTimeout(function () { if (s && s.parentNode) s.parentNode.removeChild(s); }, 850);
-       }
--      // Auto-dismiss after 2.8s
-       setTimeout(hideSplash, 2800);
--      // Also dismiss on any tap/click (tap anywhere to skip)
-       document.addEventListener('click', function onC() {
-         hideSplash();
-         document.removeEventListener('click', onC);
-@@ -71,27 +53,19 @@
-       <div class="login-header">
-         <div class="login-logo"><svg viewBox="0 0 24 24" width="60" height="60" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 5,10 8,10 3,17 8,17 6,22 18,22 16,17 21,17 16,10 19,10" stroke="var(--emerald)" stroke-width="1.2" stroke-linejoin="round" fill="none"/><line x1="12" y1="17" x2="12" y2="22" stroke="var(--emerald)" stroke-width="1.5"/></svg></div>
-         <h1 class="login-title">Forest Capture</h1>
--        <p class="login-subtitle">Ecological Field Survey</p>
-+        <p class="login-subtitle">Ecological Field Survey (Offline Mode)</p>
-       </div>
-       <div class="login-form-card">
-+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px; text-align: center;">Data is stored locally on this device. No cloud sync is active in this version.</p>
-         <div class="login-form-group">
--          <label for="loginEmail" class="login-label">Email</label>
--          <input type="email" id="loginEmail" placeholder="researcher@example.com" class="login-input" />
-+          <label for="loginEmail" class="login-label">Researcher Name / ID</label>
-+          <input type="text" id="loginEmail" placeholder="e.g., John Doe" class="login-input" />
+@@ -239,6 +239,11 @@
+           <div class="form-group"><label for="waypointType">Type</label><select id="waypointType"><option value="plot">Plot Center</option><option value="sample">Sample Point</option><option value="landmark">Landmark</option><option value="trail">Trail Marker</option><option value="water">Water Source</option><option value="camp">Camp</option><option value="other">Other</option></select></div>
          </div>
--        <div class="login-form-group-last">
--          <label for="loginPassword" class="login-label">Password</label>
--          <input type="password" id="loginPassword" placeholder="••••••••" class="login-input" />
--        </div>
--        <button class="btn btn-primary btn-block login-btn-signin" id="btnSignIn">Sign In</button>
--        <button class="btn btn-google" id="btnGoogleSignIn">
--          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M44.5 20H24v8.5h11.7C34.2 33.1 29.8 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9l6.3-6.3C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.7-8 19.7-20 0-1.3-.1-2.7-.2-4z"/></svg>
--          Continue with Google
--        </button>
--        <div class="login-footer">
--          <button class="btn-guest" id="btnGuestLogin">Continue as Guest →</button>
--        </div>
--        <div class="login-terms">
--          By continuing, you agree to our <a href="#" class="login-link">Terms of Service</a> &amp; <a href="#" class="login-link">Privacy Policy</a>.
-+        <button class="btn btn-primary btn-block login-btn-signin" id="btnSignIn">Start Session</button>
-+        <div class="login-footer" style="margin-top: 20px;">
-+          <p class="login-terms">
-+            By continuing, you agree to store research data on this local device.
-+          </p>
-         </div>
-       </div>
-     </div>
-@@ -183,9 +157,22 @@
- 
-     <!-- ===== TOOLS MENU ===== -->
-     <section class="screen" id="screenToolbar">
--      <div class="toolbar-new-survey-container">
--        <button class="btn btn-primary btn-new-survey-custom" id="btnNewSurvey"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New Survey</button>
-+      <!-- Survey Selector (Switcher) Component -->
-+      <div class="survey-switcher-container" style="margin-bottom:var(--sp-md);">
-+        <div class="form-group" style="margin-bottom:0;">
-+          <label style="font-size:0.75rem; color:var(--emerald); text-transform:uppercase; letter-spacing:0.5px; font-weight:700; margin-bottom:4px; display:block;">Active Survey Session</label>
-+          <div style="display:flex; gap:8px;">
-+            <select id="surveySelector" style="flex:1; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:var(--text); border-radius:8px; padding:10px; font-weight:600;">
-+              <option value="">Select a survey...</option>
-+            </select>
-+            <button class="btn btn-primary" id="btnNewSurvey" style="padding:0 16px; display:flex; align-items:center; gap:4px; font-size:0.85rem; height:42px;">
-+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="3" fill="none"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-+              New
-+            </button>
-+          </div>
+         <div class="form-group"><label for="waypointNotes">Notes</label><input type="text" id="waypointNotes" placeholder="Optional" /></div>
++        <div class="form-row">
++          <div class="form-group"><label for="waypointLat">Latitude</label><input type="text" id="waypointLat" placeholder="e.g., 25.6120" /></div>
++          <div class="form-group"><label for="waypointLng">Longitude</label><input type="text" id="waypointLng" placeholder="e.g., 93.7320" /></div>
++          <div class="form-group" style="flex:0 0 auto; align-self:flex-end;"><button class="btn btn-accent btn-sm gps-fill-btn" id="btnWaypointGPS" title="Fill from GPS">Γèò GPS</button></div>
 +        </div>
+         <button class="btn btn-primary btn-block mt" id="btnSaveWaypointManual" style="margin-bottom: 1rem;">Save Waypoint</button>
+         <div class="waypoint-list" id="waypointList"></div>
        </div>
-+
-       <div class="stats-grid" id="toolsMenuGrid">
-         <div class="stat-card" data-tool="screenMap"><div class="stat-icon"><svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg></div><div class="stat-label">Map &amp; GPS</div></div>
-         <div class="stat-card" data-tool="screenQuadrat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/></svg></div><div class="stat-label">Quadrat</div></div>
-@@ -429,19 +416,11 @@
-       </div>
-       <div class="form-card">
-         <h3 class="card-title">Android APK</h3>
--        <p class="card-desc">The installable Android package is produced on your computer with Capacitor and Android Studio (this screen cannot download an APK by itself).</p>
-+        <p class="card-desc">The installable Android package is produced on your computer with Capacitor and Android Studio.</p>
-         <div class="apk-path-box apk-path-box-custom">
-           <div class="apk-path-label">After a debug build, your APK is usually here:</div>
--          <strong id="apkPathDisplay">Forest Logger App\android\app\build\outputs\apk\debug\app-debug.apk</strong>
-+          <strong id="apkPathDisplay">android\app\build\outputs\apk\debug\app-debug.apk</strong>
-         </div>
--        <ol class="apk-steps-list">
--          <li>Install <strong>Node.js</strong> and <strong>Android Studio</strong> (with Android SDK).</li>
--          <li>Open a terminal in the app folder, run: <code class="code-inline">npm install</code></li>
--          <li>First time only (no <code class="code-inline">android</code> folder): <code class="code-inline">npx cap add android</code></li>
--          <li>Then: <code class="code-inline">npm run cap:sync</code></li>
--          <li>Then: <code class="code-inline">npx cap open android</code></li>
--          <li>In Android Studio: <strong>Build → Build Bundle(s) / APK(s) → Build APK(s)</strong>.</li>
--        </ol>
-       </div>
-       <div class="form-card">
-         <h3 class="card-title">Backup & Restore</h3>
-@@ -453,7 +432,12 @@
-         </div>
-       </div>
-       <div class="form-card"><h3 class="card-title">Preview</h3><div class="data-preview" id="dataPreview"><div class="empty-state small"><p>Select a survey</p></div></div></div>
--      <div class="form-card danger-zone"><h3 class="card-title">Danger Zone</h3><button class="btn btn-danger btn-block" id="btnClearAll">Clear All Data</button></div>
-+      <div class="form-card danger-zone">
-+          <h3 class="card-title">Survey Management</h3>
-+          <p class="card-desc" style="color: var(--red);">Danger zone: Permanent deletion of data.</p>
-+          <button class="btn btn-danger btn-block" id="btnDeleteCurrentSurvey">Delete Current Survey</button>
-+          <button class="btn btn-danger btn-block" style="margin-top: 10px;" id="btnClearAll">Clear All Surveys</button>
-+      </div>
-     </section>
- 
-   </main>
-@@ -541,10 +525,10 @@
-   </div>
- 
-   <div class="toast" id="toast"></div>
-+  <div class="brightness-overlay" id="brightnessOverlay"></div>
-   <script src="./vendor/leaflet/leaflet.js"></script>
-   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-   <script type="module" src="./src/main.js"></script>
--  <!-- app.js removed: replaced by modular src/main.js -->
-   <script>
-     if ('serviceWorker' in navigator) {
-       window.addEventListener('load', () => {
-diff --git a/prep-www.js b/prep-www.js
-index 05a3833..efea2ac 100644
---- a/prep-www.js
-+++ b/prep-www.js
-@@ -15,10 +15,15 @@ const copyFiles = [
- ];
- 
- const copyDirs = [
--  'src'
-+  'src',
-+  'vendor'
- ];
- 
--if (!fs.existsSync(www)) fs.mkdirSync(www, { recursive: true });
-+if (fs.existsSync(www)) {
-+    // Clean www directory
-+    fs.rmSync(www, { recursive: true, force: true });
-+}
-+fs.mkdirSync(www, { recursive: true });
- 
- // Copy individual files
- for (const f of copyFiles) {
 diff --git a/src/main.js b/src/main.js
-index c19132a..ed26192 100644
+index 3f273f6..2734a3c 100644
 --- a/src/main.js
 +++ b/src/main.js
-@@ -4,7 +4,7 @@ import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, update
- import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, migrateFromLocalStorage } from './modules/storage.js';
+@@ -1,6 +1,6 @@
+ // src/main.js
+ 
+-import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot } from './modules/ui.js';
++import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot, isOnline, updateConnectivityBanner } from './modules/ui.js';
+ import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, resetUserRef } from './modules/storage.js';
  import { startGPS, fmtCoords } from './modules/gps.js';
  import { fetchWeather } from './modules/weather.js';
--import { refreshDataRecords, createNewSurvey } from './modules/survey.js';
-+import { refreshDataRecords, createNewSurvey, populateSurveySelector } from './modules/survey.js';
- import { SYMBOLS } from './modules/symbols.js';
- import { initMap, locateMe, setMapLayer, addWaypoint } from './modules/map.js';
- import { refreshWpList } from './modules/waypoints.js';
-@@ -25,7 +25,9 @@ async function initApp() {
-   try {
-     await migrateFromLocalStorage();
-     await loadAppData();
--    loadSurveyHistory(await Store.getAll('surveys'));
-+    const surveys = await Store.getSurveys();
-+    loadSurveyHistory(surveys);
-+    await populateSurveySelector();
-   } catch (e) {
-     console.error('App: Init error', e);
-   }
-@@ -133,27 +135,44 @@ async function updateBars() {
-     const el = document.getElementById(id);
-     if (el) el.textContent = n;
+@@ -65,9 +65,17 @@ async function initApp() {
+   startGPS(onGPSUpdate, onGPSError);
+   setInterval(updateClock, 1000);
+   updateClock();
+-  window.addEventListener('online', updateOnlineDot);
+-  window.addEventListener('offline', updateOnlineDot);
++  window.addEventListener('online', () => {
++    updateOnlineDot();
++    _updateWelcomeStatus();
++  });
++  window.addEventListener('offline', () => {
++    updateOnlineDot();
++    _updateWelcomeStatus();
++  });
+   setTimeout(updateOnlineDot, 500);
++  setTimeout(updateConnectivityBanner, 600);
++  setTimeout(_updateWelcomeStatus, 700);
+ 
+   // Show login if no valid Firebase session exists.
+   // Clear legacy anonymous sessions (those stored without a uid).
+@@ -139,6 +147,25 @@ function onGPSUpdate(pos) {
+   const utmFmt = fmtCoords(pos.lat, pos.lng, 'utm');
+   if ($('#gpsOptionUTM')) $('#gpsOptionUTM').textContent = utmFmt;
+ 
++  // ΓöÇΓöÇΓöÇ AUTO-FILL GPS FIELDS WHEN SIGNAL IS AVAILABLE ΓöÇΓöÇΓöÇ
++  // Auto-fill coordinate inputs across all forms if they are empty or were auto-filled previously
++  autoFillGPSField('#quadratGPS', fmt);
++  autoFillGPSField('#transectStartGPS', fmt);
++  autoFillGPSField('#herbGPS', pos.alt !== null
++    ? fmt + ` (${Math.round(pos.alt)}m)`
++    : fmt);
++  // Auto-fill waypoint lat/lng fields
++  autoFillGPSField('#waypointLat', pos.lat.toFixed(6));
++  autoFillGPSField('#waypointLng', pos.lng.toFixed(6));
++  // Auto-fill survey location input if it's empty
++  if ($('#surveyLocation') && !$('#surveyLocation').value.trim()) {
++    $('#surveyLocation').dataset.autoFilled = 'true';
++    $('#surveyLocation').value = fmt;
++  }
++
++  // Mark GPS-equipped buttons with a green indicator
++  _setGPSButtonState(true);
++
+   fetchWeather(pos.lat, pos.lng, w => {
+     if (w) {
+       if ($('#teleTemp')) $('#teleTemp').textContent = `${w.temp}${SYMBOLS.temperature}`;
+@@ -152,8 +179,58 @@ function onGPSUpdate(pos) {
    });
-+  await populateSurveySelector();
  }
  
- function setupEventListeners() {
--  $$('.nav-btn').forEach(b => b.addEventListener('click', () => switchScreen(b.dataset.screen, screenCallbacks)));
-+  $$('.nav-btn').forEach(b => {
-+    b.onclick = (e) => {
-+      e.preventDefault();
-+      switchScreen(b.dataset.screen, screenCallbacks);
-+    };
-+  });
-   $$('.stat-card[data-tool]').forEach(b => b.addEventListener('click', () => switchScreen(b.dataset.tool, screenCallbacks)));
-   if ($('#btnHeaderBack')) $('#btnHeaderBack').addEventListener('click', () => switchScreen('screenToolbar', screenCallbacks));
- 
-+  // Survey Selector
-+  $('#surveySelector')?.addEventListener('change', async (e) => {
-+    const id = e.target.value;
-+    if (id) {
-+      await Store.setActive(id);
-+      await updateBars();
-+      toast('Survey switched');
++/**
++ * Auto-fill a GPS text input. Only fills if the field is empty or was previously
++ * auto-filled (tracked via data-auto-filled attribute). This allows manual overrides
++ * to be preserved.
++ */
++function autoFillGPSField(selector, value) {
++  const el = $(selector);
++  if (!el) return;
++  // Only auto-fill if field is empty OR was auto-filled before (not manually edited)
++  if (!el.value.trim() || el.dataset.autoFilled === 'true') {
++    el.value = value;
++    el.dataset.autoFilled = 'true';
++  }
++}
++
++/**
++ * Visual feedback: update GPS fill buttons to show whether GPS signal is active.
++ * When GPS is active, buttons show a green pulse; when not, they show a grey state.
++ */
++function _setGPSButtonState(hasSignal) {
++  const gpsBtns = ['#btnQuadratGPS', '#btnTransectStartGPS', '#btnTransectEndGPS', '#btnHerbGPS', '#btnWaypointGPS'];
++  gpsBtns.forEach(sel => {
++    const btn = $(sel);
++    if (!btn) return;
++    if (hasSignal) {
++      btn.classList.add('gps-active');
++      btn.title = 'GPS Active ΓÇö tap to fill';
++    } else {
++      btn.classList.remove('gps-active');
++      btn.title = 'No GPS signal ΓÇö enter manually';
 +    }
 +  });
++}
 +
-   // Login
-   $('#btnSignIn')?.addEventListener('click', () => {
--    const e = $('#loginEmail').value.trim();
--    const p = $('#loginPassword').value;
--    if (!e || !p) { alert('Please enter email and password.'); return; }
--    localStorage.setItem('fc_user', JSON.stringify({ email: e, time: Date.now() }));
-+    const name = $('#loginEmail').value.trim();
-+    if (!name) { alert('Please enter your name or researcher ID.'); return; }
-+    localStorage.setItem('fc_user', JSON.stringify({ name, time: Date.now() }));
-     hideLogin();
-+    toast(`Welcome, ${name}`);
-   });
-   $('#btnGoogleSignIn')?.addEventListener('click', () => {
--    toast('Google sign-in not available in offline mode. Continue as Guest.');
-+    toast('Google sign-in not available in offline mode. Use local login.');
-   });
-   $('#btnGuestLogin')?.addEventListener('click', () => {
-     localStorage.setItem('fc_user', JSON.stringify({ guest: true, time: Date.now() }));
-     hideLogin();
-+    toast('Logged in as Guest');
-   });
+ function onGPSError(msg) {
+   if ($('#gpsOptionStatus')) $('#gpsOptionStatus').textContent = msg;
++  _setGPSButtonState(false);
++}
++
++/**
++ * Updates the dashboard welcome subtitle to reflect the current connectivity status.
++ */
++function _updateWelcomeStatus() {
++  const subtitle = $('.welcome-subtitle');
++  if (!subtitle) return;
++  if (navigator.onLine) {
++    subtitle.textContent = 'Online ┬╖ GPS auto-fill enabled ┬╖ Session active';
++    subtitle.style.color = '';
++  } else {
++    subtitle.textContent = 'Offline ┬╖ Manual entry mode ┬╖ Data saved locally';
++    subtitle.style.color = 'var(--amber)';
++  }
+ }
  
-   // Survey
-@@ -287,6 +306,20 @@ function setupEventListeners() {
+ const screenCallbacks = {
+@@ -327,11 +404,30 @@ function setupEventListeners() {
+   $('#btnSaveWaypointManual')?.addEventListener('click', async () => {
+       const n = $('#waypointName').value.trim();
+       if(!n) { toast('Enter waypoint name', true); return; }
+-      await addWaypoint(n, $('#waypointType').value, $('#waypointNotes').value.trim());
++      const manualLat = parseFloat($('#waypointLat')?.value);
++      const manualLng = parseFloat($('#waypointLng')?.value);
++      const lat = !isNaN(manualLat) ? manualLat : null;
++      const lng = !isNaN(manualLng) ? manualLng : null;
++      await addWaypoint(n, $('#waypointType').value, $('#waypointNotes').value.trim(), lat, lng);
+       $('#waypointName').value = ''; $('#waypointNotes').value = '';
++      if ($('#waypointLat')) $('#waypointLat').value = '';
++      if ($('#waypointLng')) $('#waypointLng').value = '';
+       await refreshWpList();
+       toast('Waypoint saved');
    });
- 
-   // Notes
-+  $('#btnGeocodeNotes')?.addEventListener('click', () => {
-+      import('./modules/gps.js').then(async (gps) => {
-+          if (!gps.curPos.lat) { toast('No GPS', true); return; }
-+          toast('Fetching location...');
-+          const loc = await gps.reverseGeocode(gps.curPos.lat, gps.curPos.lng);
-+          if (loc) {
-+              const el = $('#noteContent');
-+              el.value = (el.value + (el.value ? '\n\n' : '') + 'Location: ' + loc).trim();
-+              toast('Location auto-filled');
++
++  // GPS auto-fill button for waypoint lat/lng fields
++  $('#btnWaypointGPS')?.addEventListener('click', () => {
++      import('./modules/gps.js').then(gps => {
++          if (gps.curPos.lat) {
++              if ($('#waypointLat')) $('#waypointLat').value = gps.curPos.lat.toFixed(6);
++              if ($('#waypointLng')) $('#waypointLng').value = gps.curPos.lng.toFixed(6);
++              toast('GPS coordinates filled');
 +          } else {
-+              toast('Failed to reverse geocode', true);
++              toast('No GPS signal ΓÇö enter coordinates manually', true);
 +          }
 +      });
 +  });
-   $('#btnAddNote')?.addEventListener('click', async () => {
-       await addNote();
-       switchScreen('screenToolbar', screenCallbacks);
-@@ -316,7 +349,17 @@ function setupEventListeners() {
-     try { await restoreData(file); } catch (err) { toast(err.message, true); }
-     finally { e.target.value = ''; }
-   });
--  $('#btnClearAll')?.addEventListener('click', async () => { if(confirm('Delete ALL?')) { await Store.clearAll(); location.reload(); } });
-+  $('#btnDeleteCurrentSurvey')?.addEventListener('click', async () => {
-+      const s = await Store.getActive();
-+      if (!s) { toast('No active survey to delete'); return; }
-+      if (confirm(`Delete current survey "${s.name}" permanently?`)) {
-+          await Store.del(s.id);
-+          await updateBars();
-+          switchScreen('screenDashboard', screenCallbacks);
-+          toast('Survey deleted');
-+      }
-+  });
-+  $('#btnClearAll')?.addEventListener('click', async () => { if(confirm('Delete ALL surveys?')) { await Store.clearAll(); location.reload(); } });
-   $('#btnClearAllSettings')?.addEventListener('click', async () => { if(confirm('Delete ALL?')) { await Store.clearAll(); location.reload(); } });
- 
-   // Settings
-diff --git a/src/modules/quadrat.js b/src/modules/quadrat.js
-index 63bda22..0e1fe4f 100644
---- a/src/modules/quadrat.js
-+++ b/src/modules/quadrat.js
-@@ -2,7 +2,6 @@
- 
- import { $, $$, toast, esc } from './ui.js';
- import { Store } from './storage.js';
--import { fmtCoords, curPos } from './gps.js';
- import { attachAutocomplete } from './species-autocomplete.js';
- 
- let spCount = 0;
-@@ -44,14 +43,25 @@ export async function saveQuadrat() {
-       health: e.querySelector('.sp-health').value.trim()
-     }))
-   };
-+
-   if (!s.quadrats) s.quadrats = [];
--  s.quadrats.push(q);
-+
-+  const editIdx = $('#btnSaveQuadrat').dataset.editIdx;
-+  if (editIdx !== undefined && editIdx !== "") {
-+      s.quadrats[parseInt(editIdx)] = q;
-+      toast(`Quadrat #${q.number} updated`);
-+      delete $('#btnSaveQuadrat').dataset.editIdx;
-+      $('#btnSaveQuadrat').textContent = 'Save Quadrat Data';
-+  } else {
-+      s.quadrats.push(q);
-+      toast(`Quadrat #${q.number} saved`);
-+      $('#quadratNumber').value = q.number + 1;
-+  }
-+
-   await Store.update(s);
--  $('#quadratNumber').value = q.number + 1;
-   $('#speciesList').innerHTML = '';
-   spCount = 0;
-   addSpeciesEntry();
--  toast(`Quadrat #${q.number} saved`);
-   refreshQuadratTable();
+   $('#btnMapSatellite')?.addEventListener('click', () => setMapLayer('sat'));
+   $('#btnMapTerrain')?.addEventListener('click', () => setMapLayer('ter'));
+   $('#btnMapHybrid')?.addEventListener('click', () => setMapLayer('hyb'));
+diff --git a/src/modules/map.js b/src/modules/map.js
+index b4b235e..6566927 100644
+--- a/src/modules/map.js
++++ b/src/modules/map.js
+@@ -71,10 +71,25 @@ export function setMapLayer(type) {
+     }
  }
  
-@@ -69,25 +79,49 @@ export async function refreshQuadratTable() {
-     sp.forEach((x, si) => {
-       const first = si === 0;
-       const badge = x.stage && x.stage !== '—' ? `<span class="stage-badge ${esc(x.stage)}">${esc(x.stage)}</span>` : '—';
--      r += `<tr>${first ? `<td>${q.number}</td><td>${q.size}</td>` : '<td></td><td></td>'}<td class="species-name-cell">${esc(x.name || '—')}</td><td>${badge}</td><td>${x.phenology || '—'}</td><td>${x.abundance || '—'}</td><td>${x.dbh || '—'}</td><td>${x.height || '—'}</td>${first ? `<td class="action-btns"><button data-action="dq" data-i="${qi}">🗑️</button></td>` : '<td></td>'}</tr>`;
-+      r += `<tr>${first ? `<td>${q.number}</td><td>${q.size}</td>` : '<td></td><td></td>'}<td class="species-name-cell">${esc(x.name || '—')}</td><td>${badge}</td><td>${x.phenology || '—'}</td><td>${x.abundance || '—'}</td><td>${x.dbh || '—'}</td><td>${x.height || '—'}</td>${first ? `<td class="action-btns"><button data-action="eq" data-i="${qi}" title="Edit">✏️</button><button data-action="dq" data-i="${qi}" title="Delete">🗑️</button></td>` : '<td></td>'}</tr>`;
-     });
-   });
-   tb.innerHTML = r;
+-export async function addWaypoint(name, type, notes = '') {
+-    if (!curPos.lat) { toast('No GPS', true); return; }
++export async function addWaypoint(name, type, notes = '', manualLat = null, manualLng = null) {
++    let lat = manualLat || curPos.lat;
++    let lng = manualLng || curPos.lng;
 +
-+  // Edit handler
-+  tb.querySelectorAll('[data-action="eq"]').forEach(b => {
-+      b.onclick = async () => {
-+          const idx = +b.dataset.i;
-+          const q = s.quadrats[idx];
-+          $('#quadratNumber').value = q.number;
-+          $('#quadratSize').value = q.size;
-+          $('#quadratShape').value = q.shape;
-+          $('#quadratGPS').value = q.gps;
-+          $('#speciesList').innerHTML = '';
-+          spCount = 0;
-+          q.species.forEach(sp => {
-+              addSpeciesEntry();
-+              const last = $('#speciesList').lastElementChild;
-+              last.querySelector('.sp-name').value = sp.name;
-+              last.querySelector('.sp-stage').value = sp.stage;
-+              last.querySelector('.sp-abundance').value = sp.abundance;
-+              last.querySelector('.sp-dbh').value = sp.dbh;
-+              last.querySelector('.sp-height').value = sp.height;
-+              last.querySelector('.sp-phenology').value = sp.phenology;
-+              last.querySelector('.sp-health').value = sp.health;
-+          });
-+          $('#btnSaveQuadrat').textContent = 'Update Quadrat Data';
-+          $('#btnSaveQuadrat').dataset.editIdx = idx;
-+          $('#screenQuadrat').scrollTo({ top: 0, behavior: 'smooth' });
-+          toast('Quadrat loaded for editing');
-+      };
-+  });
++    if (!lat || !lng) {
++        // Prompt for manual coordinates when GPS is unavailable
++        const manual = prompt('No GPS signal. Enter coordinates manually (lat, lng):');
++        if (!manual) return;
++        const parts = manual.split(',').map(s => parseFloat(s.trim()));
++        if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) {
++            toast('Invalid coordinates. Use format: lat, lng', true);
++            return;
++        }
++        lat = parts[0];
++        lng = parts[1];
++    }
 +
-+  // Delete handler
-   tb.querySelectorAll('[data-action="dq"]').forEach(b => {
--    b.addEventListener('click', async () => {
-+    b.onclick = async () => {
-       const idx = +b.dataset.i;
--      const removed = s.quadrats.splice(idx, 1)[0];
-+      if (!confirm(`Delete Quadrat #${s.quadrats[idx].number}?`)) return;
-+      s.quadrats.splice(idx, 1);
-       await Store.update(s);
-       refreshQuadratTable();
--      toast(`Quadrat #${removed.number} deleted`, false, {
--          label: 'Undo',
--          callback: async () => {
--              s.quadrats.splice(idx, 0, removed);
--              await Store.update(s);
--              refreshQuadratTable();
--              toast('Restored');
--          }
--      });
--    });
-+      toast('Quadrat deleted');
-+    };
-   });
- }
-diff --git a/src/modules/species-autocomplete.js b/src/modules/species-autocomplete.js
-index 91fcaea..59dfa9f 100644
---- a/src/modules/species-autocomplete.js
-+++ b/src/modules/species-autocomplete.js
-@@ -26,22 +26,22 @@ function _addLearnedEntry(sp) {
-   const key = sp.name.toLowerCase().trim();
-   _learnedSpecies.set(key, {
-     scientific: sp.name,
--    common:     sp.common  || '',
--    family:     sp.family      || '',
--    genus:      sp.genus       || sp.name.split(' ')[0] || '',
--    source:     'history',
--    count:      (_learnedSpecies.get(key)?.count || 0) + 1,
-+    common: sp.common || '',
-+    family: sp.family || '',
-+    genus: sp.genus || sp.name.split(' ')[0] || '',
-+    source: 'history',
-+    count: (_learnedSpecies.get(key)?.count || 0) + 1,
-   });
+     const w = await getWps();
+-    w.push({ name: name || 'Waypoint', type: type || 'plot', lat: curPos.lat, lng: curPos.lng, notes, time: new Date().toISOString() });
++    w.push({ name: name || 'Waypoint', type: type || 'plot', lat, lng, notes, time: new Date().toISOString() });
+     await saveWps(w);
+     await refreshMapWps();
+     toast('Waypoint added');
+diff --git a/src/modules/ui.js b/src/modules/ui.js
+index bfa5941..f05aace 100644
+--- a/src/modules/ui.js
++++ b/src/modules/ui.js
+@@ -42,6 +42,10 @@ export function setHeaderWeatherIcon(icon) {
+   if (el) el.textContent = icon;
  }
  
- export function attachAutocomplete(inputId, options = {}) {
-   const input = document.getElementById(inputId);
-   if (!input) {
--    console.warn(\`[autocomplete] Element #\${inputId} not found.\`);
-+    console.warn(`[autocomplete] Element #${inputId} not found.`);
-     return;
-   }
- 
--  const { onSelect = () => {}, maxResults = 8 } = options;
-+  const { onSelect = () => { }, maxResults = 8 } = options;
- 
-   // Create the dropdown.
-   const dropdown = _createDropdown(inputId);
-@@ -101,9 +101,9 @@ export function attachAutocomplete(inputId, options = {}) {
- // ─── Search ───────────────────────────────────────────────────────────────────
- 
- function _search(query, max) {
--  const q       = query.toLowerCase().trim();
-+  const q = query.toLowerCase().trim();
-   const results = [];
--  const seen    = new Set();
-+  const seen = new Set();
- 
-   // Priority 1: researcher's own learned species (sorted by frequency)
-   const learned = [..._learnedSpecies.values()]
-@@ -129,15 +129,15 @@ function _search(query, max) {
- 
- function _matches(entry, q) {
-   return entry.scientific?.toLowerCase().includes(q)
--      || entry.common?.toLowerCase().includes(q)
--      || entry.family?.toLowerCase().includes(q);
-+    || entry.common?.toLowerCase().includes(q)
-+    || entry.family?.toLowerCase().includes(q);
- }
- 
- // ─── Dropdown rendering ───────────────────────────────────────────────────────
- 
- function _createDropdown(inputId) {
-   const el = document.createElement('ul');
--  el.id        = \`autocomplete-\${inputId}\`;
-+  el.id = `autocomplete-${inputId}`;
-   el.className = 'species-dropdown';
-   el.setAttribute('role', 'listbox');
-   el.style.display = 'none';
-@@ -148,20 +148,20 @@ function _render(dropdown, results, activeIndex, onSelect) {
-   dropdown.innerHTML = '';
-   results.forEach((entry, i) => {
-     const li = document.createElement('li');
--    li.className  = \`species-option\${i === activeIndex ? ' species-option--active' : ''}\`;
-+    li.className = `species-option${i === activeIndex ? ' species-option--active' : ''}`;
-     li.setAttribute('role', 'option');
-     li.setAttribute('aria-selected', i === activeIndex ? 'true' : 'false');
- 
-     const badge = entry.source === 'history'
--      ? \`<span class="species-badge-history">used</span>\`
-+      ? `<span class="species-badge-history">used</span>`
-       : '';
- 
--    li.innerHTML = \`
--      <span class="species-scientific">\${_highlight(entry.scientific, dropdown._query || '')}</span>
--      \${entry.common ? \`<span class="species-common">\${escapeHtml(entry.common)}</span>\` : ''}
--      \${entry.family ? \`<span class="species-family">\${escapeHtml(entry.family)}</span>\` : ''}
--      \${badge}
--    \`;
-+    li.innerHTML = `
-+      <span class="species-scientific">${_highlight(entry.scientific, dropdown._query || '')}</span>
-+      ${entry.common ? `<span class="species-common">${escapeHtml(entry.common)}</span>` : ''}
-+      ${entry.family ? `<span class="species-family">${escapeHtml(entry.family)}</span>` : ''}
-+      ${badge}
-+    `;
- 
-     li.addEventListener('mousedown', (e) => {
-       e.preventDefault(); // Prevent blur before click fires
-@@ -190,7 +190,7 @@ function _highlight(text, query) {
-   const i = text.toLowerCase().indexOf(query.toLowerCase());
-   if (i === -1) return escapeHtml(text);
-   return escapeHtml(text.slice(0, i))
--    + \`<strong>\${escapeHtml(text.slice(i, i + query.length))}</strong>\`
-+    + `<strong>${escapeHtml(text.slice(i, i + query.length))}</strong>`
-     + escapeHtml(text.slice(i + query.length));
- }
- 
-diff --git a/src/modules/survey.js b/src/modules/survey.js
-index 17fa1e8..dd7a3d4 100644
---- a/src/modules/survey.js
-+++ b/src/modules/survey.js
-@@ -4,6 +4,24 @@ import { $, $$, toast, esc } from './ui.js';
- import { Store } from './storage.js';
- import { fmtCoords, curPos } from './gps.js';
- 
-+/**
-+ * Populates the survey selector dropdown with all available surveys.
-+ */
-+export async function populateSurveySelector() {
-+  const selector = $('#surveySelector');
-+  if (!selector) return;
-+
-+  const surveys = await Store.getSurveys();
-+  const active = await Store.getActive();
-+
-+  let html = '<option value="">Select a survey...</option>';
-+  surveys.forEach(s => {
-+    const selected = active && active.id === s.id ? 'selected' : '';
-+    html += `<option value="${s.id}" ${selected}>${esc(s.name)}</option>`;
-+  });
-+  selector.innerHTML = html;
++export function isOnline() {
++  return navigator.onLine;
 +}
 +
- export async function refreshDataRecords() {
-   const surveys = await Store.getSurveys();
-   const list = $('#dataRecordsList');
-@@ -73,7 +91,8 @@ export async function refreshDataRecords() {
-   Object.entries(groups).forEach(([dateKey, records]) => {
-     const groupDiv = document.createElement('div');
-     groupDiv.className = 'data-date-group';
--    groupDiv.innerHTML = `<div class="data-date-label">${dateKey}</div>`;
-+    const displayDate = dateKey !== 'Undated' ? new Date(dateKey + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : dateKey;
-+    groupDiv.innerHTML = `<div class="data-date-label">${displayDate}</div>`;
- 
-     records.forEach(r => {
-       const card = document.createElement('div');
-@@ -86,9 +105,10 @@ export async function refreshDataRecords() {
-           <div class="data-record-meta">${esc(r.survey)} · ${esc(r.detail)}</div>
-         </div>
-       `;
--      card.addEventListener('click', () => {
--        Store.setActive(card.dataset.sid);
--        toast('Survey selected — go to Tools to use it', false);
-+      card.addEventListener('click', async () => {
-+        await Store.setActive(card.dataset.sid);
-+        await populateSurveySelector();
-+        toast('Survey selected — Session updated', false);
-       });
-       groupDiv.appendChild(card);
-     });
-@@ -116,6 +136,10 @@ export async function createNewSurvey() {
+ export function updateOnlineDot() {
+   const d = $('#onlineDot');
+   const online = navigator.onLine;
+@@ -49,6 +53,29 @@ export function updateOnlineDot() {
+     online ? d.classList.remove('offline') : d.classList.add('offline');
    }
-   await Store.add(sv);
-   $('#modalNewSurvey').classList.remove('show');
-+  $('#surveyName').value = '';
-+  $('#surveyLocation').value = '';
-+  $('#surveyInvestigator').value = '';
-   toast(`"${name}" created`);
-+  await populateSurveySelector();
-   refreshDataRecords();
- }
-diff --git a/src/modules/transect.js b/src/modules/transect.js
-index a9c3c5e..e12af13 100644
---- a/src/modules/transect.js
-+++ b/src/modules/transect.js
-@@ -37,13 +37,23 @@ export async function saveTransect() {
-     }))
-   };
-   if (!s.transects) s.transects = [];
--  s.transects.push(t);
+   setHeaderWeatherIcon(online ? '≡ƒôí' : 'Γêà');
++  updateConnectivityBanner();
++}
 +
-+  const editIdx = $('#btnSaveTransect').dataset.editIdx;
-+  if (editIdx !== undefined && editIdx !== "") {
-+    s.transects[parseInt(editIdx)] = t;
-+    toast(`Transect #${t.number} updated`);
-+    delete $('#btnSaveTransect').dataset.editIdx;
-+    $('#btnSaveTransect').textContent = 'Save Transect';
-+  } else {
-+    s.transects.push(t);
-+    toast(`Transect #${t.number} saved`);
-+    $('#transectNumber').value = t.number + 1;
++export function updateConnectivityBanner() {
++  const online = navigator.onLine;
++  let banner = $('#connectivityBanner');
++  if (!banner) {
++    banner = document.createElement('div');
++    banner.id = 'connectivityBanner';
++    const header = $('#appHeader');
++    if (header && header.parentNode) {
++      header.parentNode.insertBefore(banner, header.nextSibling);
++    } else {
++      document.body.appendChild(banner);
++    }
 +  }
-+
-   await Store.update(s);
--  $('#transectNumber').value = t.number + 1;
-   $('#interceptList').innerHTML = '';
-   intCount = 0;
-   addIntercept();
--  toast(`Transect #${t.number} saved`);
-   refreshTransectTable();
++  if (online) {
++    banner.className = 'connectivity-banner online';
++    banner.innerHTML = '<span class="conn-dot online"></span> Online ΓÇö GPS & weather auto-fill active';
++  } else {
++    banner.className = 'connectivity-banner offline';
++    banner.innerHTML = '<span class="conn-dot offline"></span> Offline ΓÇö Manual entry mode';
++  }
  }
  
-@@ -59,18 +69,47 @@ export async function refreshTransectTable() {
-   s.transects.forEach((t, ti) => {
-     const ints = t.intercepts && t.intercepts.length ? t.intercepts : [{ name: '—', distance: '—', cover: '—' }];
-     ints.forEach((n, ni) => {
--      r += `<tr>${ni === 0 ? `<td>${t.number}</td><td>${t.length}</td><td>${t.width}</td>` : '<td></td><td></td><td></td>'}<td class="species-name-cell">${esc(n.name || '—')}</td><td>${n.distance || '—'}</td><td>${n.cover || '—'}</td>${ni === 0 ? `<td class="action-btns"><button data-action="del-t" data-i="${ti}">🗑️</button></td>` : '<td></td>'}</tr>`;
-+      r += `<tr>${ni === 0 ? `<td>${t.number}</td><td>${t.length}</td><td>${t.width}</td>` : '<td></td><td></td><td></td>'}<td class="species-name-cell">${esc(n.name || '—')}</td><td>${n.distance || '—'}</td><td>${n.cover || '—'}</td>${ni === 0 ? `<td class="action-btns"><button data-action="et" data-i="${ti}" title="Edit">✏️</button><button data-action="del-t" data-i="${ti}" title="Delete">🗑️</button></td>` : '<td></td>'}</tr>`;
-     });
-   });
-   tb.innerHTML = r;
-+
-+  // Edit handler
-+  tb.querySelectorAll('[data-action="et"]').forEach(b => {
-+    b.onclick = async () => {
-+      const idx = +b.dataset.i;
-+      const t = s.transects[idx];
-+      $('#transectNumber').value = t.number;
-+      $('#transectLength').value = t.length;
-+      $('#transectWidth').value = t.width;
-+      $('#transectBearing').value = t.bearing;
-+      $('#transectStartGPS').value = t.startGPS;
-+      $('#transectEndGPS').value = t.endGPS;
-+      $('#interceptList').innerHTML = '';
-+      intCount = 0;
-+      t.intercepts.forEach(int => {
-+        addIntercept();
-+        const last = $('#interceptList').lastElementChild;
-+        last.querySelector('.int-name').value = int.name;
-+        last.querySelector('.int-dist').value = int.distance;
-+        last.querySelector('.int-cover').value = int.cover;
-+      });
-+      $('#btnSaveTransect').textContent = 'Update Transect';
-+      $('#btnSaveTransect').dataset.editIdx = idx;
-+      $('#screenTransect').scrollTo({ top: 0, behavior: 'smooth' });
-+      toast('Transect loaded for editing');
-+    };
-+  });
-+
-+  // Delete handler
-   tb.querySelectorAll('[data-action="del-t"]').forEach(b => {
--    b.addEventListener('click', async () => {
--      if (confirm('Delete?')) {
--        s.transects.splice(+b.dataset.i, 1);
--        await Store.update(s);
--        refreshTransectTable();
--        toast('Deleted');
--      }
--    });
-+    b.onclick = async () => {
-+      const idx = +b.dataset.i;
-+      if (!confirm(`Delete Transect #${s.transects[idx].number}?`)) return;
-+      s.transects.splice(idx, 1);
-+      await Store.update(s);
-+      refreshTransectTable();
-+      toast('Transect deleted');
-+    };
-   });
- }
+ export function updateClock() {

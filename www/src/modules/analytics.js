@@ -48,6 +48,8 @@ export function refreshAnalytics(s) {
   }
 
   // Simpson
+  // Simpson λ (finite sample) = Σ[n(n-1)] / [N(N-1)]
+  // When N ≤ 1, D = 0 (no dominance measurable with a single individual)
   let D = 0;
   if (totalN > 1) {
     speciesList.forEach(k => {
@@ -55,10 +57,11 @@ export function refreshAnalytics(s) {
       D += n * (n - 1);
     });
     D = D / (totalN * (totalN - 1));
-  } else if (totalN === 1) D = 1;
+  }
 
-  // Pielou Evenness
-  const E = S > 1 && totalN > 0 ? H / Math.log(S) : 0;
+  // Pielou Evenness J' = H'/ln(S)
+  // When S = 1, J' = 1 by convention (single species = perfectly "even")
+  const E = S > 1 && totalN > 0 ? H / Math.log(S) : (S === 1 && totalN > 0 ? 1 : 0);
 
   // Basal area
   let totalBA = 0;
@@ -66,8 +69,8 @@ export function refreshAnalytics(s) {
 
   if ($('#analyticRichness')) $('#analyticRichness').textContent = S;
   if ($('#analyticShannon')) $('#analyticShannon').textContent = totalN > 0 ? H.toFixed(3) : '0.000';
-  if ($('#analyticSimpson')) $('#analyticSimpson').textContent = totalN > 1 ? D.toFixed(3) : (totalN === 1 ? '1.000' : '0.000');
-  if ($('#analyticSimpsonDiv')) $('#analyticSimpsonDiv').textContent = totalN > 1 ? (1 - D).toFixed(3) : (totalN === 1 ? '0.000' : '0.000');
+  if ($('#analyticSimpson')) $('#analyticSimpson').textContent = D.toFixed(3);
+  if ($('#analyticSimpsonDiv')) $('#analyticSimpsonDiv').textContent = (1 - D).toFixed(3);
   if ($('#analyticEvenness')) $('#analyticEvenness').textContent = E.toFixed(3);
   if ($('#analyticTotalN')) $('#analyticTotalN').textContent = totalN;
   if ($('#analyticBasalTotal')) $('#analyticBasalTotal').textContent = totalBA.toFixed(4) + ' m²';

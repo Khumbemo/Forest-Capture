@@ -150,7 +150,7 @@ function _calculateIndices(survey) {
       if (!key || key === '—') continue;
       specieCounts.set(key, {
         name:   sp.name,
-        n:      (specieCounts.get(key)?.n || 0) + (parseInt(sp.abundance) || 1),
+        n:      (specieCounts.get(key)?.n || 0) + (parseInt(sp.abundance) || 0),
         quadrats: new Set([...(specieCounts.get(key)?.quadrats || []), quadrat.id || quadrat.number]),
       });
     }
@@ -230,7 +230,7 @@ function _renderIndicesChart(data) {
         }
       },
       scales: {
-        y: { beginAtZero: true, max: 1, title: { display: true, text: 'Index value (0–1)' } },
+        y: { beginAtZero: true, title: { display: true, text: 'Index value' } },
         x: { grid: { display: false } },
       }
     }
@@ -415,7 +415,7 @@ function _calculateIVIForSpecies(survey, targetName, totalN) {
     let foundHere = false;
     for (const sp of (quadrat.species || [])) {
       const spKey = sp.name?.toLowerCase().trim();
-      const spStems = parseInt(sp.abundance) || 1;
+      const spStems = parseInt(sp.abundance) || 0;
       const spBA    = Math.PI * Math.pow((parseFloat(sp.dbh) || 0) / 200, 2);
       totalStems += spStems;
       totalBA    += spBA;

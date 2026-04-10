@@ -62,7 +62,7 @@ export function updateConnectivityBanner() {
   if (!banner) {
     banner = document.createElement('div');
     banner.id = 'connectivityBanner';
-    const header = $('#appHeader');
+    const header = $('#globalHeader');  // FIXED: was appHeader
     if (header && header.parentNode) {
       header.parentNode.insertBefore(banner, header.nextSibling);
     } else {
