@@ -32,7 +32,7 @@ export function startGPS(onUpdate, onError) {
     return;
   }
 
-  setHeaderWeatherIcon('⟲');
+  setHeaderWeatherIcon('sync');
   gpsWatchId = navigator.geolocation.watchPosition(p => {
     curPos.lat = p.coords.latitude;
     curPos.lng = p.coords.longitude;
@@ -42,7 +42,7 @@ export function startGPS(onUpdate, onError) {
     if (onUpdate) onUpdate(curPos);
   }, e => {
     if (onError) onError('NO SIGNAL');
-    setHeaderWeatherIcon(navigator.onLine ? '📡' : '∅');
+    setHeaderWeatherIcon(navigator.onLine ? 'online' : 'offline');
   }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 });
 }
 

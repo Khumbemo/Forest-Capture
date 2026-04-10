@@ -2,7 +2,7 @@
 
 import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot, isOnline, updateConnectivityBanner } from './modules/ui.js';
 import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, resetUserRef } from './modules/storage.js';
-import { startGPS, fmtCoords } from './modules/gps.js';
+import { startGPS, fmtCoords, curPos } from './modules/gps.js';
 import { fetchWeather } from './modules/weather.js';
 import { refreshDataRecords, createNewSurvey, populateSurveySelector } from './modules/survey.js';
 import { SYMBOLS } from './modules/symbols.js';
@@ -147,6 +147,11 @@ function onGPSUpdate(pos) {
   const utmFmt = fmtCoords(pos.lat, pos.lng, 'utm');
   if ($('#gpsOptionUTM')) $('#gpsOptionUTM').textContent = utmFmt;
 
+  // Hide manual input if we truly have a GPS fix (denoted by acc > 0, since manual is 0)
+  if ($('#gpsOfflineManualInput') && pos.acc !== 0) {
+    $('#gpsOfflineManualInput').style.display = 'none';
+  }
+
   // ─── AUTO-FILL GPS FIELDS WHEN SIGNAL IS AVAILABLE ───
   // Auto-fill coordinate inputs across all forms if they are empty or were auto-filled previously
   autoFillGPSField('#quadratGPS', fmt);
@@ -216,6 +221,11 @@ function _setGPSButtonState(hasSignal) {
 function onGPSError(msg) {
   if ($('#gpsOptionStatus')) $('#gpsOptionStatus').textContent = msg;
   _setGPSButtonState(false);
+  
+  // Show manual GPS override input
+  if ($('#gpsOfflineManualInput')) {
+    $('#gpsOfflineManualInput').style.display = 'block';
+  }
 }
 
 /**
@@ -384,6 +394,19 @@ function setupEventListeners() {
       $('#btnRegister').disabled = false;
       $('#btnRegister').textContent = 'Register';
     }
+  });
+
+  // Manual GP Override
+  $('#btnSaveManualGPS')?.addEventListener('click', () => {
+    const lat = parseFloat($('#gpsManualLat').value);
+    const lng = parseFloat($('#gpsManualLng').value);
+    if (isNaN(lat) || isNaN(lng)) return toast('Please enter valid coordinates');
+    curPos.lat = lat;
+    curPos.lng = lng;
+    curPos.acc = 0; // manual override indicator
+    curPos.alt = null;
+    onGPSUpdate(curPos);
+    toast('Global manual GPS override active');
   });
 
   // Survey

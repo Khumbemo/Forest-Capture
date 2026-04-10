@@ -37,9 +37,21 @@ export function esc(s) {
   return d.innerHTML;
 }
 
-export function setHeaderWeatherIcon(icon) {
+export const ICONS = {
+  online: '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><circle cx="12" cy="20" r="1.5" fill="currentColor" stroke="none"></circle></svg>',
+  offline: '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>',
+  sync: '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path></svg>'
+};
+
+export function setHeaderWeatherIcon(iconKeyOrStr) {
   const el = $('#headerWeatherIcon');
-  if (el) el.textContent = icon;
+  if (el) {
+    if (ICONS[iconKeyOrStr]) {
+      el.innerHTML = ICONS[iconKeyOrStr];
+    } else {
+      el.innerHTML = iconKeyOrStr;
+    }
+  }
 }
 
 export function isOnline() {
@@ -52,7 +64,7 @@ export function updateOnlineDot() {
   if (d) {
     online ? d.classList.remove('offline') : d.classList.add('offline');
   }
-  setHeaderWeatherIcon(online ? '📡' : '∅');
+  setHeaderWeatherIcon(online ? 'online' : 'offline');
   updateConnectivityBanner();
 }
 

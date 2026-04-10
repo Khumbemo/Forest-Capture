@@ -36,7 +36,7 @@
   </div>
   <!-- SPLASH SCREEN -->
   <div class="splash-screen" id="splashScreen">
-    <div class="splash-leaf"><svg viewBox="0 0 24 24" width="72" height="72" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 5,10 8,10 3,17 8,17 6,22 18,22 16,17 21,17 16,10 19,10" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" fill="none"/><line x1="12" y1="17" x2="12" y2="22" stroke="currentColor" stroke-width="1.5"/></svg></div>
+    <div class="splash-leaf"><svg viewBox="0 0 24 24" width="72" height="72" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 22c0-5 0-9-1.5-12" /><path d="M13 22c0-4 0-8 1.5-12" /><path d="M12 16c1.5-3 3-5 5.5-6" /><path d="M11.5 13.5c-2-2-4-3.5-6-3.5" /><path d="M7 11C3.5 11 2 8.5 4 6c1.5-2 4-2 5.5-1 1-3 5-4 7.5-2.5C19 4 22 5.5 21 9c-1 3-3.5 3-4.5 3" /><line x1="8" y1="22" x2="16" y2="22" /></svg></div>
     <div class="splash-title">Forest Capture</div>
     <div class="splash-subtitle">Ecological Field Survey</div>
     <div class="splash-bar"><div class="splash-bar-fill"></div></div>
@@ -107,7 +107,7 @@
       <h1 class="header-title header-title-custom">Forest Capture</h1>
     </div>
     <div class="header-right header-right-flex">
-      <span id="headerWeatherIcon" class="header-weather-icon">📡</span>
+      <span id="headerWeatherIcon" class="header-weather-icon"></span>
       <button class="settings-btn" id="btnSettings" title="Settings"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15 1.65 1.65 0 0 0 3.17 14H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 8.82a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6 1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.26.6.77 1.05 1.51 1.08H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     </div>
   </header>
@@ -310,11 +310,11 @@
     <section class="screen" id="screenMap" style="padding:0;position:relative;">
       <div class="map-container"><div id="mapView" class="map-view"></div>
         <div class="map-controls">
-          <button class="map-ctrl-btn" id="btnLocateMe" title="My Location">⊕</button>
-          <button class="map-ctrl-btn" id="btnAddWaypoint" title="Drop Waypoint">⊛</button>
-          <button class="map-ctrl-btn" id="btnMapSatellite" title="Satellite">📡</button>
-          <button class="map-ctrl-btn" id="btnMapTerrain" title="Terrain">📐</button>
-          <button class="map-ctrl-btn" id="btnMapHybrid" title="Hybrid">🌐</button>
+          <button class="map-ctrl-btn" id="btnLocateMe" title="My Location"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="8"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/></svg></button>
+          <button class="map-ctrl-btn" id="btnAddWaypoint" title="Drop Waypoint"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="3"/></svg></button>
+          <button class="map-ctrl-btn" id="btnMapSatellite" title="Satellite"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 12 12 17 22 12"/><polyline points="2 17 12 22 22 17"/></svg></button>
+          <button class="map-ctrl-btn" id="btnMapTerrain" title="Terrain"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linejoin="round"><polygon points="14.5 16 21 16 11 3 3 14 8 14"/><polygon points="8 16 14.5 16 11.25 11.75"/></svg></button>
+          <button class="map-ctrl-btn" id="btnMapHybrid" title="Hybrid"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><line x1="2" y1="12" x2="22" y2="12"/></svg></button>
         </div>
       </div>
       <div class="form-card" style="margin-top:0;">
@@ -327,6 +327,14 @@
           <div><div class="gps-label-xs">Accuracy</div><div id="gpsOptionAcc" class="gps-value-mono">±--- m</div></div>
           <div><div class="gps-label-xs">Altitude</div><div id="gpsOptionAlt" class="gps-value-mono">--- m</div></div>
           <div><div class="gps-label-xs">UTM</div><div id="gpsOptionUTM" class="gps-value-mono">—</div></div>
+        </div>
+        <div id="gpsOfflineManualInput" style="display:none; margin-top:var(--sp-md); padding-top:var(--sp-sm); border-top:1px dashed var(--border);">
+          <div class="gps-label-xs" style="color:var(--amber); margin-bottom:8px;">MANUAL GPS OVERRIDE (OFFLINE MODE)</div>
+          <div class="form-row">
+            <div class="form-group"><input type="number" id="gpsManualLat" placeholder="Latitude (e.g. 25.6120)" step="any" /></div>
+            <div class="form-group"><input type="number" id="gpsManualLng" placeholder="Longitude (e.g. 93.7320)" step="any" /></div>
+            <div class="form-group" style="flex:0 0 auto; align-self:flex-end;"><button class="btn btn-primary btn-sm" id="btnSaveManualGPS">Set</button></div>
+          </div>
         </div>
       </div>
       <div class="form-card">
