@@ -86,11 +86,10 @@ export function updateClock() {
   if (cd) cd.textContent = n.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-export function switchScreen(id, callbacks = {}) {
+export function switchScreen(id, callbacks = {}, updateHistory = true) {
   const curScreen = document.querySelector('.screen.active');
   const curId = curScreen ? curScreen.id : null;
 
-  // Allow callback even if same screen (fixes unresponsive creation buttons)
   if (curId === id) {
       if (callbacks[id]) callbacks[id]();
       return;
@@ -98,7 +97,12 @@ export function switchScreen(id, callbacks = {}) {
 
   const FC_FLOW = ['screenDashboard', 'screenToolbar', 'screenData'];
 
-  // Direct class manipulation for reliability
+  if (updateHistory) {
+    if (!history.state || history.state.screen !== id) {
+      history.pushState({ screen: id }, '', `#${id}`);
+    }
+  }
+
   $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.screen === id));
   $$('.tb-btn[data-screen]').forEach(b => b.classList.toggle('active', b.dataset.screen === id));
 
@@ -122,8 +126,9 @@ export function switchScreen(id, callbacks = {}) {
     if (backBtn) backBtn.style.display = 'none';
     if (title) title.style.marginLeft = '0';
   } else {
-    if (backBtn) backBtn.style.display = 'block';
-    if (title) title.style.marginLeft = '4px';
+    // Phone system will handle back, so we keep back btn hidden globally
+    if (backBtn) backBtn.style.display = 'none';
+    if (title) title.style.marginLeft = '0';
   }
 
   const isSmall = /Mobi|Android/i.test(navigator.userAgent);

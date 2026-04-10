@@ -973,3 +973,195 @@ button,.btn,.nav-btn,.stat-card,.map-ctrl-btn,a,input,select,textarea{
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* =========== 3D TELEMETRY ICONS =========== */
+.tele-card { position: relative; overflow: hidden; z-index: 1; }
+.tele-3d-bg {
+  position: absolute;
+  right: -10px;
+  bottom: -15px;
+  width: 90px;
+  height: 90px;
+  opacity: 0.2;
+  pointer-events: none;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-style: preserve-3d;
+  perspective: 400px;
+}
+.tele-label, .tele-value, .tele-sub { position: relative; z-index: 2; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+
+/* Satellite */
+.anim-satellite {
+  width: 100%; height: 100%;
+  animation: floatSat 8s ease-in-out infinite;
+  filter: drop-shadow(0 10px 8px rgba(16,185,129,0.3));
+}
+@keyframes floatSat {
+  0%, 100% { transform: translateY(0) rotateX(15deg) rotateY(15deg) rotateZ(0deg); }
+  50% { transform: translateY(-10px) rotateX(25deg) rotateY(5deg) rotateZ(-5deg); filter: drop-shadow(0 15px 12px rgba(16,185,129,0.4)); }
+}
+
+/* Thermometer Glow/Fluid */
+.anim-thermo {
+  width: 100%; height: 100%;
+  animation: floatThermo 5s ease-in-out infinite;
+  filter: drop-shadow(0 5px 10px rgba(245,158,11,0.2));
+}
+.thermo-fluid {
+  transform-origin: bottom;
+  animation: fluidRise 7s ease-in-out infinite;
+}
+@keyframes fluidRise {
+  0%, 100% { transform: scaleY(0.4); fill: var(--emerald); }
+  50% { transform: scaleY(0.9); fill: var(--amber); }
+}
+@keyframes floatThermo {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-5px) rotate(2deg); filter: drop-shadow(0 10px 15px rgba(245,158,11,0.4)); }
+}
+
+/* Mountain Breathing */
+.anim-mountain {
+  width: 100%; height: 100%;
+  animation: mountBreathe 10s ease-in-out infinite;
+}
+@keyframes mountBreathe {
+  0%, 100% { transform: scale(1) rotateX(5deg) translateY(0); }
+  50% { transform: scale(1.05) rotateX(15deg) translateY(-2px); filter: drop-shadow(0 10px 10px rgba(16,185,129,0.2)); }
+}
+
+/* Cloud Raining */
+.anim-cloud {
+  width: 100%; height: 100%;
+  animation: floatCloud 6s ease-in-out infinite;
+}
+@keyframes floatCloud {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  50% { transform: translateX(-5px) translateY(-5px); }
+}
+.rain-drop {
+  animation: rainDown 1.5s linear infinite;
+  stroke-dasharray: 4;
+}
+.rd-1 { animation-delay: 0s; }
+.rd-2 { animation-delay: 0.5s; }
+.rd-3 { animation-delay: 1s; }
+@keyframes rainDown {
+  0% { transform: translateY(-5px) translateX(3px); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(15px) translateX(-10px); opacity: 0; }
+}
+
+/* =========== 3D TOOLS MENU ICONS =========== */
+.anim-tool-svg {
+  width: 50px;
+  height: 50px;
+  filter: drop-shadow(0 4px 6px rgba(16,185,129,0.3));
+  overflow: visible;
+  transition: filter var(--transition);
+}
+.stat-card:hover .anim-tool-svg {
+  filter: drop-shadow(0 8px 12px rgba(16,185,129,0.6));
+}
+
+/* Map & GPS */
+.anim-tool-map { animation: mapHover 6s ease-in-out infinite; }
+@keyframes mapHover {
+  0%, 100% { transform: translateY(0) rotateX(10deg); }
+  50% { transform: translateY(-4px) rotateX(20deg); }
+}
+.map-pin { animation: pinBop 2s ease-in-out infinite; transform-origin: bottom; }
+@keyframes pinBop {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50% { transform: scale(1.1) translateY(-6px); filter: drop-shadow(0 4px 4px var(--amber)); }
+}
+
+/* Quadrat */
+.anim-tool-quadrat { animation: quadSpin 12s linear infinite; }
+@keyframes quadSpin {
+  0% { transform: rotateY(0deg) rotateX(15deg); }
+  100% { transform: rotateY(360deg) rotateX(15deg); }
+}
+.quad-cube { animation: cubeFloat 4s ease-in-out infinite; }
+@keyframes cubeFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); filter: drop-shadow(0 6px 6px var(--emerald)); }
+}
+
+/* Transect */
+.anim-tool-transect { animation: transPerspective 8s ease-in-out infinite; }
+@keyframes transPerspective {
+  0%, 100% { transform: rotateX(15deg) rotateZ(5deg); }
+  50% { transform: rotateX(25deg) rotateZ(-5deg); }
+}
+.transect-line { animation: tapeDraw 3s linear infinite; stroke-dashoffset: 16; }
+@keyframes tapeDraw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Environment */
+.anim-tool-env { animation: envBreathe 6s ease-in-out infinite; }
+@keyframes envBreathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+.sun-rays { animation: sunSpin 15s linear infinite; transform-origin: 65px 35px; }
+@keyframes sunSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Disturb & CBI */
+.anim-tool-cbi { animation: cbiShake 5s ease-in-out infinite; }
+@keyframes cbiShake {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+.cbi-flame { animation: flameFlicker 1.5s ease-in-out infinite alternate; transform-origin: center bottom; }
+.cbi-flame-inner { animation: flameFlicker 1.3s ease-in-out infinite alternate-reverse; transform-origin: center bottom; }
+@keyframes flameFlicker {
+  0% { transform: scaleY(1); }
+  100% { transform: scaleY(1.15) scaleX(0.9); }
+}
+
+/* Media */
+.anim-tool-media { animation: floatSat 6s ease-in-out infinite; }
+.camera-flash { animation: flashPulse 3s infinite; }
+@keyframes flashPulse {
+  0%, 90%, 100% { opacity: 0; transform: scale(0.5); }
+  95% { opacity: 1; transform: scale(2); filter: drop-shadow(0 0 8px var(--amber)); }
+}
+
+/* Analytics */
+.anim-tool-analytics { animation: mapHover 7s ease-in-out infinite reverse; }
+.bar-1 { animation: barGrow 3s ease-in-out infinite alternate; transform-origin: bottom; }
+.bar-2 { animation: barGrow 3.5s ease-in-out infinite alternate-reverse; transform-origin: bottom; }
+.bar-3 { animation: barGrow 4s ease-in-out infinite alternate; transform-origin: bottom; }
+@keyframes barGrow {
+  0% { transform: scaleY(0.6); }
+  100% { transform: scaleY(1.1); }
+}
+
+/* Export */
+.anim-tool-export { animation: transPerspective 7s ease-in-out infinite reverse; }
+.export-arrow { animation: arrowEject 2s ease-in infinite; transform-origin: bottom; }
+@keyframes arrowEject {
+  0% { transform: translateY(15px); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translateY(-15px); opacity: 0; }
+}
+
+/* Herbarium */
+.anim-tool-herb { animation: herbSway 6s ease-in-out infinite; transform-origin: bottom center; }
+@keyframes herbSway {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+.herb-leaf { animation: leafFlutter 3s ease-in-out infinite alternate; transform-origin: top left; }
+.l2 { animation-delay: 1.5s; transform-origin: top right;}
+@keyframes leafFlutter {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.1) rotate(5deg); }
+}

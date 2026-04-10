@@ -266,6 +266,53 @@ async function updateBars() {
 }
 
 function setupEventListeners() {
+  // Global Hardware Back Button (Popstate) Hook
+  window.addEventListener('popstate', (e) => {
+    if (e.state && e.state.screen) {
+      switchScreen(e.state.screen, screenCallbacks, false);
+    } else {
+      // Default to dashboard
+      switchScreen('screenDashboard', screenCallbacks, false);
+    }
+  });
+
+  // Global Swipe Gestures for Fluid Navigation
+  let touchStartX = 0;
+  let touchEndX = 0;
+  
+  document.addEventListener('touchstart', e => {
+    // Only capture 1 touch
+    if (e.changedTouches.length === 1) {
+      touchStartX = e.changedTouches[0].screenX;
+    }
+  }, { passive: true });
+  
+  document.addEventListener('touchend', e => {
+    if (e.changedTouches.length === 1) {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    }
+  }, { passive: true });
+
+  const handleSwipe = () => {
+    const swipeDist = touchEndX - touchStartX;
+    if (Math.abs(swipeDist) < 60) return; // Threshold of 60px
+
+    const FC_FLOW = ['screenDashboard', 'screenToolbar', 'screenData'];
+    const curScreen = document.querySelector('.screen.active');
+    // Only allow swipe if we are in one of the main flow screens
+    if (!curScreen || !FC_FLOW.includes(curScreen.id)) return;
+
+    let idx = FC_FLOW.indexOf(curScreen.id);
+    if (swipeDist < 0 && idx < FC_FLOW.length - 1) {
+      // Swipe left -> Next screen (e.g. Home to Tools)
+      switchScreen(FC_FLOW[idx + 1], screenCallbacks);
+    } else if (swipeDist > 0 && idx > 0) {
+      // Swipe right -> Prev screen (e.g. Tools to Home)
+      switchScreen(FC_FLOW[idx - 1], screenCallbacks);
+    }
+  };
+
   $$('.nav-btn').forEach(b => {
     b.onclick = (e) => {
       e.preventDefault();
@@ -273,7 +320,6 @@ function setupEventListeners() {
     };
   });
   $$('.stat-card[data-tool]').forEach(b => b.addEventListener('click', () => switchScreen(b.dataset.tool, screenCallbacks)));
-  if ($('#btnHeaderBack')) $('#btnHeaderBack').addEventListener('click', () => switchScreen('screenToolbar', screenCallbacks));
 
   // Survey Selector
   $('#surveySelector')?.addEventListener('change', async (e) => {
