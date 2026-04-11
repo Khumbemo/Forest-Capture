@@ -444,8 +444,9 @@ function _calcJaccard(d1, d2) {
 }
 
 function _calcBrayCurtis(d1, d2) {
-  const m1 = new Map(d1.indices.species.map(s => [s.key, s.n || 0]));
-  const m2 = new Map(d2.indices.species.map(s => [s.key, s.n || 0]));
+  // Build abundance maps from raw quadrat data since species items don't carry `n`
+  const m1 = _buildAbundanceMap(d1.survey);
+  const m2 = _buildAbundanceMap(d2.survey);
   const allKeys = new Set([...m1.keys(), ...m2.keys()]);
   
   let sumMin = 0, sumTotal = 0;
@@ -456,6 +457,18 @@ function _calcBrayCurtis(d1, d2) {
     sumTotal += v1 + v2;
   });
   return sumTotal ? 1 - (2 * sumMin / sumTotal) : 0;
+}
+
+function _buildAbundanceMap(survey) {
+  const map = new Map();
+  for (const quadrat of (survey.quadrats || [])) {
+    for (const sp of (quadrat.species || [])) {
+      const key = sp.name?.toLowerCase().trim();
+      if (!key || key === '—') continue;
+      map.set(key, (map.get(key) || 0) + (parseInt(sp.abundance) || 0));
+    }
+  }
+  return map;
 }
 
 function _renderRichnessANOVA(data) {

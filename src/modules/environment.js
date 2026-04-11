@@ -74,7 +74,7 @@ export async function loadEnvData() {
   if (e.soilMoisture) $('#envSoilMoisture').value = e.soilMoisture;
   if (e.soilColor) $('#envSoilColor').value = e.soilColor;
   if (e.soilPH != null && $('#envSoilPH')) $('#envSoilPH').value = e.soilPH;
-  if (e.litterDepth != null && $('#envLitterDepth')) $('#envLitterDepth').value = e.litterDepth;
+  if (e.litter_depth != null && $('#envLitterDepth')) $('#envLitterDepth').value = e.litter_depth;
   if (e.temperature != null) $('#envTemperature').value = e.temperature;
   if (e.humidity != null) $('#envHumidity').value = e.humidity;
   if (e.windSpeed != null && $('#envWindSpeed')) $('#envWindSpeed').value = e.windSpeed;

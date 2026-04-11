@@ -65,7 +65,7 @@ export async function handleHerbariumPhoto(file) {
       } else {
         // Offline: save to MediaStore
         const mediaId = await MediaStore.save(dataUrl);
-        currentImageBase64 = dataUrl; // Keep for preview
+        currentImageUrl = dataUrl; // Keep for preview
         window._herbMediaId = mediaId;
       }
 
@@ -82,6 +82,9 @@ export async function handleHerbariumPhoto(file) {
 function getFormData() {
   const collectionNo = $('#herbCollectionNo').value.trim();
   const voucherNo = $('#herbVoucherNo').value.trim() || `VCH-${Date.now().toString().slice(-6)}`;
+  const mediaId = window._herbMediaId || null;
+  // Clear the temp media ID before returning
+  window._herbMediaId = null;
   return {
     collectionNo,
     voucherNo,
@@ -99,10 +102,8 @@ function getFormData() {
     collector: $('#herbCollector').value.trim(),
     identifier: $('#herbIdentifier').value.trim(),
     photoUrl: currentImageUrl && !currentImageUrl.startsWith('data:') ? currentImageUrl : null,
-    mediaId: window._herbMediaId || null
+    mediaId
   };
-  // Clear the temp media ID
-  window._herbMediaId = null;
 }
 
 export async function saveHerbarium(exportDoc = false) {
