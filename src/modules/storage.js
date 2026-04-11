@@ -182,11 +182,24 @@ export const MediaStore = {
 };
 
 // ─── IndexedDB survey cache helpers ───
-const LS_SURVEYS_KEY = 'fc_surveys_cache';
+
+export async function getCurrentUid() {
+    return (await getUserRef()).id;
+}
+async function _getSurveyCacheKey() { return 'fc_surveys_cache_' + await getCurrentUid(); }
+async function _getActiveCacheKey() { return 'fc_active_survey_' + await getCurrentUid(); }
+async function _getWpsCacheKey()    { return 'fc_waypoints_cache_' + await getCurrentUid(); }
+
+export async function clearUserCache() {
+    console.log('storage: clearUserCache (partitioned data)');
+    await idb.remove(await _getSurveyCacheKey());
+    await idb.remove(await _getActiveCacheKey());
+    await idb.remove(await _getWpsCacheKey());
+}
 
 async function _cacheSurveysToLocal(surveys) {
   try {
-    await idb.set(LS_SURVEYS_KEY, JSON.stringify(surveys));
+    await idb.set(await _getSurveyCacheKey(), JSON.stringify(surveys));
   } catch (e) {
     console.warn('_cacheSurveysToLocal: idb write failed', e);
   }
@@ -194,7 +207,7 @@ async function _cacheSurveysToLocal(surveys) {
 
 async function _loadSurveysFromLocal() {
   try {
-    const raw = await idb.get(LS_SURVEYS_KEY);
+    const raw = await idb.get(await _getSurveyCacheKey());
     return raw ? JSON.parse(raw) : [];
   } catch (e) {
     console.warn('_loadSurveysFromLocal: parse error', e);
@@ -334,11 +347,11 @@ export const Store = {
   async setActive(id) {
     console.log('Store.setActive:', id);
     if (!id) {
-      await idb.remove('fc_active_survey');
+      await idb.remove(await _getActiveCacheKey());
       return;
     }
     // Write to idb immediately for instant offline access
-    await idb.set('fc_active_survey', id);
+    await idb.set(await _getActiveCacheKey(), id);
     try {
       const userDocRef = await getUserRef();
       setDoc(doc(collection(userDocRef, 'settings'), 'activeId'), { id });
@@ -351,7 +364,7 @@ export const Store = {
   async _getActiveId() {
     console.log('Store._getActiveId: start');
     // Fast path: check idb cache first
-    const cached = await idb.get('fc_active_survey');
+    const cached = await idb.get(await _getActiveCacheKey());
     if (cached) {
       console.log('Store._getActiveId: using idb cache', cached);
       // Sync Firestore in background without blocking UI
@@ -368,11 +381,11 @@ export const Store = {
       const docSnap = await withTimeout(getDoc(doc(collection(userDocRef, 'settings'), 'activeId')), 3000, { exists: () => false });
       console.log('Store._syncActiveIdFromFirestore: doc received');
       const id = docSnap.exists() ? docSnap.data().id : null;
-      if (id) await idb.set('fc_active_survey', id);
+      if (id) await idb.set(await _getActiveCacheKey(), id);
       return id;
     } catch (e) {
       console.error('Store._syncActiveIdFromFirestore error:', e);
-      return (await idb.get('fc_active_survey')) || null;
+      return (await idb.get(await _getActiveCacheKey())) || null;
     }
   },
 
@@ -390,7 +403,7 @@ export const Store = {
       const p = setDoc(surveyDocRef, s);
 
       // Update active session locally first
-      await idb.set('fc_active_survey', s.id);
+      await idb.set(await _getActiveCacheKey(), s.id);
 
       // Attempt background Firestore update for activeId
       setDoc(doc(collection(userDocRef, 'settings'), 'activeId'), { id: s.id }).catch(e => {
@@ -444,8 +457,7 @@ export const Store = {
     const surveys = await this.getSurveys();
 
     // Clear idb caches immediately
-    await idb.remove(LS_SURVEYS_KEY);
-    await idb.remove('fc_active_survey');
+    await clearUserCache();
 
     try {
       const userDocRef = await getUserRef();
@@ -470,16 +482,14 @@ export const Store = {
   }
 };
 
-const LS_WPS_KEY = 'fc_waypoints_cache';
-
 async function _cacheWpsToLocal(wps) {
-  try { await idb.set(LS_WPS_KEY, JSON.stringify(wps)); }
+  try { await idb.set(await _getWpsCacheKey(), JSON.stringify(wps)); }
   catch (e) { console.warn('_cacheWpsToLocal failed', e); }
 }
 
 async function _loadWpsFromLocal() {
   try {
-    const raw = await idb.get(LS_WPS_KEY);
+    const raw = await idb.get(await _getWpsCacheKey());
     return raw ? JSON.parse(raw) : [];
   } catch (e) { return []; }
 }

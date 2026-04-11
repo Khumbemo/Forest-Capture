@@ -2,7 +2,7 @@
 
 import { $, $$, toast, esc } from './ui.js';
 import { Store, MediaStore } from './storage.js';
-import { fmtCoords, curPos } from './gps.js';
+import { fmtCoords, curPos, fillGPSField } from './gps.js';
 import { dl } from './utils.js';
 import { attachAutocomplete } from './species-autocomplete.js';
 import { storage, ensureAuth } from './firebase.js';
@@ -297,4 +297,17 @@ function exportHerbariumWord(data) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+export function init() {
+  $('#herbPhotoInput')?.addEventListener('change', e => {
+      handleHerbariumPhoto(e.target.files[0]);
+  });
+  $('#btnSaveHerbarium')?.addEventListener('click', () => {
+      saveHerbarium(false);
+  });
+  $('#btnExportHerbarium')?.addEventListener('click', () => {
+      saveHerbarium(true);
+  });
+  $('#btnHerbGPS')?.addEventListener('click', () => fillGPSField('#herbGPS', true));
 }

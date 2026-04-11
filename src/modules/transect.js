@@ -3,6 +3,7 @@
 import { $, $$, toast, esc } from './ui.js';
 import { Store } from './storage.js';
 import { attachAutocomplete } from './species-autocomplete.js';
+import { fillGPSField } from './gps.js';
 
 let intCount = 0;
 
@@ -126,6 +127,14 @@ export async function refreshTransectTable() {
       await Store.update(s);
       refreshTransectTable();
       toast('Transect deleted');
-    };
+  });
+}
+
+export function init() {
+  $('#btnAddIntercept')?.addEventListener('click', addIntercept);
+  $('#btnTransectStartGPS')?.addEventListener('click', () => fillGPSField('#transectStartGPS'));
+  $('#btnTransectEndGPS')?.addEventListener('click', () => fillGPSField('#transectEndGPS'));
+  $('#btnSaveTransect')?.addEventListener('click', async () => {
+    await saveTransect();
   });
 }

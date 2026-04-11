@@ -149,3 +149,13 @@ export function estimateCanopy(file) {
   };
   reader.readAsDataURL(file);
 }
+
+export function init() {
+  $('#btnAutoFillEnv')?.addEventListener('click', autoFillEnv);
+  $('#btnSaveEnv')?.addEventListener('click', async () => {
+      await saveEnv();
+  });
+  $('#canopyPhotoInput')?.addEventListener('change', e => {
+      if(e.target.files[0]) estimateCanopy(e.target.files[0]);
+  });
+}

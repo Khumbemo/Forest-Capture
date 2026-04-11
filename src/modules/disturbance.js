@@ -104,3 +104,22 @@ export async function loadCBIData() {
   });
   recalcCBI();
 }
+
+export function init() {
+  const dToggles = [
+    { cb: 'distGrazingPresent', grp: 'grazingSeverityGroup', sl: 'distGrazingSeverity', dsp: 'distGrazingSeverityVal' },
+    { cb: 'distLoggingPresent', grp: 'loggingSeverityGroup', sl: 'distLoggingSeverity', dsp: 'distLoggingSeverityVal' },
+    { cb: 'distFirePresent', grp: 'fireSeverityGroup', sl: 'distFireSeverity', dsp: 'distFireSeverityVal' },
+    { cb: 'distHumanPresent', grp: 'humanSeverityGroup', sl: 'distHumanSeverity', dsp: 'distHumanSeverityVal' }
+  ];
+  dToggles.forEach(t => {
+    const c = document.getElementById(t.cb), g = document.getElementById(t.grp), s = document.getElementById(t.sl), d = document.getElementById(t.dsp);
+    if (!c || !g || !s || !d) return;
+    c.addEventListener('change', () => g.classList.toggle('visible', c.checked));
+    s.addEventListener('input', () => { d.textContent = s.value; });
+  });
+  $$('.cbi-select').forEach(s => s.addEventListener('change', recalcCBI));
+  $('#btnSaveDisturbCBI')?.addEventListener('click', async () => {
+      await saveDisturbCBI();
+  });
+}

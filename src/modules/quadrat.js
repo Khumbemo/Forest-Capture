@@ -1,7 +1,6 @@
-// src/modules/quadrat.js
-
 import { $, $$, toast, esc } from './ui.js';
 import { Store } from './storage.js';
+import { fillGPSField } from './gps.js';
 import { attachAutocomplete } from './species-autocomplete.js';
 
 let spCount = 0;
@@ -160,5 +159,13 @@ export async function refreshQuadratTable() {
       refreshQuadratTable();
       toast('Quadrat deleted');
     };
+  });
+}
+
+export function init() {
+  $('#btnAddSpecies')?.addEventListener('click', addSpeciesEntry);
+  $('#btnQuadratGPS')?.addEventListener('click', () => fillGPSField('#quadratGPS'));
+  $('#btnSaveQuadrat')?.addEventListener('click', async () => {
+    await saveQuadrat();
   });
 }

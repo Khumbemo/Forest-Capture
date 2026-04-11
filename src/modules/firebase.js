@@ -1,5 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
 import { initializeFirestore, persistentLocalCache, persistentSingleTabManager, getFirestore } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 import { getStorage } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js';
 import { toast } from './ui.js';
@@ -95,4 +95,11 @@ export async function EmailSignup(email, pwd) {
     const cred = await createUserWithEmailAndPassword(auth, email, pwd);
     console.log('EmailSignup: success', cred.user.uid);
     return cred.user;
+}
+
+// Sign out and clear session cache
+export async function AppSignOut() {
+    await signOut(auth);
+    localStorage.removeItem('fc_user');
+    console.log('AppSignOut: success');
 }

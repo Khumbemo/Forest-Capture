@@ -324,3 +324,23 @@ export async function refreshAudio() {
     });
   });
 }
+
+export function init() {
+  $('#photoInput')?.addEventListener('change', e => {
+      if(e.target.files[0]) handlePhotoInput(e.target.files[0]);
+  });
+  $('#btnStartRecording')?.addEventListener('click', () => {
+      startRecording(() => {
+          $('#recordingStatus').textContent = '🔴 Recording...';
+          $('#btnStartRecording').disabled = true;
+          $('#btnStopRecording').disabled = false;
+      });
+  });
+  $('#btnStopRecording')?.addEventListener('click', () => {
+      stopRecording(() => {
+          $('#recordingStatus').textContent = 'Saved';
+          $('#btnStartRecording').disabled = false;
+          $('#btnStopRecording').disabled = true;
+      });
+  });
+}

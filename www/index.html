@@ -239,6 +239,15 @@
           </svg>
         </div><div class="stat-label">Map &amp; GPS</div></div>
 
+        <div class="stat-card" id="btnToolOfflineMap"><div class="stat-icon">
+          <svg class="anim-tool-svg anim-tool-offline" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+            <polyline points="35,45 50,60 65,45" stroke="var(--emerald)"/>
+            <line x1="50" y1="25" x2="50" y2="60" stroke="var(--emerald)"/>
+            <path d="M20,75 L80,75" stroke="var(--emerald)" stroke-dasharray="6 4"/>
+          </svg>
+        </div><div class="stat-label">Offline Maps</div></div>
+
+
         <div class="stat-card" data-tool="screenQuadrat"><div class="stat-icon">
           <svg class="anim-tool-svg anim-tool-quadrat" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round">
             <polygon points="10,50 50,30 90,50 50,70" fill="rgba(16,185,129,0.1)" stroke="var(--emerald)"/>
@@ -810,7 +819,13 @@
       </div>
 
       <!-- DANGER TAB -->
-      <div class="settings-tab-pane" id="setDanger" class="hidden">
+      <div class="settings-tab-pane hidden" id="setDanger">
+        <div class="form-card danger-zone danger-card-custom" style="margin-bottom:var(--sp-md);">
+          <h3 class="card-title text-danger-custom">Session Management</h3>
+          <p class="card-desc text-danger-dim">Sign out completely. This securely wipes your localized session cache, isolating your research data from other users on this shared device.</p>
+          <button class="btn btn-danger btn-block mt-md" id="btnSignOutApp">Sign Out</button>
+        </div>
+
         <div class="form-card danger-zone danger-card-custom">
           <h3 class="card-title text-danger-custom">Danger Zone</h3>
           <p class="card-desc text-danger-dim">This action will irreversibly destroy all local survey databases, configurations, and cache. You cannot undo this.</p>

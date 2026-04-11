@@ -14,7 +14,7 @@
  */
 
 import { Store } from './storage.js';
-import { toast } from './ui.js';
+import { toast, $ } from './ui.js';
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let _allSurveys      = [];
@@ -556,4 +556,9 @@ function escapeHtml(str) {
 function _renderEmptyCharts() {
   const results = document.getElementById('compareResults');
   if (results) results.style.display = 'none';
+}
+
+export function init() {
+  $('#compareRunBtn')?.addEventListener('click', runComparison);
+  $('#compareExportBtn')?.addEventListener('click', exportComparisonJSON);
 }

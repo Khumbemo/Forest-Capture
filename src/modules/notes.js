@@ -2,6 +2,7 @@
 
 import { $, toast, esc } from './ui.js';
 import { Store } from './storage.js';
+import { curPos, reverseGeocode } from './gps.js';
 
 export async function refreshNotes() {
   const s = await Store.getActive();
@@ -39,4 +40,22 @@ export async function addNote() {
   $('#noteContent').value = '';
   refreshNotes();
   toast('Note saved');
+}
+
+export function init() {
+  $('#btnGeocodeNotes')?.addEventListener('click', async () => {
+      if (!curPos.lat) { toast('No GPS', true); return; }
+      toast('Fetching location...');
+      const loc = await reverseGeocode(curPos.lat, curPos.lng);
+      if (loc) {
+          const el = $('#noteContent');
+          el.value = (el.value + (el.value ? '\n\n' : '') + 'Location: ' + loc).trim();
+          toast('Location auto-filled');
+      } else {
+          toast('Failed to reverse geocode', true);
+      }
+  });
+  $('#btnAddNote')?.addEventListener('click', async () => {
+      await addNote();
+  });
 }
