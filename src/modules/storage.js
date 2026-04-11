@@ -13,36 +13,62 @@ export const idb = {
   dbPromise: null,
   init() {
     if (!this.dbPromise) {
+      console.log('idb: Opening IndexedDB...');
       this.dbPromise = new Promise((resolve, reject) => {
+        // Safety timeout for IndexedDB open
+        const t = setTimeout(() => {
+          console.warn('idb: Open TIMEOUT after 5s');
+          reject(new Error('IndexedDB Timeout'));
+        }, 5000);
+
         const request = indexedDB.open(DB_NAME, DB_VERSION);
         request.onupgradeneeded = (e) => {
+          console.log('idb: onupgradeneeded triggered');
           e.target.result.createObjectStore(STORE_NAME);
         };
-        request.onsuccess = (e) => resolve(e.target.result);
-        request.onerror = (e) => reject(e.target.error);
+        request.onsuccess = (e) => {
+          console.log('idb: onsuccess triggered');
+          clearTimeout(t);
+          resolve(e.target.result);
+        };
+        request.onerror = (e) => {
+          console.error('idb: onerror triggered', e.target.error);
+          clearTimeout(t);
+          reject(e.target.error);
+        };
       });
     }
     return this.dbPromise;
   },
   async get(key) {
-    const db = await this.init();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORE_NAME, 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.get(key);
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
+    try {
+      const db = await this.init();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(STORE_NAME, 'readonly');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.get(key);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    } catch (e) {
+      console.warn(`idb: get(${key}) failed`, e.message);
+      return null;
+    }
   },
   async set(key, val) {
-    const db = await this.init();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORE_NAME, 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.put(val, key);
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
+    try {
+      const db = await this.init();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(STORE_NAME, 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.put(val, key);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+    } catch (e) {
+      console.warn(`idb: set(${key}) failed`, e.message);
+      throw e;
+    }
   },
   async remove(key) {
     const db = await this.init();

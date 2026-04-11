@@ -3,9 +3,14 @@
 import { $, toast } from './ui.js';
 import { Store } from './storage.js';
 import { storage, ensureAuth } from './firebase.js';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js';
-import { Filesystem, Directory } from '@capacitor/filesystem';
-import { Capacitor } from '@capacitor/core';
+import { ref, uploadBytes, uploadString, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js';
+import { compress } from './utils.js';
+
+// Capacitor is not imported via ES modules to maintain browser compatibility without a bundler.
+// Android WebView injects Capacitor onto the window object globally.
+const NativeCap = window.Capacitor || null;
+const NativeFS = NativeCap && NativeCap.Plugins ? NativeCap.Plugins.Filesystem : null;
+const CACHE_DIR = 'CACHE';
 
 export async function refreshPhotos() {
   const s = await Store.getActive();
@@ -22,12 +27,14 @@ export async function refreshPhotos() {
 
       try {
         if (p.path) {
-          const storageRef = ref(storage, p.path);
-          await deleteObject(storageRef);
-        }
-        if (p.localUri) {
           try {
-            await Filesystem.deleteFile({ path: p.localUri });
+            const storageRef = ref(storage, p.path);
+            await deleteObject(storageRef);
+          } catch(e) {}
+        }
+        if (p.localUri && NativeFS) {
+          try {
+            await NativeFS.deleteFile({ path: p.localUri });
           } catch(e) {}
         }
         s.photos.splice(idx, 1);
@@ -50,46 +57,82 @@ export async function handlePhotoInput(file) {
 
   try {
     if (!s.photos) s.photos = [];
-    const fileName = `photo_${Date.now()}_${file.name || 'img.jpg'}`;
-    
-    // Save raw Blob directly to Android cache directory
-    const savedFile = await Filesystem.writeFile({
-      path: fileName,
-      data: file,
-      directory: Directory.Cache
-    });
-    
-    const fileUri = savedFile.uri;
-    const convertUrl = Capacitor.isNativePlatform() ? Capacitor.convertFileSrc(fileUri) : fileUri;
-    
-    let finalUrl = null;
-    let finalPath = '';
-
     const user = await ensureAuth();
-    if (user) {
-      toast('Uploading photo...', false);
-      const storageRef = ref(storage, `users/${user.uid}/surveys/${s.id}/photos/${fileName}`);
+
+    // ─── NATIVE ANDROID: HIGH PERFORMANCE RAW BLOB ───
+    if (NativeFS && NativeCap.isNativePlatform()) {
+      const fileName = `photo_${Date.now()}_${file.name || 'img.jpg'}`;
       
-      // Pipe directly from local filesystem path
-      const req = await fetch(convertUrl);
-      const blobData = await req.blob();
+      const savedFile = await NativeFS.writeFile({
+        path: fileName,
+        data: file,
+        directory: CACHE_DIR
+      });
       
-      const snapshot = await uploadBytes(storageRef, blobData);
-      finalUrl = await getDownloadURL(snapshot.ref);
-      finalPath = snapshot.ref.fullPath;
+      const fileUri = savedFile.uri;
+      const convertUrl = NativeCap.convertFileSrc(fileUri);
+      
+      let finalUrl = null;
+      let finalPath = '';
+
+      if (user) {
+        toast('Uploading photo...', false);
+        const storageRef = ref(storage, `users/${user.uid}/surveys/${s.id}/photos/${fileName}`);
+        
+        // Pipe directly from local filesystem path
+        const req = await fetch(convertUrl);
+        const blobData = await req.blob();
+        
+        const snapshot = await uploadBytes(storageRef, blobData);
+        finalUrl = await getDownloadURL(snapshot.ref);
+        finalPath = snapshot.ref.fullPath;
+      }
+
+      s.photos.push({
+        url: finalUrl,
+        path: finalPath,
+        localUri: convertUrl,
+        quadrat: parseInt($('#photoQuadratRef').value) || null,
+        time: new Date().toISOString()
+      });
+
+      await Store.update(s);
+      refreshPhotos();
+      toast(user ? 'Photo uploaded' : 'Photo saved locally');
+
+    } else {
+      // ─── WEB FALLBACK: BASE64 DATA URL ───
+      compress(file, 800, async compressedBase64 => {
+        try {
+          let finalUrl = null;
+          let finalPath = '';
+          const fileName = `photo_${Date.now()}.jpg`;
+
+          if (user) {
+            toast('Uploading photo...', false);
+            const storageRef = ref(storage, `users/${user.uid}/surveys/${s.id}/photos/${fileName}`);
+            const snapshot = await uploadString(storageRef, compressedBase64, 'data_url');
+            finalUrl = await getDownloadURL(snapshot.ref);
+            finalPath = snapshot.ref.fullPath;
+          }
+
+          s.photos.push({
+            data: user ? null : compressedBase64, // clear huge base64 if uploaded
+            url: finalUrl,
+            path: finalPath,
+            quadrat: parseInt($('#photoQuadratRef').value) || null,
+            time: new Date().toISOString()
+          });
+
+          await Store.update(s);
+          refreshPhotos();
+          toast(user ? 'Photo uploaded' : 'Photo saved (offline)');
+        } catch(e) {
+          toast('Web upload failed', true);
+        }
+      });
     }
 
-    s.photos.push({
-      url: finalUrl, // May be null if offline
-      path: finalPath,
-      localUri: convertUrl,
-      quadrat: parseInt($('#photoQuadratRef').value) || null,
-      time: new Date().toISOString()
-    });
-
-    await Store.update(s);
-    refreshPhotos();
-    toast(user ? 'Photo uploaded' : 'Photo saved locally');
   } catch (err) {
     console.error(err);
     toast('Capture failed: ' + err.message, true);
@@ -110,43 +153,75 @@ export async function startRecording(onStart) {
       if (!s.audioNotes) s.audioNotes = [];
 
       try {
-        const fileName = `audio_${Date.now()}.webm`;
-        
-        // Save raw Blob to cache directory
-        const savedFile = await Filesystem.writeFile({
-          path: fileName,
-          data: blob,
-          directory: Directory.Cache
-        });
-
-        const fileUri = savedFile.uri;
-        const convertUrl = Capacitor.isNativePlatform() ? Capacitor.convertFileSrc(fileUri) : fileUri;
-        
-        let finalUrl = null;
-        let finalPath = '';
-
         const user = await ensureAuth();
-        if (user) {
-          // Upload by piping from the local filesystem path
-          const storageRef = ref(storage, `users/${user.uid}/surveys/${s.id}/audio/${fileName}`);
-          const req = await fetch(convertUrl);
-          const blobData = await req.blob();
+
+        // ─── NATIVE ANDROID: HIGH PERFORMANCE RAW BLOB ───
+        if (NativeFS && NativeCap.isNativePlatform()) {
+          const fileName = `audio_${Date.now()}.webm`;
           
-          const snapshot = await uploadBytes(storageRef, blobData);
-          finalUrl = await getDownloadURL(snapshot.ref);
-          finalPath = snapshot.ref.fullPath;
+          const savedFile = await NativeFS.writeFile({
+            path: fileName,
+            data: blob,
+            directory: CACHE_DIR
+          });
+
+          const fileUri = savedFile.uri;
+          const convertUrl = NativeCap.convertFileSrc(fileUri);
+          
+          let finalUrl = null;
+          let finalPath = '';
+
+          if (user) {
+            toast('Uploading audio...', false);
+            const storageRef = ref(storage, `users/${user.uid}/surveys/${s.id}/audio/${fileName}`);
+            const req = await fetch(convertUrl);
+            const blobData = await req.blob();
+            
+            const snapshot = await uploadBytes(storageRef, blobData);
+            finalUrl = await getDownloadURL(snapshot.ref);
+            finalPath = snapshot.ref.fullPath;
+          }
+
+          s.audioNotes.push({ 
+            url: finalUrl, 
+            path: finalPath, 
+            localUri: convertUrl,
+            time: new Date().toISOString() 
+          });
+
+          await Store.update(s);
+          refreshAudio();
+          toast(user ? 'Voice note uploaded' : 'Voice note saved locally');
+        } else {
+          // ─── WEB FALLBACK: BASE64 DATA URL ───
+          const reader = new FileReader();
+          reader.onload = async ev => {
+            let finalUrl = null;
+            let finalPath = '';
+            const fileName = `audio_${Date.now()}.webm`;
+            const audioDataUrl = ev.target.result;
+
+            if (user) {
+              toast('Uploading audio...', false);
+              const storageRef = ref(storage, `users/${user.uid}/surveys/${s.id}/audio/${fileName}`);
+              const snapshot = await uploadString(storageRef, audioDataUrl, 'data_url');
+              finalUrl = await getDownloadURL(snapshot.ref);
+              finalPath = snapshot.ref.fullPath;
+            }
+
+            s.audioNotes.push({ 
+              data: user ? null : audioDataUrl,
+              url: finalUrl, 
+              path: finalPath,
+              time: new Date().toISOString() 
+            });
+
+            await Store.update(s);
+            refreshAudio();
+            toast(user ? 'Voice note uploaded' : 'Voice note saved (offline)');
+          };
+          reader.readAsDataURL(blob);
         }
-
-        s.audioNotes.push({ 
-          url: finalUrl, 
-          path: finalPath, 
-          localUri: convertUrl,
-          time: new Date().toISOString() 
-        });
-
-        await Store.update(s);
-        refreshAudio();
-        toast(user ? 'Voice note saved & uploaded' : 'Voice note saved locally');
       } catch (err) {
         console.error('Audio save failed', err);
         toast('Audio save failed', true);
@@ -180,22 +255,21 @@ export async function refreshAudio() {
     b.addEventListener('click', async () => {
       const idx = +b.dataset.i;
       const note = s.audioNotes[idx];
-      // Delete from Firebase Storage if path exists
+      s.audioNotes.splice(idx, 1);
+      await Store.update(s);
+      refreshAudio();
+      toast('Deleted');
       try {
         if (note && note.path) {
           const storageRef = ref(storage, note.path);
           await deleteObject(storageRef);
         }
-        if (note && note.localUri) {
-          try { await Filesystem.deleteFile({ path: note.localUri }); } catch(e) {}
+        if (note && note.localUri && NativeFS) {
+          try { await NativeFS.deleteFile({ path: note.localUri }); } catch(e) {}
         }
       } catch (err) {
         console.warn('Audio storage delete failed', err);
       }
-      s.audioNotes.splice(idx, 1);
-      await Store.update(s);
-      refreshAudio();
-      toast('Deleted');
     });
   });
 }
