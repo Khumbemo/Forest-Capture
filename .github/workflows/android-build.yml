@@ -36,6 +36,8 @@ jobs:
     - name: Build Android Debug APK
       working-directory: ./android
       run: |
+        sudo apt-get update && sudo apt-get install -y dos2unix
+        dos2unix ./gradlew
         chmod +x ./gradlew
         ./gradlew assembleDebug
 
