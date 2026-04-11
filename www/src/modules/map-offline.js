@@ -37,9 +37,14 @@ export async function downloadTilesForBounds(bounds, maxZoom, onProgress = () =>
 
   // Process in batches to avoid overwhelming the tile server.
   for (let i = 0; i < tiles.length; i += TILE_BATCH_SIZE) {
+    // Check cancel flag between batches
+    if (_cancelDownload) break;
+
     const batch = tiles.slice(i, i + TILE_BATCH_SIZE);
 
     await Promise.all(batch.map(async ({ z, x, y }) => {
+      if (_cancelDownload) return; // Check within batch too
+
       const url = OSM_TILE_URL
         .replace('{z}', z)
         .replace('{x}', x)

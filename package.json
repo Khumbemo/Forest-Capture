@@ -6,8 +6,8 @@
   "scripts": {
     "start": "npx serve -l 8080",
     "prep": "node prep-www.js",
-    "cap:sync": "node prep-www.js && cap sync android",
-    "cap:open": "cap open android"
+    "cap:sync": "node prep-www.js && npx cap sync android",
+    "cap:open": "npx cap open android"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.0",
