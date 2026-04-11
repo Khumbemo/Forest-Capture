@@ -1,7 +1,7 @@
 // src/main.js
 
 import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot, isOnline, updateConnectivityBanner } from './modules/ui.js';
-import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, resetUserRef } from './modules/storage.js';
+import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, resetUserRef, migrateFromLocalStorage } from './modules/storage.js';
 import { startGPS, fmtCoords, curPos } from './modules/gps.js';
 import { fetchWeather } from './modules/weather.js';
 import { refreshDataRecords, createNewSurvey, populateSurveySelector } from './modules/survey.js';
@@ -28,6 +28,9 @@ async function initApp() {
   setupEventListeners();
 
   try {
+    console.log('initApp: migrating data to IndexedDB');
+    await migrateFromLocalStorage();
+    
     console.log('initApp: starting');
     toast('Connecting...', false);
     await ensureAuth();

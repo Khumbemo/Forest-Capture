@@ -4,20 +4,72 @@ import { db, ensureAuth } from './firebase.js';
 import { collection, doc, setDoc, getDoc, getDocs, deleteDoc, writeBatch } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 import { toast } from './ui.js';
 
-// ─── localStorage survey cache helpers ───
+// ─── IndexedDB Wrapper ───
+const DB_NAME = 'fc_offline_db';
+const DB_VERSION = 1;
+const STORE_NAME = 'keyval';
+
+export const idb = {
+  dbPromise: null,
+  init() {
+    if (!this.dbPromise) {
+      this.dbPromise = new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = (e) => {
+          e.target.result.createObjectStore(STORE_NAME);
+        };
+        request.onsuccess = (e) => resolve(e.target.result);
+        request.onerror = (e) => reject(e.target.error);
+      });
+    }
+    return this.dbPromise;
+  },
+  async get(key) {
+    const db = await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.get(key);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  },
+  async set(key, val) {
+    const db = await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.put(val, key);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  },
+  async remove(key) {
+    const db = await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.delete(key);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+};
+
+// ─── IndexedDB survey cache helpers ───
 const LS_SURVEYS_KEY = 'fc_surveys_cache';
 
-function _cacheSurveysToLocal(surveys) {
+async function _cacheSurveysToLocal(surveys) {
   try {
-    localStorage.setItem(LS_SURVEYS_KEY, JSON.stringify(surveys));
+    await idb.set(LS_SURVEYS_KEY, JSON.stringify(surveys));
   } catch (e) {
-    console.warn('_cacheSurveysToLocal: localStorage write failed', e);
+    console.warn('_cacheSurveysToLocal: idb write failed', e);
   }
 }
 
-function _loadSurveysFromLocal() {
+async function _loadSurveysFromLocal() {
   try {
-    const raw = localStorage.getItem(LS_SURVEYS_KEY);
+    const raw = await idb.get(LS_SURVEYS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch (e) {
     console.warn('_loadSurveysFromLocal: parse error', e);
@@ -25,17 +77,17 @@ function _loadSurveysFromLocal() {
   }
 }
 
-function _addSurveyToLocalCache(s) {
-  const surveys = _loadSurveysFromLocal();
+async function _addSurveyToLocalCache(s) {
+  const surveys = await _loadSurveysFromLocal();
   const idx = surveys.findIndex(x => x.id === s.id);
   if (idx >= 0) surveys[idx] = s;
   else surveys.push(s);
-  _cacheSurveysToLocal(surveys);
+  await _cacheSurveysToLocal(surveys);
 }
 
-function _removeSurveyFromLocalCache(id) {
-  const surveys = _loadSurveysFromLocal().filter(x => x.id !== id);
-  _cacheSurveysToLocal(surveys);
+async function _removeSurveyFromLocalCache(id) {
+  const surveys = (await _loadSurveysFromLocal()).filter(x => x.id !== id);
+  await _cacheSurveysToLocal(surveys);
 }
 
 // References will be scoped to the authenticated user
@@ -102,23 +154,23 @@ export const Store = {
 
       // If Firestore returned results, update the local cache
       if (surveys.length) {
-        _cacheSurveysToLocal(surveys);
+        await _cacheSurveysToLocal(surveys);
         return surveys;
       }
 
       // Firestore returned nothing — fall back to localStorage cache
-      const cached = _loadSurveysFromLocal();
+      const cached = await _loadSurveysFromLocal();
       if (cached.length) {
-        console.log('Store.getSurveys: using localStorage cache (' + cached.length + ' surveys)');
+        console.log('Store.getSurveys: using idb cache (' + cached.length + ' surveys)');
         return cached;
       }
       return surveys;
     } catch (e) {
       console.error('Store.getSurveys error:', e);
-      // Fall back to localStorage on any error
-      const cached = _loadSurveysFromLocal();
+      // Fall back to idb on any error
+      const cached = await _loadSurveysFromLocal();
       if (cached.length) {
-        console.log('Store.getSurveys: error recovery from localStorage (' + cached.length + ')');
+        console.log('Store.getSurveys: error recovery from idb (' + cached.length + ')');
         return cached;
       }
       return [];
@@ -132,8 +184,8 @@ export const Store = {
        console.log('Store.getActive: no activeId');
        return null;
     }
-    // Try localStorage cache first for instant response
-    const cached = _loadSurveysFromLocal();
+    // Try idb cache first for instant response
+    const cached = await _loadSurveysFromLocal();
     const localMatch = cached.find(s => s.id === activeId);
 
     try {
@@ -146,9 +198,9 @@ export const Store = {
       console.warn('Store.getActive: Firestore failed, trying cache', e.message);
     }
 
-    // Fallback to localStorage
+    // Fallback to idb
     if (localMatch) {
-      console.log('Store.getActive: using localStorage cache for', activeId);
+      console.log('Store.getActive: using idb cache for', activeId);
       return localMatch;
     }
     return null;
@@ -157,11 +209,11 @@ export const Store = {
   async setActive(id) {
     console.log('Store.setActive:', id);
     if (!id) {
-      localStorage.removeItem('fc_active_survey');
+      await idb.remove('fc_active_survey');
       return;
     }
-    // Write to localStorage immediately for instant offline access
-    localStorage.setItem('fc_active_survey', id);
+    // Write to idb immediately for instant offline access
+    await idb.set('fc_active_survey', id);
     try {
       const userDocRef = await getUserRef();
       setDoc(doc(collection(userDocRef, 'settings'), 'activeId'), { id });
@@ -173,10 +225,10 @@ export const Store = {
 
   async _getActiveId() {
     console.log('Store._getActiveId: start');
-    // Fast path: check localStorage cache first
-    const cached = localStorage.getItem('fc_active_survey');
+    // Fast path: check idb cache first
+    const cached = await idb.get('fc_active_survey');
     if (cached) {
-      console.log('Store._getActiveId: using localStorage cache', cached);
+      console.log('Store._getActiveId: using idb cache', cached);
       // Sync Firestore in background without blocking UI
       this._syncActiveIdFromFirestore();
       return cached;
@@ -191,18 +243,18 @@ export const Store = {
       const docSnap = await withTimeout(getDoc(doc(collection(userDocRef, 'settings'), 'activeId')), 3000, { exists: () => false });
       console.log('Store._syncActiveIdFromFirestore: doc received');
       const id = docSnap.exists() ? docSnap.data().id : null;
-      if (id) localStorage.setItem('fc_active_survey', id);
+      if (id) await idb.set('fc_active_survey', id);
       return id;
     } catch (e) {
       console.error('Store._syncActiveIdFromFirestore error:', e);
-      return localStorage.getItem('fc_active_survey') || null;
+      return (await idb.get('fc_active_survey')) || null;
     }
   },
 
   async add(s) {
     console.log('Store.add: Attempting to save survey', s.id);
-    // Cache to localStorage IMMEDIATELY so it's always available offline
-    _addSurveyToLocalCache(s);
+    // Cache to idb IMMEDIATELY so it's always available offline
+    await _addSurveyToLocalCache(s);
     try {
       const userDocRef = await getUserRef();
       const surveyDocRef = doc(collection(userDocRef, 'surveys'), s.id);
@@ -212,7 +264,7 @@ export const Store = {
       const p = setDoc(surveyDocRef, s);
 
       // Update active session locally first
-      localStorage.setItem('fc_active_survey', s.id);
+      await idb.set('fc_active_survey', s.id);
 
       // Attempt background Firestore update for activeId
       setDoc(doc(collection(userDocRef, 'settings'), 'activeId'), { id: s.id }).catch(e => {
@@ -229,8 +281,8 @@ export const Store = {
   },
 
   async update(s) {
-    // Update localStorage cache immediately
-    _addSurveyToLocalCache(s);
+    // Update idb cache immediately
+    await _addSurveyToLocalCache(s);
     try {
       const userDocRef = await getUserRef();
       setDoc(doc(collection(userDocRef, 'surveys'), s.id), s);
@@ -240,8 +292,8 @@ export const Store = {
   },
 
   async del(id) {
-    // Remove from localStorage cache immediately
-    _removeSurveyFromLocalCache(id);
+    // Remove from idb cache immediately
+    await _removeSurveyFromLocalCache(id);
     const userDocRef = await getUserRef();
     deleteDoc(doc(collection(userDocRef, 'surveys'), id));
     
@@ -254,9 +306,9 @@ export const Store = {
   },
 
   async clearAll() {
-    // Clear localStorage caches
-    localStorage.removeItem(LS_SURVEYS_KEY);
-    localStorage.removeItem('fc_active_survey');
+    // Clear idb caches
+    await idb.remove(LS_SURVEYS_KEY);
+    await idb.remove('fc_active_survey');
 
     const surveys = await this.getSurveys();
     const userDocRef = await getUserRef();
@@ -280,14 +332,14 @@ export const Store = {
 
 const LS_WPS_KEY = 'fc_waypoints_cache';
 
-function _cacheWpsToLocal(wps) {
-  try { localStorage.setItem(LS_WPS_KEY, JSON.stringify(wps)); }
+async function _cacheWpsToLocal(wps) {
+  try { await idb.set(LS_WPS_KEY, JSON.stringify(wps)); }
   catch (e) { console.warn('_cacheWpsToLocal failed', e); }
 }
 
-function _loadWpsFromLocal() {
+async function _loadWpsFromLocal() {
   try {
-    const raw = localStorage.getItem(LS_WPS_KEY);
+    const raw = await idb.get(LS_WPS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch (e) { return []; }
 }
@@ -298,18 +350,18 @@ export async function getWps() {
     const docSnap = await withTimeout(getDoc(doc(collection(userDocRef, 'waypoints'), 'data')), 5000, { exists: () => false });
     if (docSnap.exists()) {
       const wps = docSnap.data().wps || [];
-      _cacheWpsToLocal(wps);
+      await _cacheWpsToLocal(wps);
       return wps;
     }
   } catch (e) {
     console.warn('getWps: Firestore failed, using cache', e.message);
   }
-  return _loadWpsFromLocal();
+  return await _loadWpsFromLocal();
 }
 
 export async function saveWps(wps) {
     // Cache immediately for offline access
-    _cacheWpsToLocal(wps);
+    await _cacheWpsToLocal(wps);
     try {
       const userDocRef = await getUserRef();
       setDoc(doc(collection(userDocRef, 'waypoints'), 'data'), { wps });
@@ -320,7 +372,7 @@ export async function saveWps(wps) {
 
 export async function saveSettings(s) {
   // Cache locally for offline access
-  try { localStorage.setItem('fc_app_settings', JSON.stringify(s)); } catch (_) {}
+  try { await idb.set('fc_app_settings', JSON.stringify(s)); } catch (_) {}
   try {
     const userDocRef = await getUserRef();
     await setDoc(doc(collection(userDocRef, 'settings'), 'app_settings'), s);
@@ -338,15 +390,15 @@ export async function loadSettings() {
     console.log('loadSettings: done');
     if (docSnap.exists()) {
       const data = docSnap.data();
-      try { localStorage.setItem('fc_app_settings', JSON.stringify(data)); } catch (_) {}
+      try { await idb.set('fc_app_settings', JSON.stringify(data)); } catch (_) {}
       return data;
     }
   } catch (e) {
     console.warn('loadSettings: Firestore failed, using cache', e.message);
   }
-  // Fallback to localStorage
+  // Fallback to idb
   try {
-    const raw = localStorage.getItem('fc_app_settings');
+    const raw = await idb.get('fc_app_settings');
     return raw ? JSON.parse(raw) : {};
   } catch (_) { return {}; }
 }
@@ -360,17 +412,17 @@ export async function getTheme() {
     console.log('getTheme: done');
     if (docSnap.exists()) {
       const val = docSnap.data().value;
-      try { localStorage.setItem('fc_theme', val); } catch (_) {}
+      try { await idb.set('fc_theme', val); } catch (_) {}
       return val;
     }
   } catch (e) {
     console.warn('getTheme: Firestore failed, using cache', e.message);
   }
-  return localStorage.getItem('fc_theme') || 'night';
+  return (await idb.get('fc_theme')) || 'night';
 }
 
 export async function setTheme(t) {
-  try { localStorage.setItem('fc_theme', t); } catch (_) {}
+  try { await idb.set('fc_theme', t); } catch (_) {}
   try {
     const userDocRef = await getUserRef();
     setDoc(doc(collection(userDocRef, 'settings'), 'theme'), { value: t });
@@ -388,18 +440,18 @@ export async function getBrightness() {
     console.log('getBrightness: done');
     if (docSnap.exists()) {
       const val = docSnap.data().value;
-      try { localStorage.setItem('fc_brightness', String(val)); } catch (_) {}
+      try { await idb.set('fc_brightness', String(val)); } catch (_) {}
       return val;
     }
   } catch (e) {
     console.warn('getBrightness: Firestore failed, using cache', e.message);
   }
-  const cached = localStorage.getItem('fc_brightness');
-  return cached !== null ? parseInt(cached, 10) : 100;
+  const cached = await idb.get('fc_brightness');
+  return cached !== undefined && cached !== null ? parseInt(cached, 10) : 100;
 }
 
 export async function setBrightness(v) {
-  try { localStorage.setItem('fc_brightness', String(v)); } catch (_) {}
+  try { await idb.set('fc_brightness', String(v)); } catch (_) {}
   try {
     const userDocRef = await getUserRef();
     setDoc(doc(collection(userDocRef, 'settings'), 'brightness'), { value: v });
@@ -409,9 +461,22 @@ export async function setBrightness(v) {
 }
 
 // MIGRATION UTILITY
-// Notice: In the Firebase version, local storage migration shouldn't overwrite cloud data
-// blindly, so it's disabled or turned into a cloud push loop if data is found.
 export async function migrateFromLocalStorage() {
-  // Skipping local storage migration as Firebase provides cross-device state
-  console.log('Firebase synced storage mode activated.');
+  console.log('migrateFromLocalStorage: Migrating from localStorage to IndexedDB...');
+  const keys = ['fc_surveys_cache', 'fc_active_survey', 'fc_waypoints_cache', 'fc_app_settings', 'fc_theme', 'fc_brightness'];
+  let migrated = false;
+  for (const k of keys) {
+    const v = localStorage.getItem(k);
+    if (v !== null) {
+      await idb.set(k, v);
+      // Clean up localStorage after migration
+      localStorage.removeItem(k);
+      migrated = true;
+    }
+  }
+  if (migrated) {
+    console.log('Migration to IndexedDB complete.');
+  } else {
+    console.log('No legacy localStorage data found to migrate.');
+  }
 }
