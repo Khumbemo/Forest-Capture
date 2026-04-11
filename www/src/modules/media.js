@@ -1,7 +1,7 @@
 // src/modules/media.js
 
 import { $, toast } from './ui.js';
-import { Store } from './storage.js';
+import { Store, MediaStore } from './storage.js';
 import { storage, ensureAuth } from './firebase.js';
 import { ref, uploadBytes, uploadString, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js';
 import { compress } from './utils.js';
@@ -19,23 +19,33 @@ export async function refreshPhotos() {
     if (g) g.innerHTML = '';
     return;
   }
-  g.innerHTML = s.photos.map((p, i) => `<div class="photo-thumb"><img src="${p.localUri || p.url || p.data}" alt="Photo" /><button class="photo-thumb-delete" data-i="${i}">✕</button></div>`).join('');
+
+  // Resolve all media URLs (from Firebase, local URI, or IndexedDB)
+  const resolved = await Promise.all(s.photos.map(p => MediaStore.resolveUrl(p)));
+
+  g.innerHTML = s.photos.map((p, i) => `<div class="photo-thumb"><img src="${resolved[i]}" alt="Photo" /><button class="photo-thumb-delete" data-i="${i}">✕</button></div>`).join('');
   g.querySelectorAll('.photo-thumb-delete').forEach(b => {
     b.addEventListener('click', async () => {
       const idx = +b.dataset.i;
       const p = s.photos[idx];
 
       try {
+        // Delete from Firebase Storage
         if (p.path) {
           try {
             const storageRef = ref(storage, p.path);
             await deleteObject(storageRef);
           } catch(e) {}
         }
+        // Delete from native filesystem
         if (p.localUri && NativeFS) {
           try {
             await NativeFS.deleteFile({ path: p.localUri });
           } catch(e) {}
+        }
+        // Delete from IndexedDB MediaStore
+        if (p.mediaId) {
+          await MediaStore.del(p.mediaId);
         }
         s.photos.splice(idx, 1);
         await Store.update(s);
@@ -63,9 +73,11 @@ export async function handlePhotoInput(file) {
     if (NativeFS && NativeCap.isNativePlatform()) {
       const fileName = `photo_${Date.now()}_${file.name || 'img.jpg'}`;
       
+      // Convert file to base64 for Capacitor Filesystem
+      const base64Data = await _fileToBase64(file);
       const savedFile = await NativeFS.writeFile({
         path: fileName,
-        data: file,
+        data: base64Data,
         directory: CACHE_DIR
       });
       
@@ -101,11 +113,12 @@ export async function handlePhotoInput(file) {
       toast(user ? 'Photo uploaded' : 'Photo saved locally');
 
     } else {
-      // ─── WEB FALLBACK: BASE64 DATA URL ───
+      // ─── WEB FALLBACK: COMPRESS → STORE IN IndexedDB ───
       compress(file, 800, async compressedBase64 => {
         try {
           let finalUrl = null;
           let finalPath = '';
+          let mediaId = null;
           const fileName = `photo_${Date.now()}.jpg`;
 
           if (user) {
@@ -114,11 +127,15 @@ export async function handlePhotoInput(file) {
             const snapshot = await uploadString(storageRef, compressedBase64, 'data_url');
             finalUrl = await getDownloadURL(snapshot.ref);
             finalPath = snapshot.ref.fullPath;
+            // No need to store blob locally if uploaded
+          } else {
+            // Offline: store base64 in IndexedDB MediaStore (NOT in survey doc)
+            mediaId = await MediaStore.save(compressedBase64);
           }
 
           s.photos.push({
-            data: user ? null : compressedBase64, // clear huge base64 if uploaded
-            url: finalUrl,
+            mediaId,      // IndexedDB reference (offline only)
+            url: finalUrl, // Firebase download URL (online)
             path: finalPath,
             quadrat: parseInt($('#photoQuadratRef').value) || null,
             time: new Date().toISOString()
@@ -128,7 +145,8 @@ export async function handlePhotoInput(file) {
           refreshPhotos();
           toast(user ? 'Photo uploaded' : 'Photo saved (offline)');
         } catch(e) {
-          toast('Web upload failed', true);
+          console.error('Photo save failed', e);
+          toast('Photo save failed', true);
         }
       });
     }
@@ -137,6 +155,16 @@ export async function handlePhotoInput(file) {
     console.error(err);
     toast('Capture failed: ' + err.message, true);
   }
+}
+
+// Helper: convert File to base64 string for Capacitor Filesystem
+function _fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]); // strip data URL prefix
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 let mediaRec = null, audioChunks = [];
@@ -159,9 +187,10 @@ export async function startRecording(onStart) {
         if (NativeFS && NativeCap.isNativePlatform()) {
           const fileName = `audio_${Date.now()}.webm`;
           
+          const base64Data = await _blobToBase64(blob);
           const savedFile = await NativeFS.writeFile({
             path: fileName,
-            data: blob,
+            data: base64Data,
             directory: CACHE_DIR
           });
 
@@ -193,11 +222,12 @@ export async function startRecording(onStart) {
           refreshAudio();
           toast(user ? 'Voice note uploaded' : 'Voice note saved locally');
         } else {
-          // ─── WEB FALLBACK: BASE64 DATA URL ───
+          // ─── WEB FALLBACK: STORE IN IndexedDB ───
           const reader = new FileReader();
           reader.onload = async ev => {
             let finalUrl = null;
             let finalPath = '';
+            let mediaId = null;
             const fileName = `audio_${Date.now()}.webm`;
             const audioDataUrl = ev.target.result;
 
@@ -207,10 +237,13 @@ export async function startRecording(onStart) {
               const snapshot = await uploadString(storageRef, audioDataUrl, 'data_url');
               finalUrl = await getDownloadURL(snapshot.ref);
               finalPath = snapshot.ref.fullPath;
+            } else {
+              // Offline: store in IndexedDB (not in survey doc)
+              mediaId = await MediaStore.save(audioDataUrl);
             }
 
             s.audioNotes.push({ 
-              data: user ? null : audioDataUrl,
+              mediaId,
               url: finalUrl, 
               path: finalPath,
               time: new Date().toISOString() 
@@ -235,6 +268,16 @@ export async function startRecording(onStart) {
   }
 }
 
+// Helper: convert Blob to base64 string for Capacitor Filesystem
+function _blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
 export function stopRecording(onStop) {
   if (mediaRec && mediaRec.state === 'recording') {
     mediaRec.stop();
@@ -250,11 +293,19 @@ export async function refreshAudio() {
     list.innerHTML = '<div class="empty-state small"><p>No voice notes</p></div>';
     return;
   }
-  list.innerHTML = s.audioNotes.map((a, i) => `<div class="audio-item"><audio controls src="${a.localUri || a.url || a.data}"></audio><button data-i="${i}">✕</button></div>`).join('');
+
+  // Resolve all media URLs
+  const resolved = await Promise.all(s.audioNotes.map(a => MediaStore.resolveUrl(a)));
+
+  list.innerHTML = s.audioNotes.map((a, i) => `<div class="audio-item"><audio controls src="${resolved[i]}"></audio><button data-i="${i}">✕</button></div>`).join('');
   list.querySelectorAll('button').forEach(b => {
     b.addEventListener('click', async () => {
       const idx = +b.dataset.i;
       const note = s.audioNotes[idx];
+      // Delete from IndexedDB MediaStore
+      if (note && note.mediaId) {
+        await MediaStore.del(note.mediaId);
+      }
       s.audioNotes.splice(idx, 1);
       await Store.update(s);
       refreshAudio();

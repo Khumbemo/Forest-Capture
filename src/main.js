@@ -28,18 +28,16 @@ async function initApp() {
   setupEventListeners();
 
   try {
-    console.log('initApp: migrating data to IndexedDB');
     await migrateFromLocalStorage();
     // Move any inline base64 photos/audio out of survey docs into MediaStore
     await migrateInlineMedia();
     
-    console.log('initApp: starting');
+    
     toast('Connecting...', false);
     await ensureAuth();
 
     // Load settings gracefully — don't let offline Firestore kill the init flow
     try {
-      console.log('initApp: auth done, loading settings');
       await loadAppData();
     } catch (settingsErr) {
       console.warn('App: Settings load failed (offline?), using defaults', settingsErr.message);
@@ -48,13 +46,9 @@ async function initApp() {
       applyBrightness(100);
     }
 
-    console.log('initApp: loading surveys');
+    
     const surveys = await Store.getSurveys();
 
-    console.log('initApp: surveys loaded', surveys.length);
-    loadSurveyHistory(surveys);
-
-    console.log('initApp: populating selector');
     await populateSurveySelector();
 
     toast('App Ready', false);

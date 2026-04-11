@@ -113,14 +113,71 @@ export const idb = {
     }
   },
   async remove(key) {
-    const db = await this.init();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORE_NAME, 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.delete(key);
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
+    try {
+      const db = await this.init();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(STORE_NAME, 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.delete(key);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+    } catch (e) {
+      console.warn(`idb: remove(${key}) failed`, e.message);
+    }
+  }
+};
+
+// ─── MediaStore: Separate blob storage for photos/audio ───
+// Stores binary data (base64 strings) in IndexedDB under prefixed keys,
+// keeping heavy blobs OUT of survey documents (which go to Firestore).
+// This prevents exceeding Firestore's 1MB document size limit.
+const MEDIA_PREFIX = 'media_';
+
+export const MediaStore = {
+  /** Save a media blob (base64 data URL) to IndexedDB. Returns the media ID. */
+  async save(data) {
+    const id = MEDIA_PREFIX + Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
+    await idb.set(id, data);
+    return id;
+  },
+
+  /** Retrieve a media blob by ID. Returns the base64 string or null. */
+  async get(id) {
+    if (!id || !id.startsWith(MEDIA_PREFIX)) return null;
+    try {
+      return await idb.get(id);
+    } catch (e) {
+      console.warn('MediaStore.get failed:', id, e.message);
+      return null;
+    }
+  },
+
+  /** Delete a media blob by ID. */
+  async del(id) {
+    if (!id || !id.startsWith(MEDIA_PREFIX)) return;
+    try {
+      await idb.remove(id);
+    } catch (e) {
+      console.warn('MediaStore.del failed:', id, e.message);
+    }
+  },
+
+  /**
+   * Resolve a photo/audio entry to a displayable src URL.
+   * Priority: Firebase URL > Capacitor localUri > IndexedDB blob (mediaId) > legacy inline data
+   */
+  async resolveUrl(entry) {
+    if (!entry) return '';
+    if (entry.url) return entry.url;
+    if (entry.localUri) return entry.localUri;
+    if (entry.mediaId) {
+      const blob = await this.get(entry.mediaId);
+      return blob || '';
+    }
+    // Legacy: inline base64 (kept for backwards compat)
+    if (entry.data) return entry.data;
+    return '';
   }
 };
 
@@ -364,8 +421,12 @@ export const Store = {
   async del(id) {
     // Remove from idb cache immediately
     await _removeSurveyFromLocalCache(id);
-    const userDocRef = await getUserRef();
-    deleteDoc(doc(collection(userDocRef, 'surveys'), id));
+    try {
+      const userDocRef = await getUserRef();
+      await deleteDoc(doc(collection(userDocRef, 'surveys'), id));
+    } catch (e) {
+      console.warn('Store.del: Firestore delete failed (offline?)', e.message);
+    }
     
     // Fallback logic for activeId
     const activeId = await this._getActiveId();
@@ -390,7 +451,7 @@ export const Store = {
     batch.delete(doc(collection(userDocRef, 'settings'), 'activeId'));
     batch.delete(doc(collection(userDocRef, 'waypoints'), 'data'));
     
-    batch.commit();
+    await batch.commit();
   },
 
   async getBackupData() {
@@ -548,5 +609,65 @@ export async function migrateFromLocalStorage() {
     console.log('Migration to IndexedDB complete.');
   } else {
     console.log('No legacy localStorage data found to migrate.');
+  }
+}
+
+/**
+ * migrateInlineMedia()
+ *
+ * Moves inline base64 data from survey documents into separate MediaStore entries.
+ * This prevents exceeding Firestore's 1MB document size limit.
+ * Safe to call multiple times — only migrates entries that still have inline .data.
+ */
+export async function migrateInlineMedia() {
+  const surveys = await _loadSurveysFromLocal();
+  let migrated = 0;
+
+  for (const s of surveys) {
+    let changed = false;
+
+    // Migrate photos
+    if (s.photos) {
+      for (const p of s.photos) {
+        if (p.data && !p.mediaId) {
+          p.mediaId = await MediaStore.save(p.data);
+          delete p.data;
+          changed = true;
+          migrated++;
+        }
+      }
+    }
+
+    // Migrate audio notes
+    if (s.audioNotes) {
+      for (const a of s.audioNotes) {
+        if (a.data && !a.mediaId) {
+          a.mediaId = await MediaStore.save(a.data);
+          delete a.data;
+          changed = true;
+          migrated++;
+        }
+      }
+    }
+
+    // Migrate herbarium photos
+    if (s.herbariums) {
+      for (const h of s.herbariums) {
+        if (h.photoUrl && h.photoUrl.startsWith('data:') && !h.mediaId) {
+          h.mediaId = await MediaStore.save(h.photoUrl);
+          delete h.photoUrl;
+          changed = true;
+          migrated++;
+        }
+      }
+    }
+
+    if (changed) {
+      await _addSurveyToLocalCache(s);
+    }
+  }
+
+  if (migrated > 0) {
+    console.log(`migrateInlineMedia: Migrated ${migrated} media items out of survey documents`);
   }
 }

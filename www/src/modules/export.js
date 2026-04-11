@@ -41,7 +41,22 @@ export async function exportSurveyJSON() {
 export async function exportAllSurveysCSV() {
   const sv = await Store.getSurveys();
   if (!sv.length) { alert('No surveys'); return; }
-  dl(sv.map(s => toCSV(s)).join('\n'), 'all_surveys.csv', 'text/csv');
+  // Build single header + all data rows (skip repeated headers)
+  const header = ['Survey', 'Date', 'Location', 'Investigator', 'Q#', 'Size', 'Species', 'Stage', 'Phenology', 'Abundance', 'DBH', 'Height', 'Health', 'GPS']
+    .map(c => `"${c}"`).join(',');
+  const dataRows = sv.flatMap(s => {
+    const rows = [];
+    if (s.quadrats) s.quadrats.forEach(q => {
+      if (q.species) q.species.forEach(sp => {
+        rows.push([s.name, s.date, s.location, s.investigator || '', q.number, q.size, sp.name, sp.stage, sp.phenology || '', sp.abundance, sp.dbh, sp.height, sp.health || '', q.gps || '']
+          .map(c => `"${String(c).replace(/"/g, '""')}"`).join(','));
+      });
+    });
+    return rows;
+  });
+  // UTF-8 BOM for Excel compatibility
+  const bom = '\uFEFF';
+  dl(bom + header + '\n' + dataRows.join('\n'), 'all_surveys.csv', 'text/csv;charset=utf-8');
   toast('Exporting All Surveys CSV...');
 }
 

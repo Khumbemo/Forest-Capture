@@ -72,10 +72,10 @@ export function setMapLayer(type) {
 }
 
 export async function addWaypoint(name, type, notes = '', manualLat = null, manualLng = null) {
-    let lat = manualLat || curPos.lat;
-    let lng = manualLng || curPos.lng;
+    let lat = manualLat != null ? manualLat : curPos.lat;
+    let lng = manualLng != null ? manualLng : curPos.lng;
 
-    if (!lat || !lng) {
+    if (lat == null || lng == null) {
         // Prompt for manual coordinates when GPS is unavailable
         const manual = prompt('No GPS signal. Enter coordinates manually (lat, lng):');
         if (!manual) return;

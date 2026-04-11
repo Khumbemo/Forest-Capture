@@ -4,8 +4,8 @@ import { $, esc } from './ui.js';
 
 export function refreshAnalytics(s) {
   if (!s || !s.quadrats || !s.quadrats.length) {
-    const ids = ['analyticRichness', 'analyticShannon', 'analyticSimpson', 'analyticSimpsonDiv', 'analyticEvenness', 'analyticTotalN'];
-    ids.forEach(id => { if ($( '#' + id)) $( '#' + id).textContent = id === 'analyticRichness' || id === 'analyticTotalN' ? '0' : '0.000'; });
+    const ids = ['analyticRichness', 'analyticShannon', 'analyticSimpson', 'analyticSimpsonDiv', 'analyticEvenness', 'analyticMargalef', 'analyticFisher', 'analyticChao1', 'analyticTotalN'];
+    ids.forEach(id => { if ($( '#' + id)) $( '#' + id).textContent = id === 'analyticRichness' || id === 'analyticTotalN' || id === 'analyticChao1' ? '0' : '0.000'; });
     if ($('#analyticBasalTotal')) $('#analyticBasalTotal').textContent = '0.000 m²';
     if ($('#analyticBasalHa')) $('#analyticBasalHa').textContent = '0.000 m²/ha';
     if ($('#iviTableBody')) $('#iviTableBody').innerHTML = '<tr><td colspan="8" class="table-empty">No data</td></tr>';
@@ -29,7 +29,11 @@ export function refreshAnalytics(s) {
       if (parseFloat(sp.dbh) > 0) {
         speciesMap[k].dbhSum += parseFloat(sp.dbh);
         speciesMap[k].dbhCount++;
-        speciesMap[k].basalArea += Math.PI * Math.pow(parseFloat(sp.dbh) / 200, 2) * (abundance || 1);
+        // Basal area: per-stem BA = π × (DBH_cm / 200)² in m², then multiply by stem count
+        // This is correct when all stems in this entry share the same DBH.
+        // For mixed-DBH entries, each should be a separate species entry.
+        const stemBA = Math.PI * Math.pow(parseFloat(sp.dbh) / 200, 2);
+        speciesMap[k].basalArea += stemBA * (abundance || 1);
       }
       speciesMap[k].quadrats.add(qi);
     });
@@ -63,15 +67,62 @@ export function refreshAnalytics(s) {
   // When S = 1, J' = 1 by convention (single species = perfectly "even")
   const E = S > 1 && totalN > 0 ? H / Math.log(S) : (S === 1 && totalN > 0 ? 1 : 0);
 
-  // Basal area
+  // Basal area total
   let totalBA = 0;
   speciesList.forEach(k => totalBA += speciesMap[k].basalArea);
+
+  // Margalef's richness index: d = (S - 1) / ln(N)
+  const margalef = (S > 0 && totalN > 1) ? (S - 1) / Math.log(totalN) : 0;
+
+  // ─── Fisher's alpha ───
+  // Solve: S = α × ln(1 + N/α) using Newton-Raphson iteration
+  // The function f(α) = α × ln(1 + N/α) - S = 0
+  // Derivative f'(α) = ln(1 + N/α) - N/(α + N)
+  let fisherAlpha = 0;
+  if (S > 0 && totalN > S) {
+    // Initial guess: start with Margalef as approximation
+    let alpha = margalef > 0 ? margalef : 1;
+    for (let iter = 0; iter < 100; iter++) {
+      const ratio = totalN / alpha;
+      const lnTerm = Math.log(1 + ratio);
+      const f = alpha * lnTerm - S;
+      const fPrime = lnTerm - totalN / (alpha + totalN);
+      if (Math.abs(fPrime) < 1e-15) break;
+      const delta = f / fPrime;
+      alpha -= delta;
+      if (alpha <= 0) alpha = 0.01; // prevent negative
+      if (Math.abs(delta) < 1e-8) break;
+    }
+    fisherAlpha = alpha;
+  }
+
+  // ─── Chao1 nonparametric richness estimator ───
+  // Chao1 = S_obs + f1²/(2·f2)
+  // where f1 = number of singletons (species with exactly 1 individual)
+  //       f2 = number of doubletons (species with exactly 2 individuals)
+  // Bias-corrected form when f2 = 0: Chao1 = S_obs + f1·(f1-1)/2
+  let f1 = 0, f2 = 0;
+  speciesList.forEach(k => {
+    const n = speciesMap[k].abundance;
+    if (n === 1) f1++;
+    if (n === 2) f2++;
+  });
+  let chao1 = S;
+  if (f2 > 0) {
+    chao1 = S + (f1 * f1) / (2 * f2);
+  } else if (f1 > 0) {
+    // Bias-corrected form when no doubletons exist
+    chao1 = S + f1 * (f1 - 1) / 2;
+  }
 
   if ($('#analyticRichness')) $('#analyticRichness').textContent = S;
   if ($('#analyticShannon')) $('#analyticShannon').textContent = totalN > 0 ? H.toFixed(3) : '0.000';
   if ($('#analyticSimpson')) $('#analyticSimpson').textContent = D.toFixed(3);
   if ($('#analyticSimpsonDiv')) $('#analyticSimpsonDiv').textContent = D > 0 ? (1 / D).toFixed(3) : '0.000';
   if ($('#analyticEvenness')) $('#analyticEvenness').textContent = E.toFixed(3);
+  if ($('#analyticMargalef')) $('#analyticMargalef').textContent = margalef.toFixed(3);
+  if ($('#analyticFisher')) $('#analyticFisher').textContent = fisherAlpha.toFixed(3);
+  if ($('#analyticChao1')) $('#analyticChao1').textContent = chao1.toFixed(1);
   if ($('#analyticTotalN')) $('#analyticTotalN').textContent = totalN;
   if ($('#analyticBasalTotal')) $('#analyticBasalTotal').textContent = totalBA.toFixed(4) + ' m²';
   if ($('#analyticBasalHa')) $('#analyticBasalHa').textContent = (totalArea > 0 ? (totalBA / totalArea).toFixed(3) : '—') + ' m²/ha';

@@ -31,7 +31,11 @@ export async function saveDisturbCBI() {
     grazing: { present: $('#distGrazingPresent').checked, severity: +$('#distGrazingSeverity').value, type: $('#distGrazingType').value },
     logging: { present: $('#distLoggingPresent').checked, severity: +$('#distLoggingSeverity').value, type: $('#distLoggingType').value },
     fire: { present: $('#distFirePresent').checked, severity: +$('#distFireSeverity').value, type: $('#distFireType').value, recency: $('#distFireRecency').value },
-    human: { present: $('#distHumanPresent').checked, severity: +$('#distHumanSeverity').value, types: Array.from($('#distHumanType').selectedOptions).map(o => o.value) },
+    human: { 
+      present: $('#distHumanPresent').checked, 
+      severity: +$('#distHumanSeverity').value, 
+      types: $('#distHumanType') ? Array.from($('#distHumanType').selectedOptions).map(o => o.value) : [] 
+    },
     notes: $('#distNotes').value.trim()
   };
   s.cbi = {};

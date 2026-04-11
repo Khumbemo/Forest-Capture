@@ -34,8 +34,10 @@ const ASSETS = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async cache => {
-      // Only cache core app files; avoids install failure when optional icons are missing.
-      await Promise.all(ASSETS.map(u => cache.add(u)));
+      // Use allSettled so one failed asset doesn't break the entire SW install.
+      const results = await Promise.allSettled(ASSETS.map(u => cache.add(u)));
+      const failed = results.filter(r => r.status === 'rejected');
+      if (failed.length) console.warn('SW: Failed to cache', failed.length, 'assets:', failed.map(r => r.reason));
     })
   );
   self.skipWaiting();

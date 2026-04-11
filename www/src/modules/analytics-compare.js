@@ -117,6 +117,10 @@ function _updateCompareButton() {
  * Call from your "Compare" button click handler.
  */
 export async function runComparison() {
+  if (typeof Chart === 'undefined') {
+    toast('Analytics engine (Chart.js) is still loading or failed to load. Please check your connection.', 'error');
+    return;
+  }
   if (_selectedIds.size < 2) return;
 
   const selected = _allSurveys.filter(s => _selectedIds.has(s.id));
@@ -460,7 +464,9 @@ export function exportComparisonJSON() {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function _destroyChart(canvasId) {
-  const existing = _comparisonCharts[canvasId] || (typeof Chart !== 'undefined' ? Chart.getChart(document.getElementById(canvasId)) : null);
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const existing = _comparisonCharts[canvasId] || (typeof Chart !== 'undefined' ? Chart.getChart(canvas) : null);
   if (existing) { existing.destroy(); delete _comparisonCharts[canvasId]; }
 }
 
