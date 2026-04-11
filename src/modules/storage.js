@@ -422,22 +422,21 @@ export const Store = {
     // Remove from idb cache immediately
     await _removeSurveyFromLocalCache(id);
     
+    try {
+      const userDocRef = await getUserRef();
+      if (userDocRef) {
+        await deleteDoc(doc(collection(userDocRef, 'surveys'), id));
+      }
+    } catch (e) {
+      console.warn('Store.del: Firestore delete failed (offline?)', e.message);
+    }
+    
     // Fallback logic for activeId
     const activeId = await this._getActiveId();
     if (activeId === id) {
       const surveys = await this.getSurveys();
       await this.setActive(surveys.length ? surveys[0].id : null);
     }
-
-    // Await Firestore delete in the background
-    (async () => {
-      try {
-        const userDocRef = await getUserRef();
-        await deleteDoc(doc(collection(userDocRef, 'surveys'), id));
-      } catch (e) {
-        console.warn('Store.del: Firestore delete failed (offline?)', e.message);
-      }
-    })();
   },
 
   async clearAll() {
@@ -448,23 +447,20 @@ export const Store = {
     await idb.remove(LS_SURVEYS_KEY);
     await idb.remove('fc_active_survey');
 
-    // Await Firestore batch commit in the background
-    (async () => {
-      try {
-        const userDocRef = await getUserRef();
+    try {
+      const userDocRef = await getUserRef();
+      if (userDocRef) {
         const batch = writeBatch(db);
-
         surveys.forEach(s => {
            batch.delete(doc(collection(userDocRef, 'surveys'), s.id));
         });
         batch.delete(doc(collection(userDocRef, 'settings'), 'activeId'));
         batch.delete(doc(collection(userDocRef, 'waypoints'), 'data'));
-
         await batch.commit();
-      } catch (e) {
-        console.warn('Store.clearAll: Firestore delete failed (offline?)', e.message);
       }
-    })();
+    } catch (e) {
+      console.warn('Store.clearAll: Firestore delete failed (offline?)', e.message);
+    }
   },
 
   async getBackupData() {
