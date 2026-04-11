@@ -23,7 +23,7 @@ function numOrNull(v) {
 export async function saveEnv() {
   const s = await Store.getActive();
   if (!s) { toast('Select survey', true); return; }
-  s.environment = {
+  const eData = {
     slope: numOrNull($('#envSlope').value),
     aspect: $('#envAspect').value,
     elevation: numOrNull($('#envElevation').value),
@@ -33,13 +33,30 @@ export async function saveEnv() {
     soilMoisture: $('#envSoilMoisture').value,
     soilColor: $('#envSoilColor').value.trim(),
     soilPH: numOrNull($('#envSoilPH') ? $('#envSoilPH').value : ''),
-    litterDepth: numOrNull($('#envLitterDepth') ? $('#envLitterDepth').value : ''),
+    litter_depth: numOrNull($('#envLitterDepth') ? $('#envLitterDepth').value : ''),
     temperature: numOrNull($('#envTemperature').value),
     humidity: numOrNull($('#envHumidity').value),
     windSpeed: numOrNull($('#envWindSpeed') ? $('#envWindSpeed').value : ''),
     lightCondition: $('#envLightCondition') ? $('#envLightCondition').value : '',
     weather: $('#envWeather').value
   };
+
+  // Scientific Range Validation
+  if (eData.slope !== null && (eData.slope < 0 || eData.slope > 90)) {
+    if (!confirm('Slope is typically 0-90°. Proceed anyway?')) return;
+  }
+  const aspVal = parseFloat(eData.aspect);
+  if (!isNaN(aspVal) && (aspVal < 0 || aspVal > 360)) {
+    if (!confirm('Aspect should be 0-360°. Proceed anyway?')) return;
+  }
+  if (eData.soilPH !== null && (eData.soilPH < 0 || eData.soilPH > 14)) {
+    if (!confirm('Soil pH must be 0-14. Proceed anyway?')) return;
+  }
+  if (eData.canopyCover !== null && (eData.canopyCover < 0 || eData.canopyCover > 100)) {
+    toast('Cover must be 0-100%', true); return;
+  }
+
+  s.environment = eData;
   await Store.update(s);
   toast('Saved');
 }
@@ -74,20 +91,59 @@ export function estimateCanopy(file) {
       c.width = 200; c.height = 200;
       const ctx = c.getContext('2d');
       ctx.drawImage(img, 0, 0, 200, 200);
-      const data = ctx.getImageData(0, 0, 200, 200).data;
-      let green = 0, total = 200 * 200;
+      const imgData = ctx.getImageData(0, 0, 200, 200);
+      const data = imgData.data;
+
+      // Gray distribution (Green-centric or Excess Green)
+      const gray = new Uint8Array(200 * 200);
+      const hist = new Int32Array(256);
       for (let i = 0; i < data.length; i += 4) {
         const r2 = data[i], g = data[i + 1], b = data[i + 2];
-        // Exclude blue sky: if blue is significantly dominant
-        if (b > r2 && b > g) continue;
-        // Excess Green (ExG) index check + basic green threshold
-        const exg = 2 * g - r2 - b;
-        if (exg > 20 && g > 60) green++;
+        const val = Math.max(0, Math.min(255, 2 * g - r2 - b)); // ExG
+        gray[i / 4] = val;
+        hist[val]++;
       }
+
+      // Otsu Thresholding
+      let total = 200 * 200;
+      let sum = 0;
+      for (let i = 0; i < 256; i++) sum += i * hist[i];
+      let sumB = 0, wB = 0, wF = 0, varMax = 0, threshold = 0;
+      for (let i = 0; i < 256; i++) {
+        wB += hist[i];
+        if (wB === 0) continue;
+        wF = total - wB;
+        if (wF === 0) break;
+        sumB += i * hist[i];
+        let mB = sumB / wB;
+        let mF = (sum - sumB) / wF;
+        let varBetween = wB * wF * (mB - mF) * (mB - mF);
+        if (varBetween > varMax) {
+          varMax = varBetween;
+          threshold = i;
+        }
+      }
+
+      let green = 0;
+      for (let i = 0; i < gray.length; i++) {
+        if (gray[i] > threshold) {
+          green++;
+          // Optional: visualized binarization for feedback
+          data[i * 4] = data[i * 4 + 1] = data[i * 4 + 2] = 255;
+        } else {
+          data[i * 4] = data[i * 4 + 1] = data[i * 4 + 2] = 0;
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+
       const pct = Math.round((green / total) * 100);
-      $('#canopyEstimate').textContent = `≈ ${pct}% canopy cover`;
+      const gapFraction = 1 - (green / total);
+      const lai = gapFraction > 0 ? (-2 * Math.log(gapFraction)).toFixed(2) : '—';
+
+      $('#canopyEstimate').textContent = `≈ ${pct}% cover | LAI: ${lai}`;
+      if ($('#envLAI')) $('#envLAI').value = lai;
       $('#envCanopyCover').value = pct;
-      toast(`Canopy: ~${pct}%`);
+      toast(`Canopy: ~${pct}% (LAI: ${lai})`);
     };
     img.src = ev.target.result;
   };

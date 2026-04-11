@@ -135,6 +135,8 @@ export async function runComparison() {
 
   _renderIndicesChart(data);
   _renderSpeciesRichnessChart(data);
+  _renderSimilaritySection(data);
+  _renderRichnessANOVA(data);
   _renderSpeciesOverlapTable(data);
   _renderIVIComparison(data);
 
@@ -408,33 +410,99 @@ function _updateIVIChart(data, targetSpecies) {
   });
 }
 
-function _calculateIVIForSpecies(survey, targetName, totalN) {
-  const key       = targetName.toLowerCase().trim();
-  const nQuads    = survey.quadrats?.length || 1;
-  let stems = 0, frequency = 0, ba = 0;
-  let totalStems = 0, totalBA = 0;
-  let inQuads = new Set();
+// ─── Similarity & Stats (Jaccard, Bray-Curtis, ANOVA) ─────────────────────────
 
-  for (const quadrat of (survey.quadrats || [])) {
-    let foundHere = false;
-    for (const sp of (quadrat.species || [])) {
-      const spKey = sp.name?.toLowerCase().trim();
-      const spStems = parseInt(sp.abundance) || 0;
-      const spBA    = Math.PI * Math.pow((parseFloat(sp.dbh) || 0) / 200, 2) * (spStems || 1);
-      totalStems += spStems;
-      totalBA    += spBA;
-      if (spKey === key) {
-        stems += spStems; ba += spBA; foundHere = true;
-      }
+function _renderSimilaritySection(data) {
+  const container = document.getElementById('compareOverlapTable'); 
+  // I'll append it before the overlap table
+  if (!container) return;
+  
+  const simDiv = document.createElement('div');
+  simDiv.className = 'compare-similarity-wrap';
+  
+  let html = '<div class="compare-section-title">Community Similarity Matrix</div><div class="compare-table-wrap"><table class="similarity-table"><thead><tr><th>Survey pairs</th><th>Jaccard</th><th>Bray-Curtis</th></tr></thead><tbody>';
+  
+  for (let i = 0; i < data.length; i++) {
+    for (let j = i + 1; j < data.length; j++) {
+      const s1 = data[i], s2 = data[j];
+      const jaccard = _calcJaccard(s1, s2);
+      const bray = _calcBrayCurtis(s1, s2);
+      html += `<tr><td>${_truncate(s1.survey.name,12)} vs ${_truncate(s2.survey.name,12)}</td><td>${jaccard.toFixed(3)}</td><td>${bray.toFixed(3)}</td></tr>`;
     }
-    if (foundHere) inQuads.add(quadrat.id || quadrat.number);
   }
+  html += '</tbody></table></div>';
+  simDiv.innerHTML = html;
+  container.parentElement.insertBefore(simDiv, container);
+}
 
-  if (totalStems === 0) return 0;
-  const relDensity   = (stems / totalStems) * 100;
-  const relFrequency = (inQuads.size / nQuads) * 100;
-  const relDominance = totalBA > 0 ? (ba / totalBA) * 100 : 0;
-  return parseFloat((relDensity + relFrequency + relDominance).toFixed(1));
+function _calcJaccard(d1, d2) {
+  const set1 = new Set(d1.indices.species.map(s => s.key));
+  const set2 = new Set(d2.indices.species.map(s => s.key));
+  const intersection = new Set([...set1].filter(x => set2.has(x)));
+  const union = new Set([...set1, ...set2]);
+  return union.size ? intersection.size / union.size : 0;
+}
+
+function _calcBrayCurtis(d1, d2) {
+  const m1 = new Map(d1.indices.species.map(s => [s.key, s.n || 0]));
+  const m2 = new Map(d2.indices.species.map(s => [s.key, s.n || 0]));
+  const allKeys = new Set([...m1.keys(), ...m2.keys()]);
+  
+  let sumMin = 0, sumTotal = 0;
+  allKeys.forEach(k => {
+    const v1 = m1.get(k) || 0;
+    const v2 = m2.get(k) || 0;
+    sumMin += Math.min(v1, v2);
+    sumTotal += v1 + v2;
+  });
+  return sumTotal ? 1 - (2 * sumMin / sumTotal) : 0;
+}
+
+function _renderRichnessANOVA(data) {
+  const container = document.getElementById('compareIVISection');
+  if (!container) return;
+
+  const validData = data.filter(d => d.survey.quadrats && d.survey.quadrats.length > 2);
+  if (validData.length < 2) return;
+
+  // Calculate richness per quadrat for each survey
+  const samples = validData.map(d => d.survey.quadrats.map(q => {
+    const seen = new Set();
+    if (q.species) q.species.forEach(sp => { if (sp.name) seen.add(sp.name); });
+    return seen.size;
+  }));
+
+  const N = samples.reduce((acc, s) => acc + s.length, 0);
+  const K = samples.length;
+  const grandMean = samples.flat().reduce((a, b) => a + b, 0) / N;
+
+  let ssw = 0; // sum of squares within
+  let ssb = 0; // sum of squares between
+  samples.forEach(s => {
+    const mean = s.reduce((a, b) => a + b, 0) / s.length;
+    ssb += s.length * Math.pow(mean - grandMean, 2);
+    s.forEach(val => ssw += Math.pow(val - mean, 2));
+  });
+
+  const dfb = K - 1;
+  const dfw = N - K;
+  const msb = ssb / dfb;
+  const msw = ssw / dfw;
+  const fValue = msw ? msb / msw : 0;
+
+  const anovaHTML = `
+    <div class="compare-anova-card">
+      <div class="compare-section-title">Statistical Significance (Richness ANOVA)</div>
+      <div class="anova-stats">
+        <div class="anova-stat"><span>F-Value:</span> <strong>${fValue.toFixed(2)}</strong></div>
+        <div class="anova-stat"><span>df:</span> <strong>${dfb}, ${dfw}</strong></div>
+      </div>
+      <p class="anova-note">Compares species richness variance across plots between selected surveys.</p>
+    </div>
+  `;
+  const div = document.createElement('div');
+  div.innerHTML = anovaHTML;
+  container.parentElement.insertBefore(div, container);
 }
 
 // ─── Export comparison ────────────────────────────────────────────────────────

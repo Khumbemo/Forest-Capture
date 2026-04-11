@@ -115,7 +115,7 @@ export const idb = {
   async remove(key) {
     try {
       const db = await this.init();
-      return new Promise((resolve, reject) => {
+      return await new Promise((resolve, reject) => {
         const transaction = db.transaction(STORE_NAME, 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
         const request = store.delete(key);
@@ -421,9 +421,12 @@ export const Store = {
   async del(id) {
     // Remove from idb cache immediately
     await _removeSurveyFromLocalCache(id);
+    
     try {
       const userDocRef = await getUserRef();
-      await deleteDoc(doc(collection(userDocRef, 'surveys'), id));
+      if (userDocRef) {
+        await deleteDoc(doc(collection(userDocRef, 'surveys'), id));
+      }
     } catch (e) {
       console.warn('Store.del: Firestore delete failed (offline?)', e.message);
     }
@@ -437,21 +440,27 @@ export const Store = {
   },
 
   async clearAll() {
-    // Clear idb caches
+    // Retrieve surveys before clearing the cache
+    const surveys = await this.getSurveys();
+
+    // Clear idb caches immediately
     await idb.remove(LS_SURVEYS_KEY);
     await idb.remove('fc_active_survey');
 
-    const surveys = await this.getSurveys();
-    const userDocRef = await getUserRef();
-    const batch = writeBatch(db);
-    
-    surveys.forEach(s => {
-       batch.delete(doc(collection(userDocRef, 'surveys'), s.id));
-    });
-    batch.delete(doc(collection(userDocRef, 'settings'), 'activeId'));
-    batch.delete(doc(collection(userDocRef, 'waypoints'), 'data'));
-    
-    await batch.commit();
+    try {
+      const userDocRef = await getUserRef();
+      if (userDocRef) {
+        const batch = writeBatch(db);
+        surveys.forEach(s => {
+           batch.delete(doc(collection(userDocRef, 'surveys'), s.id));
+        });
+        batch.delete(doc(collection(userDocRef, 'settings'), 'activeId'));
+        batch.delete(doc(collection(userDocRef, 'waypoints'), 'data'));
+        await batch.commit();
+      }
+    } catch (e) {
+      console.warn('Store.clearAll: Firestore delete failed (offline?)', e.message);
+    }
   },
 
   async getBackupData() {

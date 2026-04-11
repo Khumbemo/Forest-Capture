@@ -21,7 +21,7 @@ export function initOfflineMapUI(map) {
   _loadCacheStats();
 }
 
-export async function downloadTilesForBounds(bounds, maxZoom, onProgress = () => { }) {
+export async function downloadTilesForBounds(bounds, maxZoom, onProgress = () => { }, abortSignal) {
   const clampedZoom = Math.min(maxZoom, MAX_DOWNLOAD_ZOOM);
   const cache = await caches.open(TILE_CACHE_NAME);
 
@@ -37,13 +37,12 @@ export async function downloadTilesForBounds(bounds, maxZoom, onProgress = () =>
 
   // Process in batches to avoid overwhelming the tile server.
   for (let i = 0; i < tiles.length; i += TILE_BATCH_SIZE) {
-    // Check cancel flag between batches
-    if (_cancelDownload) break;
+    if (abortSignal && abortSignal.aborted) break;
 
     const batch = tiles.slice(i, i + TILE_BATCH_SIZE);
 
     await Promise.all(batch.map(async ({ z, x, y }) => {
-      if (_cancelDownload) return; // Check within batch too
+      if (abortSignal && abortSignal.aborted) return;
 
       const url = OSM_TILE_URL
         .replace('{z}', z)
@@ -55,15 +54,15 @@ export async function downloadTilesForBounds(bounds, maxZoom, onProgress = () =>
       if (existing) { done++; skipped++; onProgress({ done, total, pct: Math.round((done / total) * 100) }); return; }
 
       try {
-        const response = await fetch(url, { mode: 'cors' });
+        const response = await fetch(url, { mode: 'cors', signal: abortSignal });
         if (response.ok) {
           await cache.put(url, response);
           cached++;
         } else {
           failed++;
         }
-      } catch {
-        failed++;
+      } catch (err) {
+        if (err.name !== 'AbortError') failed++;
       }
 
       done++;
@@ -192,6 +191,7 @@ function _injectDownloadPanel(map) {
 }
 
 let _cancelDownload = false;
+let _downloadAbortController = null;
 
 function _bindPanelEvents(map) {
   const toggle      = document.getElementById('offlinePanelToggle');
@@ -228,6 +228,7 @@ function _bindPanelEvents(map) {
 
   downloadBtn.addEventListener('click', async () => {
     _cancelDownload = false;
+    _downloadAbortController = new AbortController();
     const maxZoom = parseInt(zoomSlider.value);
     const bounds  = map.getBounds();
 
@@ -240,7 +241,7 @@ function _bindPanelEvents(map) {
       document.getElementById('offlineProgressFill').style.width = pct + '%';
       document.getElementById('offlineProgressLabel').textContent =
         `${done} / ${total} tiles (${pct}%)`;
-    });
+    }, _downloadAbortController.signal);
 
     document.getElementById('offlineProgressWrap').style.display = 'none';
     downloadBtn.disabled = false;
@@ -257,6 +258,7 @@ function _bindPanelEvents(map) {
 
   cancelBtn.addEventListener('click', () => {
     _cancelDownload = true;
+    if (_downloadAbortController) _downloadAbortController.abort();
     document.getElementById('offlineProgressWrap').style.display = 'none';
     document.getElementById('offlineDownloadBtn').disabled = false;
   });

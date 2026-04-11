@@ -420,7 +420,7 @@ function _calculateIVIForSpecies(survey, targetName, totalN) {
     for (const sp of (quadrat.species || [])) {
       const spKey = sp.name?.toLowerCase().trim();
       const spStems = parseInt(sp.abundance) || 0;
-      const spBA    = Math.PI * Math.pow((parseFloat(sp.dbh) || 0) / 200, 2);
+      const spBA    = Math.PI * Math.pow((parseFloat(sp.dbh) || 0) / 200, 2) * (spStems || 1);
       totalStems += spStems;
       totalBA    += spBA;
       if (spKey === key) {

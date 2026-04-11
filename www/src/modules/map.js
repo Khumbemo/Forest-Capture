@@ -13,14 +13,15 @@ export function initMap() {
       map.invalidateSize();
       return;
   }
-  const la = curPos.lat || 20.5937, ln = curPos.lng || 78.9629;
+  const la = (curPos.lat !== null && curPos.lat !== undefined) ? curPos.lat : 20.5937;
+  const ln = (curPos.lng !== null && curPos.lng !== undefined) ? curPos.lng : 78.9629;
   try {
     map = L.map('mapView', { zoomControl: false }).setView([la, ln], 14);
     satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
     terLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
     hybLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
     satLayer.addTo(map);
-    if (curPos.lat) userMarker = L.circleMarker([curPos.lat, curPos.lng], { radius: 8, color: '#5ee5a0', fillColor: '#5ee5a0', fillOpacity: .8, weight: 2 }).addTo(map).bindPopup('You');
+    if (curPos.lat != null && curPos.lng != null) userMarker = L.circleMarker([curPos.lat, curPos.lng], { radius: 8, color: '#5ee5a0', fillColor: '#5ee5a0', fillOpacity: .8, weight: 2 }).addTo(map).bindPopup('You');
     refreshMapWps();
     initOfflineMapUI(map);
   } catch (err) {
@@ -41,7 +42,7 @@ export async function refreshMapWps() {
 }
 
 export function locateMe() {
-  if (map && curPos.lat) {
+  if (map && curPos.lat != null && curPos.lng != null) {
     map.setView([curPos.lat, curPos.lng], 16);
     if (userMarker) userMarker.setLatLng([curPos.lat, curPos.lng]);
     else userMarker = L.circleMarker([curPos.lat, curPos.lng], { radius: 8, color: '#5ee5a0', fillColor: '#5ee5a0', fillOpacity: .8, weight: 2 }).addTo(map).bindPopup('You');

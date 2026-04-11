@@ -8,8 +8,10 @@ export function autoFillEnv() {
   if (curPos.alt !== null) $('#envElevation').value = Math.round(curPos.alt);
   const t = $('#teleTemp').textContent;
   const h = $('#teleHumidity').textContent;
-  if (t !== '--°C') $('#envTemperature').value = parseFloat(t);
-  if (h !== '---%') $('#envHumidity').value = parseInt(h);
+  const tv = parseFloat(t);
+  const hv = parseFloat(h);
+  if (!isNaN(tv)) $('#envTemperature').value = tv;
+  if (!isNaN(hv)) $('#envHumidity').value = Math.round(hv);
   toast('Auto-filled');
 }
 
@@ -76,7 +78,11 @@ export function estimateCanopy(file) {
       let green = 0, total = 200 * 200;
       for (let i = 0; i < data.length; i += 4) {
         const r2 = data[i], g = data[i + 1], b = data[i + 2];
-        if (g > r2 && g > b && g > 60) green++;
+        // Exclude blue sky: if blue is significantly dominant
+        if (b > r2 && b > g) continue;
+        // Excess Green (ExG) index check + basic green threshold
+        const exg = 2 * g - r2 - b;
+        if (exg > 20 && g > 60) green++;
       }
       const pct = Math.round((green / total) * 100);
       $('#canopyEstimate').textContent = `≈ ${pct}% canopy cover`;

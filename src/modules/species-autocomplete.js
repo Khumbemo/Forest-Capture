@@ -148,6 +148,7 @@ async function _search(query, max) {
               common: '',
               family: item.family || '',
               genus: item.genus || '',
+              status: item.status || 'ACCEPTED',
               source: 'gbif'
             });
           }
@@ -190,11 +191,17 @@ function _render(dropdown, results, activeIndex, onSelect) {
       ? `<span class="species-badge-history">used</span>`
       : '';
 
+    const statusBadge = entry.status === 'SYNONYM' ? `<span class="species-badge-synonym">synonym</span>` : '';
     li.innerHTML = `
-      <span class="species-scientific">${_highlight(entry.scientific, dropdown._query || '')}</span>
-      ${entry.common ? `<span class="species-common">${escapeHtml(entry.common)}</span>` : ''}
-      ${entry.family ? `<span class="species-family">${escapeHtml(entry.family)}</span>` : ''}
-      ${badge}
+      <div class="species-option-main">
+        <span class="species-scientific">${_highlight(entry.scientific, dropdown._query || '')}</span>
+        ${entry.common ? `<span class="species-common">${escapeHtml(entry.common)}</span>` : ''}
+      </div>
+      <div class="species-option-meta">
+        ${entry.family ? `<span class="species-family">${escapeHtml(entry.family)}</span>` : ''}
+        ${badge}
+        ${statusBadge}
+      </div>
     `;
 
     li.addEventListener('mousedown', (e) => {
@@ -206,13 +213,40 @@ function _render(dropdown, results, activeIndex, onSelect) {
   });
 }
 
-function _select(input, entry, dropdown, onSelect) {
+async function _select(input, entry, dropdown, onSelect) {
   input.value = entry.scientific;
   _hide(dropdown);
-  onSelect(entry);
+  
+  // Attempt to enrich with full taxonomy if online
+  let enriched = { ...entry };
+  if (navigator.onLine && entry.source === 'gbif') {
+    try {
+      const res = await fetch(`https://api.gbif.org/v1/species/match?name=${encodeURIComponent(entry.scientific)}&strict=true`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.matchType && data.matchType !== 'NONE') {
+          enriched.family = data.family || enriched.family;
+          enriched.order = data.order || '';
+          enriched.class = data.class || '';
+          enriched.phylum = data.phylum || '';
+          enriched.kingdom = data.kingdom || '';
+        }
+      }
+    } catch (e) {
+      console.warn('GBIF enrich failed', e);
+    }
+  }
+
+  onSelect(enriched);
   // Add to learned history.
-  _addLearnedEntry({ name: entry.scientific, common: entry.common,
-                     family: entry.family, genus: entry.genus });
+  _addLearnedEntry({ 
+    name: enriched.scientific, 
+    common: enriched.common, 
+    family: enriched.family, 
+    genus: enriched.genus,
+    order: enriched.order,
+    class: enriched.class
+  });
 }
 
 function _show(el) { el.style.display = 'block'; }

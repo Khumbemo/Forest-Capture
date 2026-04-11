@@ -1,6 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
-import { initializeFirestore, persistentLocalCache, persistentSingleTabManager } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+import { initializeFirestore, persistentLocalCache, persistentSingleTabManager, getFirestore } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 import { getStorage } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js';
 import { toast } from './ui.js';
 
@@ -30,7 +30,6 @@ try {
     });
 } catch (err) {
     // Fallback: if persistence fails (e.g. already initialized), use basic Firestore
-    const { getFirestore } = await import('https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js');
     db = getFirestore(app);
     console.warn('Firestore persistence unavailable:', err.message);
 }

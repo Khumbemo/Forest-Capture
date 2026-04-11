@@ -149,6 +149,8 @@ export async function createNewSurvey() {
       location: ($('#surveyLocation') ? $('#surveyLocation').value.trim() : ''),
       investigator: ($('#surveyInvestigator') ? $('#surveyInvestigator').value.trim() : ''),
       date: ($('#surveyDate') ? $('#surveyDate').value : new Date().toISOString().split('T')[0]),
+      createdAt: _getLocalISOString(),
+      deviceTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       quadrats: [],
       transects: [],
       environment: null,
@@ -269,4 +271,18 @@ async function generateMockSurvey() {
     console.error('Failed to generate mock survey', e);
     toast('Mock generation failed: ' + e.message, true);
   }
+}
+function _getLocalISOString() {
+  const date = new Date();
+  const tzo = -date.getTimezoneOffset();
+  const dif = tzo >= 0 ? '+' : '-';
+  const pad = (num) => (num < 10 ? '0' : '') + num;
+  return date.getFullYear() +
+    '-' + pad(date.getMonth() + 1) +
+    '-' + pad(date.getDate()) +
+    'T' + pad(date.getHours()) +
+    ':' + pad(date.getMinutes()) +
+    ':' + pad(date.getSeconds()) +
+    dif + pad(Math.floor(Math.abs(tzo) / 60)) +
+    ':' + pad(Math.abs(tzo) % 60);
 }

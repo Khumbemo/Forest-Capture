@@ -144,7 +144,7 @@ export async function createNewSurvey() {
 
   try {
     const sv = {
-      id: Date.now().toString(36) + Math.random().toString(36).substr(2, 4),
+      id: Date.now().toString(36) + Math.random().toString(36).substring(2, 10),
       name,
       location: ($('#surveyLocation') ? $('#surveyLocation').value.trim() : ''),
       investigator: ($('#surveyInvestigator') ? $('#surveyInvestigator').value.trim() : ''),

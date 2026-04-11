@@ -93,7 +93,15 @@ export async function refreshQuadratTable() {
     sp.forEach((x, si) => {
       const first = si === 0;
       const badge = x.stage && x.stage !== '—' ? `<span class="stage-badge ${esc(x.stage)}">${esc(x.stage)}</span>` : '—';
-      r += `<tr>${first ? `<td>${q.number}</td><td>${q.size}</td>` : '<td></td><td></td>'}<td class="species-name-cell">${esc(x.name || '—')}</td><td>${badge}</td><td>${x.phenology || '—'}</td><td>${x.abundance || '—'}</td><td>${x.dbh || '—'}</td><td>${x.height || '—'}</td>${first ? `<td class="action-btns"><button data-action="eq" data-i="${qi}" title="Edit">✏️</button><button data-action="dq" data-i="${qi}" title="Delete">🗑️</button></td>` : '<td></td>'}</tr>`;
+      const qNum = esc(q.number);
+      const qSize = esc(q.size);
+      const spName = esc(x.name || '—');
+      const phen = esc(x.phenology || '—');
+      const abun = esc(x.abundance || '—');
+      const dbh = esc(x.dbh || '—');
+      const hgt = esc(x.height || '—');
+      
+      r += `<tr>${first ? `<td>${qNum}</td><td>${qSize}</td>` : '<td></td><td></td>'}<td class="species-name-cell">${spName}</td><td>${badge}</td><td>${phen}</td><td>${abun}</td><td>${dbh}</td><td>${hgt}</td>${first ? `<td class="action-btns"><button data-action="eq" data-i="${qi}" title="Edit">✏️</button><button data-action="dq" data-i="${qi}" title="Delete">🗑️</button></td>` : '<td></td>'}</tr>`;
     });
   });
   tb.innerHTML = r;

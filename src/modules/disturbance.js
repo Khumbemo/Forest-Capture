@@ -19,9 +19,20 @@ export function recalcCBI() {
     tot += avg; cnt++;
   });
   const c = cnt ? tot / cnt : 0;
-  const cs = $('#cbiCompositeScore'), cf = $('#cbiScoreFill');
+  const cs = $('#cbiCompositeScore'), cf = $('#cbiScoreFill'), cl = $('#cbiSeverityClass');
   if (cs) cs.textContent = c.toFixed(2);
   if (cf) cf.style.width = ((c / 3) * 100) + '%';
+  
+  if (cl) {
+    let severity = 'Unburned';
+    if (c > 2.25) severity = 'High';
+    else if (c > 1.25) severity = 'Moderate-High';
+    else if (c > 0.5) severity = 'Moderate-Low';
+    else if (c > 0) severity = 'Low';
+    
+    cl.textContent = severity;
+    cl.className = 'severity-badge ' + severity.toLowerCase().replace(' ', '-');
+  }
 }
 
 export async function saveDisturbCBI() {

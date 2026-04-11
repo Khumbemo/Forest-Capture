@@ -95,13 +95,21 @@ export function attachAutocomplete(inputId, options = {}) {
     }
   });
 
-  // Hide on outside click.
-  document.addEventListener('click', (e) => {
-    if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+  // Keydown / Input / Mouse handlers stay the same...
+}
+
+// ── Hide on outside click (global listener) ─────────────────────────────────
+document.addEventListener('click', (e) => {
+  const dropdowns = document.querySelectorAll('.species-dropdown');
+  dropdowns.forEach(dropdown => {
+    if (dropdown.style.display === 'none') return;
+    const inputId = dropdown.id.replace('autocomplete-', '');
+    const input = document.getElementById(inputId);
+    if (input && !input.contains(e.target) && !dropdown.contains(e.target)) {
       _hide(dropdown);
     }
   });
-}
+});
 
 // ─── Search ───────────────────────────────────────────────────────────────────
 

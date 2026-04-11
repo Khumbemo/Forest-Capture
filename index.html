@@ -371,7 +371,18 @@
           <div class="form-group"><label for="quadratShape">Shape</label><select id="quadratShape"><option value="square">Square</option><option value="rectangular">Rectangular</option><option value="circular">Circular</option></select></div>
           <div class="form-group"><label for="quadratVegType">Vegetation Type</label><select id="quadratVegType"><option value="">—</option><option value="tropical-wet-evergreen">Tropical Wet Evergreen</option><option value="tropical-semi-evergreen">Tropical Semi-Evergreen</option><option value="tropical-moist-deciduous">Tropical Moist Deciduous</option><option value="tropical-dry-deciduous">Tropical Dry Deciduous</option><option value="subtropical-broadleaf">Subtropical Broadleaf</option><option value="subtropical-pine">Subtropical Pine</option><option value="temperate-broadleaf">Temperate Broadleaf</option><option value="temperate-conifer">Temperate Conifer</option><option value="subalpine">Sub-alpine</option><option value="alpine-meadow">Alpine Meadow</option><option value="grassland">Grassland</option><option value="scrubland">Scrubland</option><option value="mangrove">Mangrove</option><option value="riparian">Riparian</option><option value="plantation">Plantation</option><option value="other">Other</option></select></div>
         </div>
-        <div class="form-group"><label for="quadratGPS">GPS</label><div class="flex-gap-xs"><input type="text" id="quadratGPS" placeholder="Lat, Long" class="flex-1" /><button class="btn btn-accent btn-sm" id="btnQuadratGPS">GPS</button></div></div>
+        <div class="form-group"><label for="quadratGPS">GPS (Center)</label><div class="flex-gap-xs"><input type="text" id="quadratGPS" placeholder="Lat, Long" class="flex-1" /><button class="btn btn-accent btn-sm" id="btnQuadratGPS">GPS</button></div></div>
+        <div class="optional-corners" style="margin-top:12px; padding-top:12px; border-top:1px dashed var(--border);">
+          <label style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px; display:block;">Boundary Corners (Optional)</label>
+          <div class="form-row">
+            <div class="form-group"><label for="quadratNW">NW</label><input type="text" id="quadratNW" placeholder="Lat, Lng" /></div>
+            <div class="form-group"><label for="quadratNE">NE</label><input type="text" id="quadratNE" placeholder="Lat, Lng" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label for="quadratSE">SE</label><input type="text" id="quadratSE" placeholder="Lat, Lng" /></div>
+            <div class="form-group"><label for="quadratSW">SW</label><input type="text" id="quadratSW" placeholder="Lat, Lng" /></div>
+          </div>
+        </div>
       </div>
       <div class="form-card">
         <div class="section-title-row"><h3 class="card-title">Species Entries</h3><button class="btn btn-accent btn-sm" id="btnAddSpecies">＋ Add Species</button></div>
