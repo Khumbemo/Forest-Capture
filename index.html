@@ -593,8 +593,9 @@
         </div>
         <div class="form-row">
           <div class="form-group"><label for="herbPhenology">Phenological State</label><select id="herbPhenology"><option value="Vegetative/Sterile">Vegetative / Sterile</option><option value="Flowering (Buds)">Flowering (Buds)</option><option value="Flowering (Anthesis)">Flowering (Anthesis)</option><option value="Fruiting (Unripe)">Fruiting (Unripe)</option><option value="Fruiting (Ripe)">Fruiting (Ripe)</option><option value="Senescent">Senescent</option></select></div>
-          <div class="form-group"><label for="herbDate">Collection Date</label><input type="date" id="herbDate" /></div>
+          <div class="form-group"><label for="herbLifeForm">Plant Habit (Life Form)</label><select id="herbLifeForm"><option value="">—</option><option value="Tree">Tree</option><option value="Shrub">Shrub</option><option value="Herb">Herb / Forb</option><option value="Liana">Liana / Vine</option><option value="Epiphyte">Epiphyte</option><option value="Graminoid">Graminoid (Grass/Sedge)</option><option value="Fern">Fern</option><option value="Bryophyte">Bryophyte</option></select></div>
         </div>
+        <div class="form-group"><label for="herbDate">Collection Date</label><input type="date" id="herbDate" /></div>
       </div>
 
       <div class="form-card">
@@ -605,7 +606,14 @@
             <button class="btn btn-accent btn-sm" id="btnHerbGPS">⊕</button>
           </div>
         </div>
-        <div class="form-group"><label for="herbLocality">Locality</label><input type="text" id="herbLocality" placeholder="Precise location details..." /></div>
+        <div class="form-row">
+          <div class="form-group"><label for="herbCountry">Country</label><input type="text" id="herbCountry" placeholder="e.g., India" /></div>
+          <div class="form-group"><label for="herbState">State/Province</label><input type="text" id="herbState" placeholder="e.g., Assam" /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label for="herbCounty">County/District</label><input type="text" id="herbCounty" placeholder="e.g., Sonitpur" /></div>
+          <div class="form-group"><label for="herbLocality">Locality</label><input type="text" id="herbLocality" placeholder="Precise location details..." /></div>
+        </div>
         <div class="form-group"><label for="herbHabitat">Habitat</label><input type="text" id="herbHabitat" placeholder="e.g., Tropical semi-evergreen forest" /></div>
         <div class="form-group"><label for="herbAssocSpecies">Associated Species</label><input type="text" id="herbAssocSpecies" placeholder="Dominant co-occurring vegetation" /></div>
         <div class="form-group"><label for="herbRemarks">Notes / Remarks</label><textarea id="herbRemarks" rows="2" placeholder="Plant habit, size, bark, flower color..."></textarea></div>
@@ -616,6 +624,10 @@
         <div class="form-row">
           <div class="form-group"><label for="herbCollector">Collector(s)</label><input type="text" id="herbCollector" placeholder="Recorded by" /></div>
           <div class="form-group"><label for="herbIdentifier">Determinavit (Identified by)</label><input type="text" id="herbIdentifier" placeholder="Expert or self" /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label for="herbDateIdentified">Date Identified</label><input type="date" id="herbDateIdentified" /></div>
+          <div class="form-group"><label for="herbProtocol">Sampling Protocol</label><select id="herbProtocol"><option value="Hand-collected">Hand-collected</option><option value="Pole pruner">Pole pruner</option><option value="Felled">Felled</option><option value="Camera trap (Photo only)">Camera trap (Photo only)</option><option value="Other">Other</option></select></div>
         </div>
       </div>
 

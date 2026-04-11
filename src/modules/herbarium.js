@@ -93,14 +93,20 @@ function getFormData() {
     scientific: $('#herbScientific').value.trim(),
     localName: $('#herbLocalName').value.trim(),
     phenology: $('#herbPhenology').value,
+    lifeForm: $('#herbLifeForm').value,
     date: $('#herbDate').value,
     gps: $('#herbGPS').value.trim(),
+    country: $('#herbCountry').value.trim(),
+    state: $('#herbState').value.trim(),
+    county: $('#herbCounty').value.trim(),
     locality: $('#herbLocality').value.trim(),
     habitat: $('#herbHabitat').value.trim(),
     assocSpecies: $('#herbAssocSpecies').value.trim(),
     remarks: $('#herbRemarks').value.trim(),
     collector: $('#herbCollector').value.trim(),
     identifier: $('#herbIdentifier').value.trim(),
+    dateIdentified: $('#herbDateIdentified').value,
+    protocol: $('#herbProtocol').value,
     photoUrl: currentImageUrl && !currentImageUrl.startsWith('data:') ? currentImageUrl : null,
     mediaId
   };
@@ -147,6 +153,12 @@ export async function saveHerbarium(exportDoc = false) {
   $('#herbPhotoPreview').style.display = 'none';
   $('#herbCollectionNo').value = '';
   $('#herbVoucherNo').value = '';
+  $('#herbLifeForm').value = '';
+  $('#herbCountry').value = '';
+  $('#herbState').value = '';
+  $('#herbCounty').value = '';
+  $('#herbDateIdentified').value = '';
+  $('#herbProtocol').value = 'Hand-collected';
   
   refreshHerbariumTable();
 }
@@ -187,14 +199,20 @@ export async function refreshHerbariumTable() {
       $('#herbScientific').value = h.scientific || '';
       $('#herbLocalName').value = h.localName || '';
       $('#herbPhenology').value = h.phenology || 'Vegetative/Sterile';
+      $('#herbLifeForm').value = h.lifeForm || '';
       $('#herbDate').value = h.date || '';
       $('#herbGPS').value = h.gps || '';
+      $('#herbCountry').value = h.country || '';
+      $('#herbState').value = h.state || '';
+      $('#herbCounty').value = h.county || '';
       $('#herbLocality').value = h.locality || '';
       $('#herbHabitat').value = h.habitat || '';
       $('#herbAssocSpecies').value = h.assocSpecies || '';
       $('#herbRemarks').value = h.remarks || '';
       $('#herbCollector').value = h.collector || '';
       $('#herbIdentifier').value = h.identifier || '';
+      $('#herbDateIdentified').value = h.dateIdentified || '';
+      $('#herbProtocol').value = h.protocol || 'Hand-collected';
       
       currentImageUrl = h.photoUrl || null;
       if (!currentImageUrl && h.mediaId) {
@@ -268,7 +286,9 @@ function exportHerbariumWord(data) {
           <tr><td class="label">Family:</td><td style="text-transform:uppercase;">${esc(data.family || '—')}</td></tr>
           <tr><td class="label">Scientific Name:</td><td class="scientific">${esc(data.scientific || '—')}</td></tr>
           <tr><td class="label">Common Name:</td><td>${esc(data.localName || '—')}</td></tr>
+          <tr><td class="label">Plant Habit:</td><td>${esc(data.lifeForm || '—')}</td></tr>
           <tr><td class="label">Locality:</td><td>${esc(data.locality || '—')}</td></tr>
+          <tr><td class="label">Region:</td><td>${esc([data.county, data.state, data.country].filter(Boolean).join(', ') || '—')}</td></tr>
           <tr><td class="label">GPS & Altitude:</td><td>${esc(data.gps || '—')}</td></tr>
           <tr><td class="label">Habitat:</td><td>${esc(data.habitat || '—')}</td></tr>
           <tr><td class="label">Associated Spp:</td><td>${esc(data.assocSpecies || '—')}</td></tr>
@@ -280,8 +300,10 @@ function exportHerbariumWord(data) {
           <table>
             <tr><td class="label">Collector:</td><td>${esc(data.collector || '—')}</td></tr>
             <tr><td class="label">Date:</td><td>${esc(data.date || '—')}</td></tr>
+            <tr><td class="label">Protocol:</td><td>${esc(data.protocol || '—')}</td></tr>
             <tr><td class="label">Col. Number:</td><td>${esc(data.collectionNo || '—')}</td></tr>
             <tr><td class="label">Det. By:</td><td>${esc(data.identifier || '—')}</td></tr>
+            <tr><td class="label">Det. Date:</td><td>${esc(data.dateIdentified || '—')}</td></tr>
             <tr><td class="label">Accession No:</td><td>${esc(data.voucherNo || '—')}</td></tr>
           </table>
         </div>
