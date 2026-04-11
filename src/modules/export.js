@@ -1,6 +1,6 @@
 // src/modules/export.js
 
-import { $, esc, toast } from './ui.js';
+import { $, esc, toast, fcConfirm } from './ui.js';
 import { dl } from './utils.js';
 import { Store, getWps } from './storage.js';
 
@@ -26,21 +26,21 @@ export function toCSV(s) {
 
 export async function exportSurveyCSV() {
   const s = await Store.getActive();
-  if (!s) { alert('No active survey'); return; }
+  if (!s) { toast('No active survey', true); return; }
   dl(toCSV(s), s.name.replace(/\W/g, '_') + '_survey.csv', 'text/csv');
   toast('Exporting CSV...');
 }
 
 export async function exportSurveyJSON() {
   const s = await Store.getActive();
-  if (!s) { alert('No active survey'); return; }
+  if (!s) { toast('No active survey', true); return; }
   dl(JSON.stringify(s, null, 2), s.name.replace(/\W/g, '_') + '_survey.json', 'application/json');
   toast('Exporting JSON...');
 }
 
 export async function exportAllSurveysCSV() {
   const sv = await Store.getSurveys();
-  if (!sv.length) { alert('No surveys'); return; }
+  if (!sv.length) { toast('No surveys to export', true); return; }
   // Build single header + all data rows (skip repeated headers)
   const header = ['Survey', 'Date', 'Location', 'Investigator', 'Q#', 'Size', 'Species', 'Stage', 'Phenology', 'Abundance', 'DBH', 'Height', 'Health', 'GPS']
     .map(c => `"${c}"`).join(',');
@@ -71,7 +71,7 @@ function xmlEsc(str) {
 
 export async function exportGPX() {
   const w = await getWps();
-  if (!w.length) { alert('No waypoints'); return; }
+  if (!w.length) { toast('No waypoints to export', true); return; }
   let g = '<?xml version="1.0"?>\n<gpx version="1.1" creator="ForestCapture">\n';
   w.forEach(p => {
     g += `<wpt lat="${p.lat}" lon="${p.lng}"><name>${xmlEsc(p.name)}</name><desc>${xmlEsc(p.type)}</desc><time>${p.time}</time></wpt>\n`;
@@ -83,7 +83,7 @@ export async function exportGPX() {
 
 export async function generateReport() {
   const s = await Store.getActive();
-  if (!s) { alert('No active survey'); return; }
+  if (!s) { toast('No active survey', true); return; }
 
   // Basic calculation for report
   const speciesMap = {}; let totalN = 0;
@@ -200,7 +200,7 @@ export async function restoreData(file) {
   const waypointCount = Array.isArray(backupData.waypoints) ? backupData.waypoints.length : 0;
   const totalRecords  = surveyCount + waypointCount;
 
-  const confirmed = window.confirm(
+  const confirmed = await fcConfirm(
     `This will import the backup contents:\n\n` +
     `  • ${surveyCount} survey${surveyCount !== 1 ? 's' : ''}\n` +
     `  • ${waypointCount} waypoint${waypointCount !== 1 ? 's' : ''}\n\n` +

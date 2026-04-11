@@ -1,6 +1,6 @@
 // src/modules/herbarium.js
 
-import { $, $$, toast, esc } from './ui.js';
+import { $, $$, toast, esc, fcConfirm } from './ui.js';
 import { Store, MediaStore } from './storage.js';
 import { fmtCoords, curPos, fillGPSField } from './gps.js';
 import { dl } from './utils.js';
@@ -227,7 +227,7 @@ export async function refreshHerbariumTable() {
   tb.querySelectorAll('[data-action="dh"]').forEach(b => {
     b.onclick = async () => {
       const idx = +b.dataset.i;
-      if (!confirm(`Delete Voucher #${s.herbariums[idx].voucherNo}?`)) return;
+      if (!await fcConfirm(`Delete Voucher #${s.herbariums[idx].voucherNo}?`)) return;
       s.herbariums.splice(idx, 1);
       await Store.update(s);
       refreshHerbariumTable();

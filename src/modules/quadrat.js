@@ -1,4 +1,4 @@
-import { $, $$, toast, esc } from './ui.js';
+import { $, $$, toast, esc, fcConfirm } from './ui.js';
 import { Store } from './storage.js';
 import { fillGPSField } from './gps.js';
 import { attachAutocomplete } from './species-autocomplete.js';
@@ -56,10 +56,10 @@ export async function saveQuadrat() {
   // Automated QA Validation
   for (const sp of q.species) {
     if (sp.dbh > 0 && (sp.dbh < 0.1 || sp.dbh > 500)) {
-      if (!confirm(`Warning: Species '${sp.name || 'Unknown'}' has an outlier DBH (${sp.dbh}cm). Scale: 0.1-500cm. Proceed?`)) return;
+      if (!await fcConfirm(`Warning: Species '${sp.name || 'Unknown'}' has an outlier DBH (${sp.dbh}cm). Scale: 0.1-500cm. Proceed?`)) return;
     }
     if (sp.height > 0 && (sp.height < 0.1 || sp.height > 150)) {
-      if (!confirm(`Warning: Species '${sp.name || 'Unknown'}' has an outlier height (${sp.height}m). Scale: 0.1-150m. Proceed?`)) return;
+      if (!await fcConfirm(`Warning: Species '${sp.name || 'Unknown'}' has an outlier height (${sp.height}m). Scale: 0.1-150m. Proceed?`)) return;
     }
   }
 
@@ -153,7 +153,7 @@ export async function refreshQuadratTable() {
   tb.querySelectorAll('[data-action="dq"]').forEach(b => {
     b.onclick = async () => {
       const idx = +b.dataset.i;
-      if (!confirm(`Delete Quadrat #${s.quadrats[idx].number}?`)) return;
+      if (!await fcConfirm(`Delete Quadrat #${s.quadrats[idx].number}?`)) return;
       s.quadrats.splice(idx, 1);
       await Store.update(s);
       refreshQuadratTable();

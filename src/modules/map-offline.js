@@ -12,7 +12,7 @@ const MAX_DOWNLOAD_ZOOM = 16;   // Hard cap to prevent runaway downloads
 const TILE_BATCH_SIZE = 8;    // Concurrent tile fetches (be kind to tile servers)
 const REQUEST_DELAY_MS = 50;   // Delay between batches (avoid rate limiting)
 
-import { toast } from './ui.js';
+import { toast, fcConfirm } from './ui.js';
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
@@ -264,7 +264,7 @@ function _bindPanelEvents(map) {
   });
 
   clearBtn.addEventListener('click', async () => {
-    if (!confirm('Delete all cached map tiles?')) return;
+    if (!await fcConfirm('Delete all cached map tiles?')) return;
     await clearTileCache();
     _loadCacheStats();
     if (typeof toast !== 'undefined') toast('Tile cache cleared.', false);

@@ -1,6 +1,6 @@
 // src/main.js
 
-import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot, isOnline, updateConnectivityBanner } from './modules/ui.js';
+import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot, isOnline, updateConnectivityBanner, fcConfirm, fcPrompt } from './modules/ui.js';
 import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, resetUserRef, migrateFromLocalStorage, migrateInlineMedia, clearUserCache } from './modules/storage.js';
 import { startGPS, fmtCoords, curPos } from './modules/gps.js';
 import { fetchWeather } from './modules/weather.js';
@@ -360,26 +360,48 @@ function setupEventListeners() {
     }
   });
 
-  // Login — Firebase Email Auth
+  // Login — Firebase Email Auth with client-side rate limiting
+  let _authAttempts = 0;
+  let _authLockoutUntil = 0;
+  const AUTH_MAX_ATTEMPTS = 5;
+  const AUTH_LOCKOUT_MS = 30000; // 30 seconds
+
   function setLoginError(msg) {
     const el = document.getElementById('loginError');
     if (el) el.textContent = msg;
   }
 
+  function _checkAuthRateLimit() {
+    if (Date.now() < _authLockoutUntil) {
+      const secs = Math.ceil((_authLockoutUntil - Date.now()) / 1000);
+      setLoginError(`Too many attempts. Please wait ${secs}s.`);
+      return false;
+    }
+    if (_authAttempts >= AUTH_MAX_ATTEMPTS) {
+      _authLockoutUntil = Date.now() + AUTH_LOCKOUT_MS;
+      _authAttempts = 0;
+      setLoginError('Too many attempts. Please wait 30 seconds.');
+      return false;
+    }
+    return true;
+  }
+
   $('#btnSignIn')?.addEventListener('click', async () => {
+    if (!_checkAuthRateLimit()) return;
     const email = $('#loginEmail')?.value.trim();
     const pwd   = $('#loginPassword')?.value;
     if (!email || !pwd) { setLoginError('Please enter your email and password.'); return; }
     setLoginError('');
+    _authAttempts++;
     $('#btnSignIn').disabled = true;
     $('#btnSignIn').textContent = 'Signing in…';
     try {
       resetUserRef();
       const user = await EmailLogin(email, pwd);
+      _authAttempts = 0; // Reset on success
       localStorage.setItem('fc_user', JSON.stringify({ uid: user.uid, email: user.email, time: Date.now() }));
       hideLogin();
       toast(`Welcome back, ${user.email}`);
-      // Reload to ensure all modules (Store, GPS, etc.) re-initialize with new UID
       setTimeout(() => location.reload(), 1500);
     } catch (err) {
       console.error('Sign-in error:', err);
@@ -391,20 +413,22 @@ function setupEventListeners() {
   });
 
   $('#btnRegister')?.addEventListener('click', async () => {
+    if (!_checkAuthRateLimit()) return;
     const email = $('#loginEmail')?.value.trim();
     const pwd   = $('#loginPassword')?.value;
     if (!email || !pwd) { setLoginError('Please enter your email and password.'); return; }
     if (pwd.length < 6)  { setLoginError('Password must be at least 6 characters.'); return; }
     setLoginError('');
+    _authAttempts++;
     $('#btnRegister').disabled = true;
     $('#btnRegister').textContent = 'Creating…';
     try {
       resetUserRef();
       const user = await EmailSignup(email, pwd);
+      _authAttempts = 0; // Reset on success
       localStorage.setItem('fc_user', JSON.stringify({ uid: user.uid, email: user.email, time: Date.now() }));
       hideLogin();
       toast(`Account created! Welcome, ${user.email}`);
-      // Reload to ensure all modules (Store, GPS, etc.) re-initialize with new UID
       setTimeout(() => location.reload(), 1500);
     } catch (err) {
       console.error('Register error:', err);
@@ -499,7 +523,7 @@ function setupEventListeners() {
   // Map
   $('#btnLocateMe')?.addEventListener('click', locateMe);
   $('#btnAddWaypoint')?.addEventListener('click', async () => {
-      const n = prompt('Waypoint name:');
+      const n = await fcPrompt('Waypoint name:');
       if(n) await addWaypoint(n, 'plot');
   });
   // Save Waypoint button (explicit form submit button)
@@ -581,19 +605,19 @@ function setupEventListeners() {
   $('#btnDeleteCurrentSurvey')?.addEventListener('click', async () => {
       const s = await Store.getActive();
       if (!s) { toast('No active survey to delete'); return; }
-      if (confirm(`Delete current survey "${s.name}" permanently?`)) {
+      if (await fcConfirm(`Delete current survey "${s.name}" permanently?`)) {
           await Store.del(s.id);
           await updateBars();
           switchScreen('screenDashboard', screenCallbacks);
           toast('Survey deleted');
       }
   });
-  $('#btnClearAll')?.addEventListener('click', async () => { if(confirm('Delete ALL surveys?')) { await Store.clearAll(); location.reload(); } });
-  $('#btnClearAllSettings')?.addEventListener('click', async () => { if(confirm('Delete ALL?')) { await Store.clearAll(); location.reload(); } });
+  $('#btnClearAll')?.addEventListener('click', async () => { if(await fcConfirm('Delete ALL surveys?')) { await Store.clearAll(); location.reload(); } });
+  $('#btnClearAllSettings')?.addEventListener('click', async () => { if(await fcConfirm('Delete ALL data?')) { await Store.clearAll(); location.reload(); } });
 
   // Sign out
   $('#btnSignOutApp')?.addEventListener('click', async () => {
-      if (confirm('Sign out? This securely wipes your local cache.')) {
+      if (await fcConfirm('Sign out? This securely wipes your local cache.')) {
           toast('Clearing local cache...');
           await clearUserCache();
           resetUserRef();

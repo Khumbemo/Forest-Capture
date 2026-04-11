@@ -1,6 +1,6 @@
 // src/modules/map.js
 
-import { $, toast, esc } from './ui.js';
+import { $, toast, esc, fcPrompt } from './ui.js';
 import { curPos } from './gps.js';
 import { getWps, saveWps } from './storage.js';
 import { initOfflineMapUI } from './map-offline.js';
@@ -78,7 +78,7 @@ export async function addWaypoint(name, type, notes = '', manualLat = null, manu
 
     if (lat == null || lng == null) {
         // Prompt for manual coordinates when GPS is unavailable
-        const manual = prompt('No GPS signal. Enter coordinates manually (lat, lng):');
+        const manual = await fcPrompt('No GPS signal. Enter coordinates manually (lat, lng):');
         if (!manual) return;
         const parts = manual.split(',').map(s => parseFloat(s.trim()));
         if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) {

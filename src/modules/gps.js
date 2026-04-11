@@ -1,5 +1,5 @@
 import { toUTM } from './utils.js';
-import { $, toast, setHeaderWeatherIcon } from './ui.js';
+import { $, toast, setHeaderWeatherIcon, fcConfirm } from './ui.js';
 import { loadSettings } from './storage.js';
 
 export let curPos = { lat: null, lng: null, alt: null, acc: null };
@@ -37,7 +37,7 @@ export async function fillGPSField(inputId, includeAlt = false) {
   }
 
   if (curPos.acc && curPos.acc > 10) {
-    if (!confirm(`Warning: GPS accuracy is too low (${Math.round(curPos.acc)}m). Do you want to proceed and save this coordinate?`)) {
+    if (!await fcConfirm(`Warning: GPS accuracy is too low (${Math.round(curPos.acc)}m). Do you want to proceed and save this coordinate?`)) {
       return;
     }
   }

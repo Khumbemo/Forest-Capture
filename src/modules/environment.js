@@ -1,6 +1,6 @@
 // src/modules/environment.js
 
-import { $, toast } from './ui.js';
+import { $, toast, fcConfirm } from './ui.js';
 import { Store } from './storage.js';
 import { curPos } from './gps.js';
 
@@ -43,14 +43,14 @@ export async function saveEnv() {
 
   // Scientific Range Validation
   if (eData.slope !== null && (eData.slope < 0 || eData.slope > 90)) {
-    if (!confirm('Slope is typically 0-90°. Proceed anyway?')) return;
+    if (!await fcConfirm('Slope is typically 0-90°. Proceed anyway?')) return;
   }
   const aspVal = parseFloat(eData.aspect);
   if (!isNaN(aspVal) && (aspVal < 0 || aspVal > 360)) {
-    if (!confirm('Aspect should be 0-360°. Proceed anyway?')) return;
+    if (!await fcConfirm('Aspect should be 0-360°. Proceed anyway?')) return;
   }
   if (eData.soilPH !== null && (eData.soilPH < 0 || eData.soilPH > 14)) {
-    if (!confirm('Soil pH must be 0-14. Proceed anyway?')) return;
+    if (!await fcConfirm('Soil pH must be 0-14. Proceed anyway?')) return;
   }
   if (eData.canopyCover !== null && (eData.canopyCover < 0 || eData.canopyCover > 100)) {
     toast('Cover must be 0-100%', true); return;

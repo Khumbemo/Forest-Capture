@@ -7,7 +7,7 @@ let toastT;
 export function toast(m, e, action = null) {
   const el = $('#toast');
   if (!el) return;
-  el.innerHTML = m;
+  el.textContent = m;
   if(action) {
       const btn = document.createElement('button');
       btn.textContent = action.label;
@@ -186,6 +186,144 @@ export function hideLogin() {
       ls.style.transition = '';
     }, 300);
   }
+}
+
+// ─── Custom Modal Dialogs (replace native confirm/prompt/alert) ───
+
+function _createModalOverlay() {
+  const overlay = document.createElement('div');
+  overlay.className = 'fc-modal-overlay';
+  return overlay;
+}
+
+function _createModalBox(message, type = 'confirm') {
+  const modal = document.createElement('div');
+  modal.className = 'fc-modal';
+  const iconMap = { confirm: '⚠️', prompt: '✏️', alert: 'ℹ️', delete: '🗑️' };
+  const icon = iconMap[type] || iconMap.confirm;
+  modal.innerHTML = `<div class="fc-modal-icon">${icon}</div><div class="fc-modal-body"><p class="fc-modal-message"></p></div><div class="fc-modal-actions"></div>`;
+  modal.querySelector('.fc-modal-message').textContent = message;
+  return modal;
+}
+
+/**
+ * Branded replacement for window.confirm(). Returns Promise<boolean>.
+ */
+export function fcConfirm(message) {
+  return new Promise((resolve) => {
+    const overlay = _createModalOverlay();
+    const isDelete = /delete|clear|wipe|remove/i.test(message);
+    const modal = _createModalBox(message, isDelete ? 'delete' : 'confirm');
+    const actions = modal.querySelector('.fc-modal-actions');
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'fc-modal-btn fc-modal-cancel';
+    cancelBtn.textContent = 'Cancel';
+
+    const okBtn = document.createElement('button');
+    okBtn.className = `fc-modal-btn fc-modal-ok${isDelete ? ' fc-modal-danger' : ''}`;
+    okBtn.textContent = isDelete ? 'Delete' : 'Confirm';
+
+    actions.appendChild(cancelBtn);
+    actions.appendChild(okBtn);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    requestAnimationFrame(() => { overlay.classList.add('show'); okBtn.focus(); });
+
+    const cleanup = (result) => {
+      overlay.classList.remove('show');
+      setTimeout(() => overlay.remove(), 200);
+      resolve(result);
+    };
+
+    cancelBtn.onclick = () => cleanup(false);
+    okBtn.onclick = () => cleanup(true);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(false); });
+    document.addEventListener('keydown', function handler(e) {
+      if (e.key === 'Escape') { cleanup(false); document.removeEventListener('keydown', handler); }
+    });
+  });
+}
+
+/**
+ * Branded replacement for window.prompt(). Returns Promise<string|null>.
+ */
+export function fcPrompt(message, defaultValue = '') {
+  return new Promise((resolve) => {
+    const overlay = _createModalOverlay();
+    const modal = _createModalBox(message, 'prompt');
+    const body = modal.querySelector('.fc-modal-body');
+    const actions = modal.querySelector('.fc-modal-actions');
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'fc-modal-input';
+    input.value = defaultValue;
+    body.appendChild(input);
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'fc-modal-btn fc-modal-cancel';
+    cancelBtn.textContent = 'Cancel';
+
+    const okBtn = document.createElement('button');
+    okBtn.className = 'fc-modal-btn fc-modal-ok';
+    okBtn.textContent = 'OK';
+
+    actions.appendChild(cancelBtn);
+    actions.appendChild(okBtn);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    requestAnimationFrame(() => { overlay.classList.add('show'); input.focus(); input.select(); });
+
+    const cleanup = (result) => {
+      overlay.classList.remove('show');
+      setTimeout(() => overlay.remove(), 200);
+      resolve(result);
+    };
+
+    cancelBtn.onclick = () => cleanup(null);
+    okBtn.onclick = () => cleanup(input.value);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') cleanup(input.value);
+      if (e.key === 'Escape') cleanup(null);
+    });
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(null); });
+  });
+}
+
+/**
+ * Branded replacement for window.alert(). Returns Promise<void>.
+ */
+export function fcAlert(message) {
+  return new Promise((resolve) => {
+    const overlay = _createModalOverlay();
+    const modal = _createModalBox(message, 'alert');
+    const actions = modal.querySelector('.fc-modal-actions');
+
+    const okBtn = document.createElement('button');
+    okBtn.className = 'fc-modal-btn fc-modal-ok';
+    okBtn.textContent = 'OK';
+
+    actions.appendChild(okBtn);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    requestAnimationFrame(() => { overlay.classList.add('show'); okBtn.focus(); });
+
+    const cleanup = () => {
+      overlay.classList.remove('show');
+      setTimeout(() => overlay.remove(), 200);
+      resolve();
+    };
+
+    okBtn.onclick = cleanup;
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(); });
+    document.addEventListener('keydown', function handler(e) {
+      if (e.key === 'Enter' || e.key === 'Escape') { cleanup(); document.removeEventListener('keydown', handler); }
+    });
+  });
 }
 
 export { $, $$ };

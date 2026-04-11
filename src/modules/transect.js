@@ -1,6 +1,6 @@
 // src/modules/transect.js
 
-import { $, $$, toast, esc } from './ui.js';
+import { $, $$, toast, esc, fcConfirm } from './ui.js';
 import { Store } from './storage.js';
 import { attachAutocomplete } from './species-autocomplete.js';
 import { fillGPSField } from './gps.js';
@@ -44,10 +44,10 @@ export async function saveTransect() {
   // Automated QA Validation
   for (const int of t.intercepts) {
     if (int.cover > 100) {
-      if (!confirm(`Warning: Intercept '${int.name || 'Unknown'}' has a cover percentage > 100%. Are you sure this is correct?`)) return;
+      if (!await fcConfirm(`Warning: Intercept '${int.name || 'Unknown'}' has a cover percentage > 100%. Are you sure this is correct?`)) return;
     }
     if (int.height > 150) {
-      if (!confirm(`Warning: Intercept '${int.name || 'Unknown'}' has an unusually large height (${int.height}m). Are you sure this is correct?`)) return;
+      if (!await fcConfirm(`Warning: Intercept '${int.name || 'Unknown'}' has an unusually large height (${int.height}m). Are you sure this is correct?`)) return;
     }
   }
 
@@ -122,7 +122,7 @@ export async function refreshTransectTable() {
   tb.querySelectorAll('[data-action="del-t"]').forEach(b => {
     b.onclick = async () => {
       const idx = +b.dataset.i;
-      if (!confirm(`Delete Transect #${s.transects[idx].number}?`)) return;
+      if (!await fcConfirm(`Delete Transect #${s.transects[idx].number}?`)) return;
       s.transects.splice(idx, 1);
       await Store.update(s);
       refreshTransectTable();
