@@ -189,17 +189,37 @@ export function refreshAnalytics(s) {
     </div>`).join('');
   }
 
-  // Species Accumulation Curve
+  // Randomized Rarefaction Curve (100 permutations)
   if ($('#speciesAccumChart')) {
-    const seen = new Set();
-    const points = [];
-    s.quadrats.forEach((q, i) => {
-      if (q.species) q.species.forEach(sp => { if (sp.name) seen.add(sp.name); });
-      points.push({ x: i + 1, y: seen.size });
-    });
+    const numQuads = s.quadrats.length;
+    const rarefactionData = new Array(numQuads).fill(0);
+    const permutations = 100;
+
+    for (let p = 0; p < permutations; p++) {
+      // Shuffle indices
+      const indices = Array.from({ length: numQuads }, (_, i) => i);
+      for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+      }
+
+      const seenInPerm = new Set();
+      for (let k = 0; k < numQuads; k++) {
+        const qIdx = indices[k];
+        const q = s.quadrats[qIdx];
+        if (q.species) q.species.forEach(sp => { if (sp.name) seenInPerm.add(sp.name); });
+        rarefactionData[k] += seenInPerm.size;
+      }
+    }
+
+    const points = rarefactionData.map((sum, i) => ({
+      x: i + 1,
+      y: sum / permutations
+    }));
+
     const maxY = Math.max(...points.map(p => p.y), 1);
     $('#speciesAccumChart').innerHTML = points.map(p => `<div class="bar-col">
-      <div class="bar-val">${p.y}</div>
+      <div class="bar-val">${p.y.toFixed(1)}</div>
       <div class="bar-fill" style="height:${(p.y / maxY) * 140}px;background:linear-gradient(180deg,var(--cyan),var(--emerald));"></div>
       <div class="bar-label">Q${p.x}</div>
     </div>`).join('');

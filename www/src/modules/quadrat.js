@@ -35,6 +35,12 @@ export async function saveQuadrat() {
     shape: $('#quadratShape').value,
     vegType: $('#quadratVegType') ? $('#quadratVegType').value : '',
     gps: $('#quadratGPS').value,
+    corners: {
+      nw: $('#quadratNW')?.value || null,
+      ne: $('#quadratNE')?.value || null,
+      se: $('#quadratSE')?.value || null,
+      sw: $('#quadratSW')?.value || null
+    },
     species: Array.from(entries).map(e => ({
       name: e.querySelector('.sp-name').value.trim(),
       stage: e.querySelector('.sp-stage').value,
@@ -50,11 +56,11 @@ export async function saveQuadrat() {
 
   // Automated QA Validation
   for (const sp of q.species) {
-    if (sp.dbh > 500) {
-      if (!confirm(`Warning: Species '${sp.name || 'Unknown'}' has an unusually large DBH (${sp.dbh}cm). Are you sure this is correct?`)) return;
+    if (sp.dbh > 0 && (sp.dbh < 0.1 || sp.dbh > 500)) {
+      if (!confirm(`Warning: Species '${sp.name || 'Unknown'}' has an outlier DBH (${sp.dbh}cm). Scale: 0.1-500cm. Proceed?`)) return;
     }
-    if (sp.height > 150) {
-      if (!confirm(`Warning: Species '${sp.name || 'Unknown'}' has an unusually large height (${sp.height}m). Are you sure this is correct?`)) return;
+    if (sp.height > 0 && (sp.height < 0.1 || sp.height > 150)) {
+      if (!confirm(`Warning: Species '${sp.name || 'Unknown'}' has an outlier height (${sp.height}m). Scale: 0.1-150m. Proceed?`)) return;
     }
   }
 
@@ -116,6 +122,12 @@ export async function refreshQuadratTable() {
           $('#quadratShape').value = q.shape;
           if (q.vegType && $('#quadratVegType')) $('#quadratVegType').value = q.vegType;
           $('#quadratGPS').value = q.gps;
+          if (q.corners) {
+            if ($('#quadratNW')) $('#quadratNW').value = q.corners.nw || '';
+            if ($('#quadratNE')) $('#quadratNE').value = q.corners.ne || '';
+            if ($('#quadratSE')) $('#quadratSE').value = q.corners.se || '';
+            if ($('#quadratSW')) $('#quadratSW').value = q.corners.sw || '';
+          }
           $('#speciesList').innerHTML = '';
           spCount = 0;
           q.species.forEach(sp => {
