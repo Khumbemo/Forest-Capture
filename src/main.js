@@ -509,6 +509,11 @@ function setupEventListeners() {
   const fillGPSField = (inputId, includeAlt = false) => {
     import('./modules/gps.js').then(gps => {
       if (gps.curPos.lat) {
+        if (gps.curPos.acc && gps.curPos.acc > 10) {
+          if (!confirm(`Warning: GPS accuracy is too low (${Math.round(gps.curPos.acc)}m). Do you want to proceed and save this coordinate?`)) {
+            return;
+          }
+        }
         let val = fmtCoords(gps.curPos.lat, gps.curPos.lng, $('#settingCoordFormat')?.value);
         if (includeAlt && gps.curPos.alt !== null) val += ` (${Math.round(gps.curPos.alt)}m)`;
         $(inputId).value = val;
