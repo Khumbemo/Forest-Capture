@@ -1,7 +1,7 @@
 // src/main.js
 
 import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot, isOnline, updateConnectivityBanner } from './modules/ui.js';
-import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, resetUserRef } from './modules/storage.js';
+import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, resetUserRef, migrateFromLocalStorage } from './modules/storage.js';
 import { startGPS, fmtCoords, curPos } from './modules/gps.js';
 import { fetchWeather } from './modules/weather.js';
 import { refreshDataRecords, createNewSurvey, populateSurveySelector } from './modules/survey.js';
@@ -28,6 +28,9 @@ async function initApp() {
   setupEventListeners();
 
   try {
+    console.log('initApp: migrating data to IndexedDB');
+    await migrateFromLocalStorage();
+    
     console.log('initApp: starting');
     toast('Connecting...', false);
     await ensureAuth();
@@ -503,32 +506,35 @@ function setupEventListeners() {
   $('#btnMapTerrain')?.addEventListener('click', () => setMapLayer('ter'));
   $('#btnMapHybrid')?.addEventListener('click', () => setMapLayer('hyb'));
 
+  const fillGPSField = (inputId, includeAlt = false) => {
+    import('./modules/gps.js').then(gps => {
+      if (gps.curPos.lat) {
+        if (gps.curPos.acc && gps.curPos.acc > 10) {
+          if (!confirm(`Warning: GPS accuracy is too low (${Math.round(gps.curPos.acc)}m). Do you want to proceed and save this coordinate?`)) {
+            return;
+          }
+        }
+        let val = fmtCoords(gps.curPos.lat, gps.curPos.lng, $('#settingCoordFormat')?.value);
+        if (includeAlt && gps.curPos.alt !== null) val += ` (${Math.round(gps.curPos.alt)}m)`;
+        $(inputId).value = val;
+        toast('GPS filled');
+      } else {
+        toast('No GPS signal', true);
+      }
+    });
+  };
+
   // Quadrat
   $('#btnAddSpecies')?.addEventListener('click', addSpeciesEntry);
-  $('#btnQuadratGPS')?.addEventListener('click', () => {
-    import('./modules/gps.js').then(gps => {
-        if (gps.curPos.lat) {
-            $('#quadratGPS').value = fmtCoords(gps.curPos.lat, gps.curPos.lng, $('#settingCoordFormat')?.value);
-            toast('GPS filled');
-        } else toast('No GPS', true);
-    });
-  });
+  $('#btnQuadratGPS')?.addEventListener('click', () => fillGPSField('#quadratGPS'));
   $('#btnSaveQuadrat')?.addEventListener('click', async () => {
       await saveQuadrat();
   });
 
   // Transect
   $('#btnAddIntercept')?.addEventListener('click', addIntercept);
-  $('#btnTransectStartGPS')?.addEventListener('click', () => {
-      import('./modules/gps.js').then(gps => {
-          if (gps.curPos.lat) $('#transectStartGPS').value = fmtCoords(gps.curPos.lat, gps.curPos.lng, $('#settingCoordFormat')?.value);
-      });
-  });
-  $('#btnTransectEndGPS')?.addEventListener('click', () => {
-      import('./modules/gps.js').then(gps => {
-          if (gps.curPos.lat) $('#transectEndGPS').value = fmtCoords(gps.curPos.lat, gps.curPos.lng, $('#settingCoordFormat')?.value);
-      });
-  });
+  $('#btnTransectStartGPS')?.addEventListener('click', () => fillGPSField('#transectStartGPS'));
+  $('#btnTransectEndGPS')?.addEventListener('click', () => fillGPSField('#transectEndGPS'));
   $('#btnSaveTransect')?.addEventListener('click', async () => {
       await saveTransect();
   });
@@ -584,15 +590,7 @@ function setupEventListeners() {
   $('#btnExportHerbarium')?.addEventListener('click', () => {
       saveHerbarium(true);
   });
-  $('#btnHerbGPS')?.addEventListener('click', () => {
-      import('./modules/gps.js').then(gps => {
-          if (gps.curPos.lat) {
-              const altStr = gps.curPos.alt !== null ? ` (${Math.round(gps.curPos.alt)}m)` : '';
-              $('#herbGPS').value = fmtCoords(gps.curPos.lat, gps.curPos.lng, $('#settingCoordFormat')?.value) + altStr;
-              toast('GPS filled');
-          } else toast('No GPS', true);
-      });
-  });
+  $('#btnHerbGPS')?.addEventListener('click', () => fillGPSField('#herbGPS', true));
 
   // Notes
   $('#btnGeocodeNotes')?.addEventListener('click', () => {

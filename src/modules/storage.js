@@ -9,6 +9,48 @@ const DB_NAME = 'fc_offline_db';
 const DB_VERSION = 1;
 const STORE_NAME = 'keyval';
 
+async function _signSurvey(s) {
+  const copy = { ...s };
+  delete copy.signature;
+  delete copy.isTampered;
+  const payloadStr = JSON.stringify(copy);
+  
+  if (window.crypto && crypto.subtle) {
+    try {
+      const encoder = new TextEncoder();
+      const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(payloadStr));
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      s.signature = hashHex;
+      s.isTampered = false;
+    } catch (e) {
+      console.warn("Crypto signing failed", e);
+    }
+  }
+  return s;
+}
+
+export async function verifySurveySignature(s) {
+  if (!s || !s.signature) return s; 
+  const copy = { ...s };
+  const originalSignature = copy.signature;
+  delete copy.signature;
+  delete copy.isTampered;
+  
+  if (window.crypto && crypto.subtle) {
+    try {
+      const encoder = new TextEncoder();
+      const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(JSON.stringify(copy)));
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      s.isTampered = (hashHex !== originalSignature);
+    } catch (e) {
+      console.warn("Crypto verification failed", e);
+    }
+  }
+  return s;
+}
+
 export const idb = {
   dbPromise: null,
   init() {
@@ -181,14 +223,14 @@ export const Store = {
       // If Firestore returned results, update the local cache
       if (surveys.length) {
         await _cacheSurveysToLocal(surveys);
-        return surveys;
+        return Promise.all(surveys.map(verifySurveySignature));
       }
 
       // Firestore returned nothing — fall back to localStorage cache
       const cached = await _loadSurveysFromLocal();
       if (cached.length) {
         console.log('Store.getSurveys: using idb cache (' + cached.length + ' surveys)');
-        return cached;
+        return Promise.all(cached.map(verifySurveySignature));
       }
       return surveys;
     } catch (e) {
@@ -197,7 +239,7 @@ export const Store = {
       const cached = await _loadSurveysFromLocal();
       if (cached.length) {
         console.log('Store.getSurveys: error recovery from idb (' + cached.length + ')');
-        return cached;
+        return Promise.all(cached.map(verifySurveySignature));
       }
       return [];
     }
@@ -219,7 +261,7 @@ export const Store = {
       console.log('Store.getActive: fetching survey doc', activeId);
       const sDoc = await withTimeout(getDoc(doc(collection(userDocRef, 'surveys'), activeId)), 5000, { exists: () => false });
       console.log('Store.getActive: doc received');
-      if (sDoc.exists()) return sDoc.data();
+      if (sDoc.exists()) return await verifySurveySignature(sDoc.data());
     } catch (e) {
       console.warn('Store.getActive: Firestore failed, trying cache', e.message);
     }
@@ -227,7 +269,7 @@ export const Store = {
     // Fallback to idb
     if (localMatch) {
       console.log('Store.getActive: using idb cache for', activeId);
-      return localMatch;
+      return await verifySurveySignature(localMatch);
     }
     return null;
   },
@@ -279,6 +321,7 @@ export const Store = {
 
   async add(s) {
     console.log('Store.add: Attempting to save survey', s.id);
+    s = await _signSurvey(s);
     // Cache to idb IMMEDIATELY so it's always available offline
     await _addSurveyToLocalCache(s);
     try {
@@ -307,6 +350,7 @@ export const Store = {
   },
 
   async update(s) {
+    s = await _signSurvey(s);
     // Update idb cache immediately
     await _addSurveyToLocalCache(s);
     try {

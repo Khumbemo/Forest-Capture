@@ -36,18 +36,18 @@ export async function refreshDataRecords() {
     // Quadrats
     if (sv.quadrats && sv.quadrats.length) {
       sv.quadrats.forEach((q, qi) => {
-        allRecords.push({ type: 'quadrat', icon: 'Q', label: `Quadrat #${q.number || qi + 1}`, detail: `${q.species ? q.species.length : 0} species · ${q.size || '—'}m²`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id });
+        allRecords.push({ type: 'quadrat', icon: 'Q', label: `Quadrat #${q.number || qi + 1}`, detail: `${q.species ? q.species.length : 0} species · ${q.size || '—'}m²`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
       });
     }
     // Transects
     if (sv.transects && sv.transects.length) {
       sv.transects.forEach((t, ti) => {
-        allRecords.push({ type: 'transect', icon: 'T', label: `Transect #${t.number || ti + 1}`, detail: `${t.length || '—'}m × ${t.width || '—'}m · ${t.intercepts ? t.intercepts.length : 0} intercepts`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id });
+        allRecords.push({ type: 'transect', icon: 'T', label: `Transect #${t.number || ti + 1}`, detail: `${t.length || '—'}m × ${t.width || '—'}m · ${t.intercepts ? t.intercepts.length : 0} intercepts`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
       });
     }
     // Environment
     if (sv.environment) {
-      allRecords.push({ type: 'environment', icon: 'E', label: 'Environment Data', detail: `Elev: ${sv.environment.elevation || '—'}m · Slope: ${sv.environment.slope || '—'}° · ${sv.environment.weather || '—'}`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id });
+      allRecords.push({ type: 'environment', icon: 'E', label: 'Environment Data', detail: `Elev: ${sv.environment.elevation || '—'}m · Slope: ${sv.environment.slope || '—'}° · ${sv.environment.weather || '—'}`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
     }
     // Disturbance
     if (sv.disturbance) {
@@ -56,19 +56,19 @@ export async function refreshDataRecords() {
       if (sv.disturbance.logging && sv.disturbance.logging.present) dTypes.push('Logging');
       if (sv.disturbance.fire && sv.disturbance.fire.present) dTypes.push('Fire');
       if (sv.disturbance.human && sv.disturbance.human.present) dTypes.push('Human');
-      allRecords.push({ type: 'disturbance', icon: 'D', label: 'Disturbance & CBI', detail: dTypes.length ? dTypes.join(', ') : 'No disturbance recorded', survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id });
+      allRecords.push({ type: 'disturbance', icon: 'D', label: 'Disturbance & CBI', detail: dTypes.length ? dTypes.join(', ') : 'No disturbance recorded', survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
     }
     // Notes
     if (sv.notes && sv.notes.length) {
       sv.notes.forEach(n => {
         const noteDate = n.time ? n.time.split('T')[0] : svDate;
         const noteTime = n.time ? new Date(n.time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
-        allRecords.push({ type: 'notes', icon: 'N', label: `Note: ${n.category || 'General'}`, detail: n.text ? n.text.substring(0, 60) + '…' : '', survey: svName, date: noteDate, sortDate: noteDate || '0000-00-00', time: noteTime, surveyId: sv.id });
+        allRecords.push({ type: 'notes', icon: 'N', label: `Note: ${n.category || 'General'}`, detail: n.text ? n.text.substring(0, 60) + '…' : '', survey: svName, date: noteDate, sortDate: noteDate || '0000-00-00', time: noteTime, surveyId: sv.id, isTampered: sv.isTampered });
       });
     }
     // Photos
     if (sv.photos && sv.photos.length) {
-      allRecords.push({ type: 'photos', icon: 'P', label: `${sv.photos.length} Photo${sv.photos.length > 1 ? 's' : ''}`, detail: 'Attached to survey', survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id });
+      allRecords.push({ type: 'photos', icon: 'P', label: `${sv.photos.length} Photo${sv.photos.length > 1 ? 's' : ''}`, detail: 'Attached to survey', survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
     }
   });
 
@@ -99,10 +99,13 @@ export async function refreshDataRecords() {
       const card = document.createElement('div');
       card.className = 'data-record-card';
       card.dataset.sid = r.surveyId;
+      
+      const tamperBadge = r.isTampered ? `<span style="font-size:0.6rem; background:var(--red); padding:2px 4px; border-radius:4px; margin-left:8px;">TAMPERED</span>` : '';
+
       card.innerHTML = `
         <div class="data-record-icon type-${r.type}">${r.icon}</div>
         <div class="data-record-body">
-          <div class="data-record-title">${esc(r.label)}</div>
+          <div class="data-record-title">${esc(r.label)}${tamperBadge}</div>
           <div class="data-record-meta">${esc(r.survey)} · ${esc(r.detail)}</div>
         </div>
       `;

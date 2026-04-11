@@ -39,6 +39,17 @@ export async function saveTransect() {
       stratum: e.querySelector('.int-stratum').value
     }))
   };
+
+  // Automated QA Validation
+  for (const int of t.intercepts) {
+    if (int.cover > 100) {
+      if (!confirm(`Warning: Intercept '${int.name || 'Unknown'}' has a cover percentage > 100%. Are you sure this is correct?`)) return;
+    }
+    if (int.height > 150) {
+      if (!confirm(`Warning: Intercept '${int.name || 'Unknown'}' has an unusually large height (${int.height}m). Are you sure this is correct?`)) return;
+    }
+  }
+
   if (!s.transects) s.transects = [];
 
   const editIdx = $('#btnSaveTransect').dataset.editIdx;

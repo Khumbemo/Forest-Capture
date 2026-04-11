@@ -48,6 +48,16 @@ export async function saveQuadrat() {
     }))
   };
 
+  // Automated QA Validation
+  for (const sp of q.species) {
+    if (sp.dbh > 500) {
+      if (!confirm(`Warning: Species '${sp.name || 'Unknown'}' has an unusually large DBH (${sp.dbh}cm). Are you sure this is correct?`)) return;
+    }
+    if (sp.height > 150) {
+      if (!confirm(`Warning: Species '${sp.name || 'Unknown'}' has an unusually large height (${sp.height}m). Are you sure this is correct?`)) return;
+    }
+  }
+
   if (!s.quadrats) s.quadrats = [];
 
   const editIdx = $('#btnSaveQuadrat').dataset.editIdx;
