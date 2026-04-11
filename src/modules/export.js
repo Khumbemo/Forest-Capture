@@ -163,7 +163,20 @@ export async function generateReport() {
 
   if (s.environment) {
     html += `<h2>Environmental Variables</h2><table>`;
-    Object.entries(s.environment).forEach(([k, v]) => { if (v) html += `<tr><th>${k}</th><td>${v}</td></tr>`; });
+    const envLabels = {
+      date: 'Measurement Date', observer: 'Observer / Team ID',
+      slope: 'Slope (°)', aspect: 'Aspect', elevation: 'Elevation (m)', topoPosition: 'Topographic Position',
+      canopyCover: 'Canopy Cover (%)', hydrology: 'Drainage / Hydrology', forestType: 'Forest Type',
+      soilType: 'Soil Type', soilMoisture: 'Soil Moisture', soilColor: 'Soil Color', soilPH: 'Soil pH',
+      litter_depth: 'Litter Depth (cm)', humus_depth: 'Humus Depth (cm)', bedrock_depth: 'Depth to Bedrock (cm)',
+      temperature: 'Temperature (°C)', humidity: 'Humidity (%)', windSpeed: 'Wind Speed (km/h)',
+      lightCondition: 'Light Condition', weather: 'Weather'
+    };
+    Object.entries(s.environment).forEach(([k, v]) => { 
+      if (v !== '' && v !== null && v !== undefined) {
+        html += `<tr><th>${envLabels[k] || k}</th><td>${esc(String(v)).replace(/-/g, ' ')}</td></tr>`; 
+      }
+    });
     html += `</table>`;
   }
 
