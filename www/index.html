@@ -415,12 +415,20 @@
       <div class="form-card">
         <h3 class="card-title">Transect Configuration</h3>
         <div class="form-row">
+          <div class="form-group"><label for="transectType">Transect Method</label><select id="transectType"><option value="belt">Belt Transect</option><option value="line-intercept">Line Intercept (Canfield)</option><option value="point-intercept">Point Intercept</option></select></div>
+          <div class="form-group"><label for="transectNumber">Transect #</label><input type="number" id="transectNumber" min="1" placeholder="e.g., 1" /></div>
+        </div>
+        <div class="form-row">
           <div class="form-group"><label for="transectLength">Length (m)</label><input type="number" id="transectLength" min="1" placeholder="e.g., 100" /></div>
           <div class="form-group"><label for="transectWidth">Width (m)</label><input type="number" id="transectWidth" min="0.1" step="0.1" placeholder="e.g., 2" /></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label for="transectBearing">Bearing (°)</label><input type="number" id="transectBearing" min="0" max="360" placeholder="0–360" /></div>
-          <div class="form-group"><label for="transectNumber">Transect #</label><input type="number" id="transectNumber" min="1" placeholder="e.g., 1" /></div>
+          <div class="form-group"><label for="transectSlope">Slope (°)</label><input type="number" id="transectSlope" min="0" max="90" step="0.1" placeholder="0–90" title="For slope correction of horizontal distance" /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label for="transectDate">Measurement Date</label><input type="date" id="transectDate" /></div>
+          <div class="form-group"><label for="transectObserver">Observer / Team ID</label><input type="text" id="transectObserver" placeholder="e.g., Team B / J. Singh" /></div>
         </div>
         <div class="form-group"><label for="transectStartGPS">Start GPS</label><div class="flex-gap-xs"><input type="text" id="transectStartGPS" placeholder="Start Lat, Long" class="flex-1" /><button class="btn btn-accent btn-sm" id="btnTransectStartGPS">⊕</button></div></div>
         <div class="form-group"><label for="transectEndGPS">End GPS</label><div class="flex-gap-xs"><input type="text" id="transectEndGPS" placeholder="End Lat, Long" class="flex-1" /><button class="btn btn-accent btn-sm" id="btnTransectEndGPS">⊕</button></div></div>

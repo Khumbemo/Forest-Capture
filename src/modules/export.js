@@ -15,12 +15,23 @@ export async function refreshPreview() {
 }
 
 export function toCSV(s) {
-  const rows = [['Survey', 'Date', 'Location', 'Investigator', 'Q#', 'Size', 'Species', 'Stage', 'Phenology', 'Abundance', 'DBH', 'Height', 'Health', 'GPS']];
+  const rows = [['Survey', 'Date', 'Location', 'Investigator', 'Q#', 'Size', 'MeasDate', 'Observer', 'Species', 'Stage', 'Status', 'Phenology', 'Abundance', 'Stems', 'DBH', 'DBH_MeasHt', 'GBH', 'Height', 'CrownClass', 'CrownDiam', 'Distance', 'Azimuth', 'Health', 'Bark', 'DecayClass', 'GPS']];
   if (s.quadrats) s.quadrats.forEach(q => {
     if (q.species) q.species.forEach(sp => {
-      rows.push([s.name, s.date, s.location, s.investigator || '', q.number, q.size, sp.name, sp.stage, sp.phenology || '', sp.abundance, sp.dbh, sp.height, sp.health || '', q.gps || '']);
+      rows.push([s.name, s.date, s.location, s.investigator || '', q.number, q.size, q.measDate || '', q.observer || '', sp.name, sp.stage, sp.status || 'live', sp.phenology || '', sp.abundance, sp.stems || 1, sp.dbh, sp.dbhMeasHeight || 1.3, sp.gbh || 0, sp.height, sp.crownClass || '', sp.crownDiameter || 0, sp.distance || 0, sp.azimuth || 0, sp.health || '', sp.bark || '', sp.decayClass || 0, q.gps || '']);
     });
   });
+  // Transect data as additional CSV rows
+  if (s.transects && s.transects.length) {
+    rows.push([]);
+    rows.push(['--- TRANSECT DATA ---']);
+    rows.push(['Survey', 'T#', 'Method', 'Length', 'Width', 'Bearing', 'Slope', 'MeasDate', 'Observer', 'Species', 'LifeForm', 'IntType', 'StartDist', 'EndDist', 'Distance', 'Cover%', 'Height', 'DBH', 'Abundance', 'Stratum', 'Substrate', 'PerpDist', 'Notes']);
+    s.transects.forEach(t => {
+      if (t.intercepts) t.intercepts.forEach(int => {
+        rows.push([s.name, t.number, t.type || 'belt', t.length, t.width, t.bearing, t.slope || 0, t.measDate || '', t.observer || '', int.name, int.lifeForm || '', int.interceptType || '', int.startDist || 0, int.endDist || 0, int.distance, int.cover, int.height || 0, int.dbh || 0, int.abundance || 0, int.stratum || '', int.substrate || '', int.perpDistance || 0, int.notes || '']);
+      });
+    });
+  }
   return rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
 }
 
@@ -41,20 +52,18 @@ export async function exportSurveyJSON() {
 export async function exportAllSurveysCSV() {
   const sv = await Store.getSurveys();
   if (!sv.length) { toast('No surveys to export', true); return; }
-  // Build single header + all data rows (skip repeated headers)
-  const header = ['Survey', 'Date', 'Location', 'Investigator', 'Q#', 'Size', 'Species', 'Stage', 'Phenology', 'Abundance', 'DBH', 'Height', 'Health', 'GPS']
+  const header = ['Survey', 'Date', 'Location', 'Investigator', 'Q#', 'Size', 'MeasDate', 'Observer', 'Species', 'Stage', 'Status', 'Phenology', 'Abundance', 'Stems', 'DBH', 'DBH_MeasHt', 'GBH', 'Height', 'CrownClass', 'CrownDiam', 'Distance', 'Azimuth', 'Health', 'Bark', 'DecayClass', 'GPS']
     .map(c => `"${c}"`).join(',');
   const dataRows = sv.flatMap(s => {
     const rows = [];
     if (s.quadrats) s.quadrats.forEach(q => {
       if (q.species) q.species.forEach(sp => {
-        rows.push([s.name, s.date, s.location, s.investigator || '', q.number, q.size, sp.name, sp.stage, sp.phenology || '', sp.abundance, sp.dbh, sp.height, sp.health || '', q.gps || '']
+        rows.push([s.name, s.date, s.location, s.investigator || '', q.number, q.size, q.measDate || '', q.observer || '', sp.name, sp.stage, sp.status || 'live', sp.phenology || '', sp.abundance, sp.stems || 1, sp.dbh, sp.dbhMeasHeight || 1.3, sp.gbh || 0, sp.height, sp.crownClass || '', sp.crownDiameter || 0, sp.distance || 0, sp.azimuth || 0, sp.health || '', sp.bark || '', sp.decayClass || 0, q.gps || '']
           .map(c => `"${String(c).replace(/"/g, '""')}"`).join(','));
       });
     });
     return rows;
   });
-  // UTF-8 BOM for Excel compatibility
   const bom = '\uFEFF';
   dl(bom + header + '\n' + dataRows.join('\n'), 'all_surveys.csv', 'text/csv;charset=utf-8');
   toast('Exporting All Surveys CSV...');
@@ -140,13 +149,16 @@ export async function generateReport() {
   }
 
   if (s.transects && s.transects.length) {
-    html += `<h2>Transect Data</h2><table><tr><th>T#</th><th>Length</th><th>Width</th><th>Species</th><th>Distance</th><th>Cover %</th></tr>`;
+    html += `<h2>Transect Data</h2>`;
     s.transects.forEach(t => {
+      html += `<h3 style="color:#166534;margin-top:20px;">Transect #${t.number} — ${esc(t.type || 'belt').replace(/-/g,' ')} (${t.length}m × ${t.width}m, ${t.bearing}°)</h3>`;
+      if (t.observer) html += `<p style="color:#64748b;font-size:13px;">Observer: ${esc(t.observer)} | Date: ${t.measDate || ''} | Slope: ${t.slope || 0}°</p>`;
+      html += `<table><tr><th>Species</th><th>Life Form</th><th>Start (m)</th><th>End (m)</th><th>Dist (m)</th><th>Cover %</th><th>Height</th><th>DBH</th><th>Count</th><th>Stratum</th></tr>`;
       if (t.intercepts) t.intercepts.forEach(int => {
-        html += `<tr><td>${t.number}</td><td>${t.length}</td><td>${t.width}</td><td class="species">${esc(int.name)}</td><td>${int.distance}</td><td>${int.cover}</td></tr>`;
+        html += `<tr><td class="species">${esc(int.name)}</td><td>${int.lifeForm || ''}</td><td>${int.startDist || '—'}</td><td>${int.endDist || '—'}</td><td>${int.distance || '—'}</td><td>${int.cover}</td><td>${int.height || '—'}</td><td>${int.dbh || '—'}</td><td>${int.abundance || '—'}</td><td>${int.stratum || ''}</td></tr>`;
       });
+      html += `</table>`;
     });
-    html += `</table>`;
   }
 
   if (s.environment) {
