@@ -163,6 +163,8 @@ export function dismissSplash(callback) {
 }
 
 export function showLogin() {
+  // Don't show login if user has already dismissed it this session
+  if (sessionStorage.getItem('fc_login_dismissed')) return;
   const ls = $('#loginScreen');
   if (ls) {
     ls.classList.remove('hidden');
@@ -173,8 +175,16 @@ export function showLogin() {
 export function hideLogin() {
   const ls = $('#loginScreen');
   if (ls) {
-    ls.style.display = 'none';
-    ls.classList.add('hidden');
+    // Mark as dismissed for this session so it doesn't keep popping up
+    sessionStorage.setItem('fc_login_dismissed', '1');
+    ls.style.transition = 'opacity 0.3s ease';
+    ls.style.opacity = '0';
+    setTimeout(() => {
+      ls.style.display = 'none';
+      ls.classList.add('hidden');
+      ls.style.opacity = '';
+      ls.style.transition = '';
+    }, 300);
   }
 }
 

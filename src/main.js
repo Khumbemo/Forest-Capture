@@ -1,7 +1,7 @@
 // src/main.js
 
 import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot, isOnline, updateConnectivityBanner } from './modules/ui.js';
-import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, resetUserRef, migrateFromLocalStorage } from './modules/storage.js';
+import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, resetUserRef, migrateFromLocalStorage, migrateInlineMedia } from './modules/storage.js';
 import { startGPS, fmtCoords, curPos } from './modules/gps.js';
 import { fetchWeather } from './modules/weather.js';
 import { refreshDataRecords, createNewSurvey, populateSurveySelector } from './modules/survey.js';
@@ -30,6 +30,8 @@ async function initApp() {
   try {
     console.log('initApp: migrating data to IndexedDB');
     await migrateFromLocalStorage();
+    // Move any inline base64 photos/audio out of survey docs into MediaStore
+    await migrateInlineMedia();
     
     console.log('initApp: starting');
     toast('Connecting...', false);
@@ -81,10 +83,14 @@ async function initApp() {
   setTimeout(_updateWelcomeStatus, 700);
 
   // Show login if no valid Firebase session exists.
-  // Clear legacy anonymous sessions (those stored without a uid).
+  // The user can always dismiss login with "Continue Offline" and use the app fully.
   const storedUser = JSON.parse(localStorage.getItem('fc_user') || 'null');
   if (!storedUser || !storedUser.uid) {
     localStorage.removeItem('fc_user'); // clear stale anonymous entry
+    // Create a temporary anonymous session so the app is immediately usable
+    const anonId = 'anon_' + Date.now();
+    localStorage.setItem('fc_user', JSON.stringify({ uid: anonId, email: null, anonymous: true, time: Date.now() }));
+    // Show login after splash fades, but it's dismissible via "Continue Offline"
     setTimeout(showLogin, 2900);
   }
 
@@ -397,6 +403,18 @@ function setupEventListeners() {
       $('#btnRegister').disabled = false;
       $('#btnRegister').textContent = 'Register';
     }
+  });
+
+  // Skip Login / Continue Offline
+  $('#btnSkipLogin')?.addEventListener('click', () => {
+    // Ensure anonymous session exists
+    const stored = JSON.parse(localStorage.getItem('fc_user') || 'null');
+    if (!stored || !stored.uid) {
+      const anonId = 'anon_' + Date.now();
+      localStorage.setItem('fc_user', JSON.stringify({ uid: anonId, email: null, anonymous: true, time: Date.now() }));
+    }
+    hideLogin();
+    toast('Working offline — data saved locally');
   });
 
   // Manual GP Override

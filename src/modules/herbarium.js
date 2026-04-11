@@ -1,7 +1,7 @@
 // src/modules/herbarium.js
 
 import { $, $$, toast, esc } from './ui.js';
-import { Store } from './storage.js';
+import { Store, MediaStore } from './storage.js';
 import { fmtCoords, curPos } from './gps.js';
 import { dl } from './utils.js';
 import { attachAutocomplete } from './species-autocomplete.js';
@@ -55,11 +55,18 @@ export async function handleHerbariumPhoto(file) {
           const downloadURL = await getDownloadURL(snapshot.ref);
           currentImageBase64 = downloadURL; // Store URL, not base64
         } catch (err) {
-          console.warn('Herbarium photo upload failed, using local', err);
-          currentImageBase64 = dataUrl;
+          console.warn('Herbarium photo upload failed, saving to IndexedDB', err);
+          // Offline: store in MediaStore instead of keeping base64 in memory
+          const mediaId = await MediaStore.save(dataUrl);
+          currentImageBase64 = dataUrl; // Keep for preview
+          // Store mediaId for later reference
+          window._herbMediaId = mediaId;
         }
       } else {
-        currentImageBase64 = dataUrl;
+        // Offline: save to MediaStore
+        const mediaId = await MediaStore.save(dataUrl);
+        currentImageBase64 = dataUrl; // Keep for preview
+        window._herbMediaId = mediaId;
       }
 
       const imgEl = document.getElementById('herbImgEl');
@@ -91,8 +98,11 @@ function getFormData() {
     remarks: $('#herbRemarks').value.trim(),
     collector: $('#herbCollector').value.trim(),
     identifier: $('#herbIdentifier').value.trim(),
-    photoUrl: currentImageBase64
+    photoUrl: currentImageBase64 && !currentImageBase64.startsWith('data:') ? currentImageBase64 : null,
+    mediaId: window._herbMediaId || null
   };
+  // Clear the temp media ID
+  window._herbMediaId = null;
 }
 
 export async function saveHerbarium(exportDoc = false) {
@@ -186,6 +196,9 @@ export async function refreshHerbariumTable() {
       $('#herbIdentifier').value = h.identifier || '';
       
       currentImageBase64 = h.photoUrl || null;
+      if (!currentImageBase64 && h.mediaId) {
+        currentImageBase64 = await MediaStore.get(h.mediaId);
+      }
       if (currentImageBase64) {
         $('#herbImgEl').src = currentImageBase64;
         $('#herbPhotoPreview').style.display = 'flex';
