@@ -214,7 +214,7 @@ export async function restoreData(file) {
       for (const survey of backupData.surveys) {
         // Ensure each survey has an ID (preserve original or generate new)
         if (!survey.id) {
-          survey.id = Date.now().toString(36) + Math.random().toString(36).substr(2, 4);
+          survey.id = Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
         }
         await Store.add(survey);
       }

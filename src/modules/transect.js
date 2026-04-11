@@ -34,7 +34,7 @@ export async function saveTransect() {
     intercepts: Array.from($$('#interceptList .species-entry')).map(e => ({
       name: e.querySelector('.int-name').value.trim(),
       distance: parseFloat(e.querySelector('.int-dist').value) || 0,
-      cover: parseFloat(e.querySelector('.int-cover').value) || 0,
+      cover: Math.max(0, Math.min(100, parseFloat(e.querySelector('.int-cover').value) || 0)),
       height: parseFloat(e.querySelector('.int-height').value) || 0,
       stratum: e.querySelector('.int-stratum').value
     }))

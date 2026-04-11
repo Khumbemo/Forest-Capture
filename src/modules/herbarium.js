@@ -8,7 +8,7 @@ import { attachAutocomplete } from './species-autocomplete.js';
 import { storage, ensureAuth } from './firebase.js';
 import { ref, uploadString, getDownloadURL } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js';
 
-let currentImageBase64 = null;
+let currentImageUrl = null;
 
 export function initHerbarium() {
   attachAutocomplete('herbScientific', { maxResults: 10 });
@@ -19,7 +19,7 @@ export function initHerbarium() {
 
 export async function handleHerbariumPhoto(file) {
   if (!file) {
-    currentImageBase64 = null;
+    currentImageUrl = null;
     $('#herbPhotoPreview').style.display = 'none';
     return;
   }
@@ -53,12 +53,12 @@ export async function handleHerbariumPhoto(file) {
           const storageRef = ref(storage, `users/${user.uid}/surveys/${s.id}/herbarium/${fileName}`);
           const snapshot = await uploadString(storageRef, dataUrl, 'data_url');
           const downloadURL = await getDownloadURL(snapshot.ref);
-          currentImageBase64 = downloadURL; // Store URL, not base64
+          currentImageUrl = downloadURL; // Store URL, not base64
         } catch (err) {
           console.warn('Herbarium photo upload failed, saving to IndexedDB', err);
           // Offline: store in MediaStore instead of keeping base64 in memory
           const mediaId = await MediaStore.save(dataUrl);
-          currentImageBase64 = dataUrl; // Keep for preview
+          currentImageUrl = dataUrl; // Keep for preview
           // Store mediaId for later reference
           window._herbMediaId = mediaId;
         }
@@ -70,7 +70,7 @@ export async function handleHerbariumPhoto(file) {
       }
 
       const imgEl = document.getElementById('herbImgEl');
-      imgEl.src = currentImageBase64;
+      imgEl.src = currentImageUrl;
       $('#herbPhotoPreview').style.display = 'flex';
       toast('Photo captured');
     };
@@ -98,7 +98,7 @@ function getFormData() {
     remarks: $('#herbRemarks').value.trim(),
     collector: $('#herbCollector').value.trim(),
     identifier: $('#herbIdentifier').value.trim(),
-    photoUrl: currentImageBase64 && !currentImageBase64.startsWith('data:') ? currentImageBase64 : null,
+    photoUrl: currentImageUrl && !currentImageUrl.startsWith('data:') ? currentImageUrl : null,
     mediaId: window._herbMediaId || null
   };
   // Clear the temp media ID
@@ -142,7 +142,7 @@ export async function saveHerbarium(exportDoc = false) {
   $('#herbCollector').value = '';
   $('#herbRemarks').value = '';
   $('#herbPhotoInput').value = '';
-  currentImageBase64 = null;
+  currentImageUrl = null;
   $('#herbPhotoPreview').style.display = 'none';
   $('#herbCollectionNo').value = '';
   $('#herbVoucherNo').value = '';
@@ -195,12 +195,12 @@ export async function refreshHerbariumTable() {
       $('#herbCollector').value = h.collector || '';
       $('#herbIdentifier').value = h.identifier || '';
       
-      currentImageBase64 = h.photoUrl || null;
-      if (!currentImageBase64 && h.mediaId) {
-        currentImageBase64 = await MediaStore.get(h.mediaId);
+      currentImageUrl = h.photoUrl || null;
+      if (!currentImageUrl && h.mediaId) {
+        currentImageUrl = await MediaStore.get(h.mediaId);
       }
-      if (currentImageBase64) {
-        $('#herbImgEl').src = currentImageBase64;
+      if (currentImageUrl) {
+        $('#herbImgEl').src = currentImageUrl;
         $('#herbPhotoPreview').style.display = 'flex';
       } else {
         $('#herbPhotoPreview').style.display = 'none';

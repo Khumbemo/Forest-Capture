@@ -6,7 +6,7 @@ let weatherLastKey = '', weatherFetchT = 0;
 
 export async function fetchWeather(lat, lng, onUpdate) {
   try {
-    const key = `${lat.toFixed(3)},${lng.toFixed(3)}`;
+    const key = `${lat.toFixed(4)},${lng.toFixed(4)}`;
     const now = Date.now();
     if (key === weatherLastKey && now - weatherFetchT < 600000) return;
     weatherLastKey = key;

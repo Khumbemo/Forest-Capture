@@ -46,6 +46,14 @@ export function startGPS(onUpdate, onError) {
   }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 });
 }
 
+export function stopGPS() {
+  if (gpsWatchId !== null) {
+    navigator.geolocation.clearWatch(gpsWatchId);
+    gpsWatchId = null;
+    setHeaderWeatherIcon(navigator.onLine ? 'online' : 'offline');
+  }
+}
+
 export async function reverseGeocode(lat, lon) {
   if (!navigator.onLine) {
     return null;
