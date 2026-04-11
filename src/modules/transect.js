@@ -127,6 +127,7 @@ export async function refreshTransectTable() {
       await Store.update(s);
       refreshTransectTable();
       toast('Transect deleted');
+    };
   });
 }
 
