@@ -7,7 +7,10 @@
     "start": "npx serve -l 8080",
     "prep": "node prep-www.js",
     "cap:sync": "node prep-www.js && cap sync android",
-    "cap:open": "cap open android"
+    "cap:open": "cap open android",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "cross-env NODE_OPTIONS=--experimental-vm-modules jest tests/analytics.test.js",
+    "test:e2e": "jest --config=jest-e2e.config.js"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.0",
@@ -17,8 +20,15 @@
     "leaflet": "^1.9.4"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.2",
     "@capacitor/cli": "^6.2.0",
+    "cross-env": "^10.1.0",
     "eslint": "^10.2.0",
-    "puppeteer": "^24.40.0"
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0",
+    "jest-puppeteer": "^11.0.0",
+    "puppeteer": "^24.40.0",
+    "serve": "^14.2.6"
   }
 }

@@ -306,9 +306,16 @@
             <path class="herb-leaf l2" d="M30 70 Q 60 70 65 35 Q 30 40 30 70 Z" fill="rgba(16,185,129,0.1)" stroke="var(--emerald)"/>
           </svg>
         </div><div class="stat-label">E-Herbarium</div></div>
+
+        <div class="stat-card" data-tool="screenGermplasm"><div class="stat-icon">
+          <svg class="anim-tool-svg anim-tool-germplasm" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round">
+            <path d="M30,70 Q50,40 50,20 Q50,40 70,70" stroke="var(--amber)" stroke-width="4"/>
+            <circle cx="50" cy="20" r="8" fill="rgba(245,158,11,0.2)" stroke="var(--amber)"/>
+            <path d="M40,80 L60,80" stroke="var(--emerald)" stroke-width="6"/>
+          </svg>
+        </div><div class="stat-label">Germplasm</div></div>
       </div>
     </section>
-
     <!-- ===== MAP ===== -->
     <section class="screen" id="screenMap" style="padding:0;position:relative;">
       <div class="map-container"><div id="mapView" class="map-view"></div>
@@ -694,6 +701,10 @@
       </div>
     </section>
 
+    <!-- ===== GERMPLASM ===== -->
+    <section class="screen" id="screenGermplasm" style="background:#f4f4f4; min-height:100vh;">
+      <div id="germplasmMount" style="width:100%; height:100%; padding-top:10px;"></div>
+    </section>
   </main>
 
   <!-- Settings -->
@@ -849,6 +860,7 @@
       </div>
     </div>
   </div>
+
 
   <div class="toast" id="toast"></div>
   <div class="brightness-overlay" id="brightnessOverlay"></div>

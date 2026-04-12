@@ -19,6 +19,7 @@ import { refreshPreview, exportSurveyCSV, exportSurveyJSON, exportAllSurveysCSV,
 import { initCompareScreen, runComparison, exportComparisonJSON, init as initCompare } from './modules/analytics-compare.js';
 import { loadSurveyHistory } from './modules/species-autocomplete.js';
 import { initHerbarium, handleHerbariumPhoto, saveHerbarium, init as initHerbariumListeners } from './modules/herbarium.js';
+import { init as initGermplasm, refreshGermplasmUI, onScreenEnter as germplasmEnter } from './modules/germplasm.js';
 import { ensureAuth, EmailLogin, EmailSignup, AppSignOut } from './modules/firebase.js';
 
 // ===== INIT =====
@@ -261,6 +262,7 @@ const screenCallbacks = {
     initCompareScreen();
   },
   screenHerbarium: initHerbarium,
+  screenGermplasm: germplasmEnter,
   screenExport: refreshPreview
 };
 
@@ -268,7 +270,7 @@ async function updateBars() {
   try {
     const s = await Store.getActive();
     const n = s ? s.name : 'No survey';
-    ['quadratSurveyName', 'envSurveyName', 'distSurveyName', 'photoSurveyName', 'exportSurveyName', 'analyticsSurveyName', 'transectSurveyName', 'herbSurveyName'].forEach(id => {
+    ['quadratSurveyName', 'envSurveyName', 'distSurveyName', 'photoSurveyName', 'exportSurveyName', 'analyticsSurveyName', 'transectSurveyName', 'herbSurveyName', 'germSurveyName'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.textContent = n;
     });
@@ -578,6 +580,9 @@ function setupEventListeners() {
 
   // Notes
   initNotes();
+
+  // Germplasm
+  initGermplasm();
 
   // Analytics Compare
   initCompare();
