@@ -1,6 +1,6 @@
 // src/modules/environment.js
 
-import { $, toast } from './ui.js';
+import { $, toast, fcConfirm } from './ui.js';
 import { Store } from './storage.js';
 import { curPos } from './gps.js';
 
@@ -24,16 +24,22 @@ export async function saveEnv() {
   const s = await Store.getActive();
   if (!s) { toast('Select survey', true); return; }
   const eData = {
+    date: $('#envDate') ? $('#envDate').value : '',
+    observer: $('#envObserver') ? $('#envObserver').value.trim() : '',
     slope: numOrNull($('#envSlope').value),
     aspect: $('#envAspect').value,
     elevation: numOrNull($('#envElevation').value),
+    topoPosition: $('#envTopoPosition') ? $('#envTopoPosition').value : '',
     canopyCover: numOrNull($('#envCanopyCover').value),
+    hydrology: $('#envHydrology') ? $('#envHydrology').value : '',
     forestType: $('#envForestType') ? $('#envForestType').value : '',
     soilType: $('#envSoilType').value,
     soilMoisture: $('#envSoilMoisture').value,
     soilColor: $('#envSoilColor').value.trim(),
     soilPH: numOrNull($('#envSoilPH') ? $('#envSoilPH').value : ''),
     litter_depth: numOrNull($('#envLitterDepth') ? $('#envLitterDepth').value : ''),
+    humus_depth: numOrNull($('#envHumusDepth') ? $('#envHumusDepth').value : ''),
+    bedrock_depth: numOrNull($('#envBedrockDepth') ? $('#envBedrockDepth').value : ''),
     temperature: numOrNull($('#envTemperature').value),
     humidity: numOrNull($('#envHumidity').value),
     windSpeed: numOrNull($('#envWindSpeed') ? $('#envWindSpeed').value : ''),
@@ -43,14 +49,14 @@ export async function saveEnv() {
 
   // Scientific Range Validation
   if (eData.slope !== null && (eData.slope < 0 || eData.slope > 90)) {
-    if (!confirm('Slope is typically 0-90°. Proceed anyway?')) return;
+    if (!await fcConfirm('Slope is typically 0-90°. Proceed anyway?')) return;
   }
   const aspVal = parseFloat(eData.aspect);
   if (!isNaN(aspVal) && (aspVal < 0 || aspVal > 360)) {
-    if (!confirm('Aspect should be 0-360°. Proceed anyway?')) return;
+    if (!await fcConfirm('Aspect should be 0-360°. Proceed anyway?')) return;
   }
   if (eData.soilPH !== null && (eData.soilPH < 0 || eData.soilPH > 14)) {
-    if (!confirm('Soil pH must be 0-14. Proceed anyway?')) return;
+    if (!await fcConfirm('Soil pH must be 0-14. Proceed anyway?')) return;
   }
   if (eData.canopyCover !== null && (eData.canopyCover < 0 || eData.canopyCover > 100)) {
     toast('Cover must be 0-100%', true); return;
@@ -65,16 +71,22 @@ export async function loadEnvData() {
   const s = await Store.getActive();
   if (!s || !s.environment) return;
   const e = s.environment;
+  if (e.date && $('#envDate')) $('#envDate').value = e.date;
+  if (e.observer && $('#envObserver')) $('#envObserver').value = e.observer;
   if (e.slope != null) $('#envSlope').value = e.slope;
   if (e.aspect) $('#envAspect').value = e.aspect;
   if (e.elevation != null) $('#envElevation').value = e.elevation;
+  if (e.topoPosition && $('#envTopoPosition')) $('#envTopoPosition').value = e.topoPosition;
   if (e.canopyCover != null) $('#envCanopyCover').value = e.canopyCover;
+  if (e.hydrology && $('#envHydrology')) $('#envHydrology').value = e.hydrology;
   if (e.forestType && $('#envForestType')) $('#envForestType').value = e.forestType;
   if (e.soilType) $('#envSoilType').value = e.soilType;
   if (e.soilMoisture) $('#envSoilMoisture').value = e.soilMoisture;
   if (e.soilColor) $('#envSoilColor').value = e.soilColor;
   if (e.soilPH != null && $('#envSoilPH')) $('#envSoilPH').value = e.soilPH;
-  if (e.litterDepth != null && $('#envLitterDepth')) $('#envLitterDepth').value = e.litterDepth;
+  if (e.litter_depth != null && $('#envLitterDepth')) $('#envLitterDepth').value = e.litter_depth;
+  if (e.humus_depth != null && $('#envHumusDepth')) $('#envHumusDepth').value = e.humus_depth;
+  if (e.bedrock_depth != null && $('#envBedrockDepth')) $('#envBedrockDepth').value = e.bedrock_depth;
   if (e.temperature != null) $('#envTemperature').value = e.temperature;
   if (e.humidity != null) $('#envHumidity').value = e.humidity;
   if (e.windSpeed != null && $('#envWindSpeed')) $('#envWindSpeed').value = e.windSpeed;
@@ -148,4 +160,14 @@ export function estimateCanopy(file) {
     img.src = ev.target.result;
   };
   reader.readAsDataURL(file);
+}
+
+export function init() {
+  $('#btnAutoFillEnv')?.addEventListener('click', autoFillEnv);
+  $('#btnSaveEnv')?.addEventListener('click', async () => {
+      await saveEnv();
+  });
+  $('#canopyPhotoInput')?.addEventListener('change', e => {
+      if(e.target.files[0]) estimateCanopy(e.target.files[0]);
+  });
 }

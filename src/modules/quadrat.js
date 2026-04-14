@@ -50,7 +50,7 @@ export async function saveQuadrat() {
       name: e.querySelector('.sp-name').value.trim(),
       stage: e.querySelector('.sp-stage').value,
       status: e.querySelector('.sp-status')?.value || 'live',
-      abundance: parseInt(e.querySelector('.sp-abundance').value) || 0,
+      abundance: parseInt(e.querySelector('.sp-abundance').value) || 1,
       stems: parseInt(e.querySelector('.sp-stems')?.value) || 1,
       dbh: parseFloat(e.querySelector('.sp-dbh').value) || 0,
       gbh: parseFloat(e.querySelector('.sp-gbh').value) || 0,

@@ -328,17 +328,22 @@ function setupEventListeners() {
     }
   };
 
-  $$('.nav-btn').forEach(b => {
-    b.onclick = (e) => {
+  // Use event delegation for nav buttons in footer to be more resilient
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.nav-btn');
+    if (btn && btn.dataset.screen) {
       e.preventDefault();
-      switchScreen(b.dataset.screen, screenCallbacks);
-    };
+      switchScreen(btn.dataset.screen, screenCallbacks);
+    }
   });
-  $$('.stat-card[data-tool]').forEach(el => {
-    el.addEventListener('click', () => {
-      const screenId = el.getAttribute('data-tool');
-      if (screenId) switchScreen(screenId);
-    });
+
+  // Use event delegation for tool cards in the Grid
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('.stat-card[data-tool]');
+    if (card) {
+      const screenId = card.getAttribute('data-tool');
+      if (screenId) switchScreen(screenId, screenCallbacks);
+    }
   });
 
   $('#btnToolOfflineMap')?.addEventListener('click', () => {

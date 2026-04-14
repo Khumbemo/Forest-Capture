@@ -183,7 +183,10 @@ export async function createNewSurvey() {
 
     toast(`"${name}" created`);
 
-    // Run UI refreshes without blocking the main success path too much
+    // Auto-select the newly created survey
+    await Store.setActive(sv.id);
+
+    // Refresh UI without blocking
     populateSurveySelector().catch(e => console.warn('Refresh selector failed', e));
     refreshDataRecords().catch(e => console.warn('Refresh records failed', e));
 

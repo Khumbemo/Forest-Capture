@@ -29,7 +29,7 @@ export function calculateIndicesPayload(s) {
     });
   });
 
-  const speciesList = Object.keys(speciesMap).filter(k => speciesMap[k].abundance > 0);
+  const speciesList = Object.keys(speciesMap);
   const S = speciesList.length;
 
   let H = 0;

@@ -56,8 +56,11 @@ describe('Forest Capture E2E UI Tests', () => {
 
       // Click Add Species button
       await page.click('#btnAddSpecies');
-      // Wait for species modal or inline inputs (it builds DOM dynamically)
-      // Actually it adds a row inline
+      await new Promise(r => setTimeout(r, 500));
+      
+      // Type a species name so Analytics counts it
+      await page.type('.sp-name', 'Test Tree');
+      await new Promise(r => setTimeout(r, 500));
       await new Promise(r => setTimeout(r, 1000));
       
       // Since it's dynamic DOM, we will just try to hit save quadrat

@@ -59,9 +59,9 @@ export const idb = {
       this.dbPromise = new Promise((resolve, reject) => {
         // Safety timeout for IndexedDB open
         const t = setTimeout(() => {
-          console.warn('idb: Open TIMEOUT after 5s');
+          console.warn('idb: Open TIMEOUT after 15s');
           reject(new Error('IndexedDB Timeout'));
-        }, 5000);
+        }, 15000);
 
         const request = indexedDB.open(DB_NAME, DB_VERSION);
         request.onupgradeneeded = (e) => {

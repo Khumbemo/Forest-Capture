@@ -1,7 +1,6 @@
-// src/modules/gps.js
-
 import { toUTM } from './utils.js';
-import { setHeaderWeatherIcon } from './ui.js';
+import { $, toast, setHeaderWeatherIcon, fcConfirm } from './ui.js';
+import { loadSettings } from './storage.js';
 
 export let curPos = { lat: null, lng: null, alt: null, acc: null };
 let gpsWatchId = null;
@@ -24,6 +23,36 @@ export function fmtCoords(lat, lng, format = 'dd') {
     return toDMS(lat, 'N', 'S') + ' ' + toDMS(lng, 'E', 'W');
   }
   return `${lat.toFixed(5)}°, ${lng.toFixed(5)}°`;
+}
+
+/**
+ * Global helper to fill a coordinate field with current GPS data.
+ * @param {string} inputId CSS selector for the target input.
+ * @param {boolean} includeAlt Whether to append altitude in parentheses.
+ */
+export async function fillGPSField(inputId, includeAlt = false) {
+  if (!curPos.lat) {
+    toast('No GPS signal', true);
+    return;
+  }
+
+  if (curPos.acc && curPos.acc > 10) {
+    if (!await fcConfirm(`Warning: GPS accuracy is too low (${Math.round(curPos.acc)}m). Do you want to proceed and save this coordinate?`)) {
+      return;
+    }
+  }
+
+  const settings = await loadSettings();
+  let val = fmtCoords(curPos.lat, curPos.lng, settings?.settingCoordFormat || 'dd');
+  if (includeAlt && curPos.alt !== null) {
+    val += ` (${Math.round(curPos.alt)}m)`;
+  }
+
+  const el = $(inputId);
+  if (el) {
+    el.value = val;
+    toast('GPS coordinates filled');
+  }
 }
 
 export function startGPS(onUpdate, onError) {

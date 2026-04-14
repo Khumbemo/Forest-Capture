@@ -1,25 +1,26 @@
 // src/main.js
 
-import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot, isOnline, updateConnectivityBanner } from './modules/ui.js';
-import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, resetUserRef, migrateFromLocalStorage, migrateInlineMedia } from './modules/storage.js';
+import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot, isOnline, updateConnectivityBanner, fcConfirm, fcPrompt } from './modules/ui.js';
+import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, resetUserRef, migrateFromLocalStorage, migrateInlineMedia, clearUserCache } from './modules/storage.js';
 import { startGPS, fmtCoords, curPos } from './modules/gps.js';
 import { fetchWeather } from './modules/weather.js';
 import { refreshDataRecords, createNewSurvey, populateSurveySelector } from './modules/survey.js';
 import { SYMBOLS } from './modules/symbols.js';
 import { initMap, locateMe, setMapLayer, addWaypoint } from './modules/map.js';
 import { refreshWpList } from './modules/waypoints.js';
-import { addSpeciesEntry, saveQuadrat, refreshQuadratTable } from './modules/quadrat.js';
-import { addIntercept, saveTransect, refreshTransectTable } from './modules/transect.js';
-import { autoFillEnv, saveEnv, loadEnvData, estimateCanopy } from './modules/environment.js';
-import { recalcCBI, saveDisturbCBI, loadDistData, loadCBIData } from './modules/disturbance.js';
-import { refreshPhotos, handlePhotoInput, startRecording, stopRecording, refreshAudio } from './modules/media.js';
-import { refreshNotes, addNote } from './modules/notes.js';
+import { addSpeciesEntry, saveQuadrat, refreshQuadratTable, init as initQuadrat } from './modules/quadrat.js';
+import { addIntercept, saveTransect, refreshTransectTable, init as initTransect } from './modules/transect.js';
+import { autoFillEnv, saveEnv, loadEnvData, estimateCanopy, init as initEnv } from './modules/environment.js';
+import { recalcCBI, saveDisturbCBI, loadDistData, loadCBIData, init as initDisturb } from './modules/disturbance.js';
+import { refreshPhotos, handlePhotoInput, startRecording, stopRecording, refreshAudio, init as initMedia } from './modules/media.js';
+import { refreshNotes, addNote, init as initNotes } from './modules/notes.js';
 import { refreshAnalytics } from './modules/analytics.js';
 import { refreshPreview, exportSurveyCSV, exportSurveyJSON, exportAllSurveysCSV, exportGPX, generateReport, backupAll, restoreData } from './modules/export.js';
-import { initCompareScreen, runComparison, exportComparisonJSON } from './modules/analytics-compare.js';
+import { initCompareScreen, runComparison, exportComparisonJSON, init as initCompare } from './modules/analytics-compare.js';
 import { loadSurveyHistory } from './modules/species-autocomplete.js';
-import { initHerbarium, handleHerbariumPhoto, saveHerbarium } from './modules/herbarium.js';
-import { ensureAuth, EmailLogin, EmailSignup } from './modules/firebase.js';
+import { initHerbarium, handleHerbariumPhoto, saveHerbarium, init as initHerbariumListeners } from './modules/herbarium.js';
+import { init as initGermplasm, refreshGermplasmUI, onScreenEnter as germplasmEnter } from './modules/germplasm.js';
+import { ensureAuth, EmailLogin, EmailSignup, AppSignOut } from './modules/firebase.js';
 
 // ===== INIT =====
 
@@ -261,6 +262,7 @@ const screenCallbacks = {
     initCompareScreen();
   },
   screenHerbarium: initHerbarium,
+  screenGermplasm: germplasmEnter,
   screenExport: refreshPreview
 };
 
@@ -268,7 +270,7 @@ async function updateBars() {
   try {
     const s = await Store.getActive();
     const n = s ? s.name : 'No survey';
-    ['quadratSurveyName', 'envSurveyName', 'distSurveyName', 'photoSurveyName', 'exportSurveyName', 'analyticsSurveyName', 'transectSurveyName', 'herbSurveyName'].forEach(id => {
+    ['quadratSurveyName', 'envSurveyName', 'distSurveyName', 'photoSurveyName', 'exportSurveyName', 'analyticsSurveyName', 'transectSurveyName', 'herbSurveyName', 'germSurveyName'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.textContent = n;
     });
@@ -326,13 +328,34 @@ function setupEventListeners() {
     }
   };
 
-  $$('.nav-btn').forEach(b => {
-    b.onclick = (e) => {
+  // Use event delegation for nav buttons in footer to be more resilient
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.nav-btn');
+    if (btn && btn.dataset.screen) {
       e.preventDefault();
-      switchScreen(b.dataset.screen, screenCallbacks);
-    };
+      switchScreen(btn.dataset.screen, screenCallbacks);
+    }
   });
-  $$('.stat-card[data-tool]').forEach(b => b.addEventListener('click', () => switchScreen(b.dataset.tool, screenCallbacks)));
+
+  // Use event delegation for tool cards in the Grid
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('.stat-card[data-tool]');
+    if (card) {
+      const screenId = card.getAttribute('data-tool');
+      if (screenId) switchScreen(screenId, screenCallbacks);
+    }
+  });
+
+  $('#btnToolOfflineMap')?.addEventListener('click', () => {
+    switchScreen('screenMap');
+    // Give it a tiny delay to allow the map screen and panel to initialize if it's the first time
+    setTimeout(() => {
+        const panelBody = $('#offlinePanelBody');
+        if (panelBody && panelBody.style.display === 'none') {
+            $('#offlinePanelToggle')?.click();
+        }
+    }, 100);
+  });
 
   // Survey Selector
   $('#surveySelector')?.addEventListener('change', async (e) => {
@@ -344,26 +367,48 @@ function setupEventListeners() {
     }
   });
 
-  // Login — Firebase Email Auth
+  // Login — Firebase Email Auth with client-side rate limiting
+  let _authAttempts = 0;
+  let _authLockoutUntil = 0;
+  const AUTH_MAX_ATTEMPTS = 5;
+  const AUTH_LOCKOUT_MS = 30000; // 30 seconds
+
   function setLoginError(msg) {
     const el = document.getElementById('loginError');
     if (el) el.textContent = msg;
   }
 
+  function _checkAuthRateLimit() {
+    if (Date.now() < _authLockoutUntil) {
+      const secs = Math.ceil((_authLockoutUntil - Date.now()) / 1000);
+      setLoginError(`Too many attempts. Please wait ${secs}s.`);
+      return false;
+    }
+    if (_authAttempts >= AUTH_MAX_ATTEMPTS) {
+      _authLockoutUntil = Date.now() + AUTH_LOCKOUT_MS;
+      _authAttempts = 0;
+      setLoginError('Too many attempts. Please wait 30 seconds.');
+      return false;
+    }
+    return true;
+  }
+
   $('#btnSignIn')?.addEventListener('click', async () => {
+    if (!_checkAuthRateLimit()) return;
     const email = $('#loginEmail')?.value.trim();
     const pwd   = $('#loginPassword')?.value;
     if (!email || !pwd) { setLoginError('Please enter your email and password.'); return; }
     setLoginError('');
+    _authAttempts++;
     $('#btnSignIn').disabled = true;
     $('#btnSignIn').textContent = 'Signing in…';
     try {
       resetUserRef();
       const user = await EmailLogin(email, pwd);
+      _authAttempts = 0; // Reset on success
       localStorage.setItem('fc_user', JSON.stringify({ uid: user.uid, email: user.email, time: Date.now() }));
       hideLogin();
       toast(`Welcome back, ${user.email}`);
-      // Reload to ensure all modules (Store, GPS, etc.) re-initialize with new UID
       setTimeout(() => location.reload(), 1500);
     } catch (err) {
       console.error('Sign-in error:', err);
@@ -375,20 +420,22 @@ function setupEventListeners() {
   });
 
   $('#btnRegister')?.addEventListener('click', async () => {
+    if (!_checkAuthRateLimit()) return;
     const email = $('#loginEmail')?.value.trim();
     const pwd   = $('#loginPassword')?.value;
     if (!email || !pwd) { setLoginError('Please enter your email and password.'); return; }
     if (pwd.length < 6)  { setLoginError('Password must be at least 6 characters.'); return; }
     setLoginError('');
+    _authAttempts++;
     $('#btnRegister').disabled = true;
     $('#btnRegister').textContent = 'Creating…';
     try {
       resetUserRef();
       const user = await EmailSignup(email, pwd);
+      _authAttempts = 0; // Reset on success
       localStorage.setItem('fc_user', JSON.stringify({ uid: user.uid, email: user.email, time: Date.now() }));
       hideLogin();
       toast(`Account created! Welcome, ${user.email}`);
-      // Reload to ensure all modules (Store, GPS, etc.) re-initialize with new UID
       setTimeout(() => location.reload(), 1500);
     } catch (err) {
       console.error('Register error:', err);
@@ -483,7 +530,7 @@ function setupEventListeners() {
   // Map
   $('#btnLocateMe')?.addEventListener('click', locateMe);
   $('#btnAddWaypoint')?.addEventListener('click', async () => {
-      const n = prompt('Waypoint name:');
+      const n = await fcPrompt('Waypoint name:');
       if(n) await addWaypoint(n, 'plot');
   });
   // Save Waypoint button (explicit form submit button)
@@ -518,114 +565,32 @@ function setupEventListeners() {
   $('#btnMapTerrain')?.addEventListener('click', () => setMapLayer('ter'));
   $('#btnMapHybrid')?.addEventListener('click', () => setMapLayer('hyb'));
 
-  const fillGPSField = (inputId, includeAlt = false) => {
-    import('./modules/gps.js').then(gps => {
-      if (gps.curPos.lat) {
-        if (gps.curPos.acc && gps.curPos.acc > 10) {
-          if (!confirm(`Warning: GPS accuracy is too low (${Math.round(gps.curPos.acc)}m). Do you want to proceed and save this coordinate?`)) {
-            return;
-          }
-        }
-        let val = fmtCoords(gps.curPos.lat, gps.curPos.lng, $('#settingCoordFormat')?.value);
-        if (includeAlt && gps.curPos.alt !== null) val += ` (${Math.round(gps.curPos.alt)}m)`;
-        $(inputId).value = val;
-        toast('GPS filled');
-      } else {
-        toast('No GPS signal', true);
-      }
-    });
-  };
-
   // Quadrat
-  $('#btnAddSpecies')?.addEventListener('click', addSpeciesEntry);
-  $('#btnQuadratGPS')?.addEventListener('click', () => fillGPSField('#quadratGPS'));
-  $('#btnSaveQuadrat')?.addEventListener('click', async () => {
-      await saveQuadrat();
-  });
+  initQuadrat();
 
   // Transect
-  $('#btnAddIntercept')?.addEventListener('click', addIntercept);
-  $('#btnTransectStartGPS')?.addEventListener('click', () => fillGPSField('#transectStartGPS'));
-  $('#btnTransectEndGPS')?.addEventListener('click', () => fillGPSField('#transectEndGPS'));
-  $('#btnSaveTransect')?.addEventListener('click', async () => {
-      await saveTransect();
-  });
+  initTransect();
 
   // Environment
-  $('#btnAutoFillEnv')?.addEventListener('click', autoFillEnv);
-  $('#btnSaveEnv')?.addEventListener('click', async () => {
-      await saveEnv();
-  });
-  $('#canopyPhotoInput')?.addEventListener('change', e => {
-      if(e.target.files[0]) estimateCanopy(e.target.files[0]);
-  });
+  initEnv();
 
   // Disturbance
-  const dToggles = [{ cb: 'distGrazingPresent', grp: 'grazingSeverityGroup', sl: 'distGrazingSeverity', dsp: 'distGrazingSeverityVal' }, { cb: 'distLoggingPresent', grp: 'loggingSeverityGroup', sl: 'distLoggingSeverity', dsp: 'distLoggingSeverityVal' }, { cb: 'distFirePresent', grp: 'fireSeverityGroup', sl: 'distFireSeverity', dsp: 'distFireSeverityVal' }, { cb: 'distHumanPresent', grp: 'humanSeverityGroup', sl: 'distHumanSeverity', dsp: 'distHumanSeverityVal' }];
-  dToggles.forEach(t => {
-    const c = document.getElementById(t.cb), g = document.getElementById(t.grp), s = document.getElementById(t.sl), d = document.getElementById(t.dsp);
-    if (!c || !g || !s || !d) return;
-    c.addEventListener('change', () => g.classList.toggle('visible', c.checked));
-    s.addEventListener('input', () => { d.textContent = s.value; });
-  });
-  $$('.cbi-select').forEach(s => s.addEventListener('change', recalcCBI));
-  $('#btnSaveDisturbCBI')?.addEventListener('click', async () => {
-      await saveDisturbCBI();
-  });
+  initDisturb();
 
   // Media
-  $('#photoInput')?.addEventListener('change', e => {
-      if(e.target.files[0]) handlePhotoInput(e.target.files[0]);
-  });
-  $('#btnStartRecording')?.addEventListener('click', () => {
-      startRecording(() => {
-          $('#recordingStatus').textContent = '🔴 Recording...';
-          $('#btnStartRecording').disabled = true;
-          $('#btnStopRecording').disabled = false;
-      });
-  });
-  $('#btnStopRecording')?.addEventListener('click', () => {
-      stopRecording(() => {
-          $('#recordingStatus').textContent = 'Saved';
-          $('#btnStartRecording').disabled = false;
-          $('#btnStopRecording').disabled = true;
-      });
-  });
+  initMedia();
 
   // Herbarium
-  $('#herbPhotoInput')?.addEventListener('change', e => {
-      handleHerbariumPhoto(e.target.files[0]);
-  });
-  $('#btnSaveHerbarium')?.addEventListener('click', () => {
-      saveHerbarium(false);
-  });
-  $('#btnExportHerbarium')?.addEventListener('click', () => {
-      saveHerbarium(true);
-  });
-  $('#btnHerbGPS')?.addEventListener('click', () => fillGPSField('#herbGPS', true));
+  initHerbariumListeners();
 
   // Notes
-  $('#btnGeocodeNotes')?.addEventListener('click', () => {
-      import('./modules/gps.js').then(async (gps) => {
-          if (!gps.curPos.lat) { toast('No GPS', true); return; }
-          toast('Fetching location...');
-          const loc = await gps.reverseGeocode(gps.curPos.lat, gps.curPos.lng);
-          if (loc) {
-              const el = $('#noteContent');
-              el.value = (el.value + (el.value ? '\n\n' : '') + 'Location: ' + loc).trim();
-              toast('Location auto-filled');
-          } else {
-              toast('Failed to reverse geocode', true);
-          }
-      });
-  });
-  $('#btnAddNote')?.addEventListener('click', async () => {
-      await addNote();
-  });
+  initNotes();
+
+  // Germplasm
+  initGermplasm();
 
   // Analytics Compare
-  $('#compareRunBtn')?.addEventListener('click', runComparison);
-  $('#compareExportBtn')?.addEventListener('click', exportComparisonJSON);
+  initCompare();
 
   // Export
   $('#btnExportCSV')?.addEventListener('click', exportSurveyCSV);
@@ -650,15 +615,26 @@ function setupEventListeners() {
   $('#btnDeleteCurrentSurvey')?.addEventListener('click', async () => {
       const s = await Store.getActive();
       if (!s) { toast('No active survey to delete'); return; }
-      if (confirm(`Delete current survey "${s.name}" permanently?`)) {
+      if (await fcConfirm(`Delete current survey "${s.name}" permanently?`)) {
           await Store.del(s.id);
           await updateBars();
           switchScreen('screenDashboard', screenCallbacks);
           toast('Survey deleted');
       }
   });
-  $('#btnClearAll')?.addEventListener('click', async () => { if(confirm('Delete ALL surveys?')) { await Store.clearAll(); location.reload(); } });
-  $('#btnClearAllSettings')?.addEventListener('click', async () => { if(confirm('Delete ALL?')) { await Store.clearAll(); location.reload(); } });
+  $('#btnClearAll')?.addEventListener('click', async () => { if(await fcConfirm('Delete ALL surveys?')) { await Store.clearAll(); location.reload(); } });
+  $('#btnClearAllSettings')?.addEventListener('click', async () => { if(await fcConfirm('Delete ALL data?')) { await Store.clearAll(); location.reload(); } });
+
+  // Sign out
+  $('#btnSignOutApp')?.addEventListener('click', async () => {
+      if (await fcConfirm('Sign out? This securely wipes your local cache.')) {
+          toast('Clearing local cache...');
+          await clearUserCache();
+          resetUserRef();
+          await AppSignOut();
+          location.reload();
+      }
+  });
 
   // Settings
   if ($('#btnSettings')) $('#btnSettings').addEventListener('click', () => {

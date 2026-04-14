@@ -1,6 +1,6 @@
 // src/modules/map.js
 
-import { $, toast, esc } from './ui.js';
+import { $, toast, esc, fcPrompt } from './ui.js';
 import { curPos } from './gps.js';
 import { getWps, saveWps } from './storage.js';
 import { initOfflineMapUI } from './map-offline.js';
@@ -10,8 +10,8 @@ let map = null, userMarker = null, wpMarkers = [], satLayer, terLayer, hybLayer;
 export function initMap() {
   if (typeof L === 'undefined') return;
   if (map) {
-      map.invalidateSize();
-      return;
+    map.invalidateSize();
+    return;
   }
   const la = (curPos.lat !== null && curPos.lat !== undefined) ? curPos.lat : 20.5937;
   const ln = (curPos.lng !== null && curPos.lng !== undefined) ? curPos.lng : 78.9629;
@@ -53,45 +53,45 @@ export function locateMe() {
 function mapHas(Ly) { return map && Ly && map.hasLayer(Ly); }
 
 export function setMapLayer(type) {
-    if(!map) return;
-    if (type === 'sat') {
-        if (mapHas(terLayer)) map.removeLayer(terLayer);
-        if (mapHas(hybLayer)) map.removeLayer(hybLayer);
-        if (!mapHas(satLayer)) satLayer.addTo(map);
-        toast('Satellite');
-    } else if (type === 'ter') {
-        if (mapHas(satLayer)) map.removeLayer(satLayer);
-        if (mapHas(hybLayer)) map.removeLayer(hybLayer);
-        if (!mapHas(terLayer)) terLayer.addTo(map);
-        toast('Terrain');
-    } else if (type === 'hyb') {
-        if (mapHas(satLayer)) map.removeLayer(satLayer);
-        if (mapHas(terLayer)) map.removeLayer(terLayer);
-        if (!mapHas(hybLayer)) hybLayer.addTo(map);
-        toast('Hybrid');
-    }
+  if (!map) return;
+  if (type === 'sat') {
+    if (mapHas(terLayer)) map.removeLayer(terLayer);
+    if (mapHas(hybLayer)) map.removeLayer(hybLayer);
+    if (!mapHas(satLayer)) satLayer.addTo(map);
+    toast('Satellite');
+  } else if (type === 'ter') {
+    if (mapHas(satLayer)) map.removeLayer(satLayer);
+    if (mapHas(hybLayer)) map.removeLayer(hybLayer);
+    if (!mapHas(terLayer)) terLayer.addTo(map);
+    toast('Terrain');
+  } else if (type === 'hyb') {
+    if (mapHas(satLayer)) map.removeLayer(satLayer);
+    if (mapHas(terLayer)) map.removeLayer(terLayer);
+    if (!mapHas(hybLayer)) hybLayer.addTo(map);
+    toast('Hybrid');
+  }
 }
 
 export async function addWaypoint(name, type, notes = '', manualLat = null, manualLng = null) {
-    let lat = manualLat != null ? manualLat : curPos.lat;
-    let lng = manualLng != null ? manualLng : curPos.lng;
+  let lat = manualLat != null ? manualLat : curPos.lat;
+  let lng = manualLng != null ? manualLng : curPos.lng;
 
-    if (lat == null || lng == null) {
-        // Prompt for manual coordinates when GPS is unavailable
-        const manual = prompt('No GPS signal. Enter coordinates manually (lat, lng):');
-        if (!manual) return;
-        const parts = manual.split(',').map(s => parseFloat(s.trim()));
-        if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) {
-            toast('Invalid coordinates. Use format: lat, lng', true);
-            return;
-        }
-        lat = parts[0];
-        lng = parts[1];
+  if (lat == null || lng == null) {
+    // Prompt for manual coordinates when GPS is unavailable
+    const manual = await fcPrompt('No GPS signal. Enter coordinates manually (lat, lng):');
+    if (!manual) return;
+    const parts = manual.split(',').map(s => parseFloat(s.trim()));
+    if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) {
+      toast('Invalid coordinates. Use format: lat, lng', true);
+      return;
     }
+    lat = parts[0];
+    lng = parts[1];
+  }
 
-    const w = await getWps();
-    w.push({ name: name || 'Waypoint', type: type || 'plot', lat, lng, notes, time: new Date().toISOString() });
-    await saveWps(w);
-    await refreshMapWps();
-    toast('Waypoint added');
+  const w = await getWps();
+  w.push({ name: name || 'Waypoint', type: type || 'plot', lat, lng, notes, time: new Date().toISOString() });
+  await saveWps(w);
+  await refreshMapWps();
+  toast('Waypoint added');
 }

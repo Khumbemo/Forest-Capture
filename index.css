@@ -1240,3 +1240,50 @@ button,.btn,.nav-btn,.stat-card,.map-ctrl-btn,a,input,select,textarea{
   background: #ef4444 !important;
 }
 .fc-modal-danger:hover { filter: brightness(1.15); }
+
+/* =========== BADGE =========== */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: .62rem;
+  font-weight: 700;
+  color: var(--emerald);
+  background: var(--emerald-glow);
+  vertical-align: middle;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+
+/* =========== GERMPLASM UTILITIES =========== */
+.flex-full { flex: 0 0 100% !important; }
+.g-icon-large { font-size: 2.5rem; line-height: 1; }
+.g-card-meta { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* =========== GERMPLASM =========== */
+.g-body-card {
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.g-body-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--emerald);
+  box-shadow: var(--neon-glow);
+}
+.g-body-card:active {
+  transform: translateY(0);
+}
+
+/* Germplasm tool icon */
+.anim-tool-germplasm { animation: germSprout 4s ease-in-out infinite; transform-origin: center bottom; }
+@keyframes germSprout {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50% { transform: scale(1.08) translateY(-4px); }
+}
+
+/* SVG Icon Animations */
+.anim-svg-flow { animation: svgFlow 10s linear infinite; }
+@keyframes svgFlow {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: 0; }
+}
+
