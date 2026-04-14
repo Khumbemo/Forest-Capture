@@ -2,7 +2,8 @@ module.exports = {
   server: {
     command: 'npx serve -l 8080',
     port: 8080,
-    launchTimeout: 10000,
+    launchTimeout: 30000,
+    usedPortAction: 'kill',
     debug: true,
   },
   launch: {
