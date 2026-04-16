@@ -1,6 +1,6 @@
 [
-  { "scientific": "Alnus nepalensis", "common": "Nepalese Alder", "family": "Betulaceae", "genus": "Alnus" },
-  { "scientific": "Gmelina arborea", "common": "Gamari", "family": "Lamiaceae", "genus": "Gmelina" },
+  { "scientific": "Alnus nepalensis", "common": "Nepalese Alder", "family": "Betulaceae", "genus": "Alnus", "thumbnail": "./data/taxonomy/images/alnus.png" },
+  { "scientific": "Gmelina arborea", "common": "Gamari", "family": "Lamiaceae", "genus": "Gmelina", "thumbnail": "./data/taxonomy/images/gmelina.png" },
   { "scientific": "Dipterocarpus retusus", "common": "Hollong", "family": "Dipterocarpaceae", "genus": "Dipterocarpus" },
   { "scientific": "Quercus pachyphylla", "common": "Thick-leaf Oak", "family": "Fagaceae", "genus": "Quercus" },
   { "scientific": "Quercus griffithii", "common": "Griffith's Oak", "family": "Fagaceae", "genus": "Quercus" },

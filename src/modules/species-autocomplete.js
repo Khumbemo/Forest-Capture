@@ -231,15 +231,24 @@ function _render(dropdown, results, activeIndex, onSelect) {
       : entry.source === 'regional_pack' ? `<span class="species-badge-regional" style="background:var(--emerald);color:#000;font-size:0.7em;padding:2px 6px;border-radius:4px;">regional dict</span>` : '';
 
     const statusBadge = entry.status === 'SYNONYM' ? `<span class="species-badge-synonym">synonym</span>` : '';
+    const thumbnailHtml = entry.thumbnail 
+      ? `<img src="${entry.thumbnail}" style="width:36px; height:36px; border-radius:4px; object-fit:cover; margin-right:12px; border:1px solid var(--border); background:#fff;" loading="lazy" />` 
+      : '';
+
     li.innerHTML = `
-      <div class="species-option-main">
-        <span class="species-scientific">${_highlight(entry.scientific, dropdown._query || '')}</span>
-        ${entry.common ? `<span class="species-common">${escapeHtml(entry.common)}</span>` : ''}
-      </div>
-      <div class="species-option-meta">
-        ${entry.family ? `<span class="species-family">${escapeHtml(entry.family)}</span>` : ''}
-        ${badge}
-        ${statusBadge}
+      <div style="display:flex; align-items:center;">
+        ${thumbnailHtml}
+        <div style="flex:1;">
+          <div class="species-option-main">
+            <span class="species-scientific">${_highlight(entry.scientific, dropdown._query || '')}</span>
+            ${entry.common ? `<span class="species-common">${escapeHtml(entry.common)}</span>` : ''}
+          </div>
+          <div class="species-option-meta">
+            ${entry.family ? `<span class="species-family">${escapeHtml(entry.family)}</span>` : ''}
+            ${badge}
+            ${statusBadge}
+          </div>
+        </div>
       </div>
     `;
 
