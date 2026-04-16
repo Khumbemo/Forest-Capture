@@ -76,9 +76,12 @@ describe('Germplasm Collector E2E Tests', () => {
     await page.waitForSelector('#germ_icfre_speciesScientific', { timeout: 5000 });
     expect(await page.$('#germ_icfre_speciesScientific')).toBeTruthy();
 
-    // Go back to home view via the Back button.
-    await page.waitForSelector('#btnGCancelRec', { timeout: 3000 });
-    await page.evaluate(() => document.getElementById('btnGCancelRec').click());
+    // Go back using system back (simulated)
+    await page.goBack();
+    await new Promise(r => setTimeout(r, 500));
+    // Re-enter Germplasm tool
+    await page.waitForSelector('.stat-card[data-screen="screenGermplasm"]', { timeout: 5000 });
+    await page.evaluate(() => document.querySelector('.stat-card[data-screen="screenGermplasm"]').click());
     // Wait for home body cards to reappear.
     await page.waitForSelector('.g-body-card[data-b="ista"]', { timeout: 5000 });
 
@@ -94,9 +97,10 @@ describe('Germplasm Collector E2E Tests', () => {
     let istaInput = await page.$('#germ_ista_speciesScientific');
     if (!istaInput) {
       // Navigate to ISTA form
-      await page.waitForSelector('#btnGCancelRec', { timeout: 2000 }).catch(() => {});
-      const cancelBtn = await page.$('#btnGCancelRec');
-      if (cancelBtn) await page.evaluate(() => document.getElementById('btnGCancelRec').click());
+      await page.goBack();
+      await new Promise(r => setTimeout(r, 500));
+      await page.waitForSelector('.stat-card[data-screen="screenGermplasm"]', { timeout: 5000 });
+      await page.evaluate(() => document.querySelector('.stat-card[data-screen="screenGermplasm"]').click());
       await page.waitForSelector('.g-body-card[data-b="ista"]', { timeout: 5000 });
       await page.evaluate(() => document.querySelector('.g-body-card[data-b="ista"]').click());
       await page.waitForSelector('#germ_ista_speciesScientific', { timeout: 5000 });

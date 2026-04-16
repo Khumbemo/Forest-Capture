@@ -181,15 +181,13 @@ async function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
       log('ICFRE form has unique GPS button ID (btnGermICFREGPS)', icfregps);
       log('Old duplicate btnGermGPS no longer on ICFRE form', !oldgps);
 
-      // Check back button label
-      const backText = await page.evaluate(() => {
-        const b = document.getElementById('btnGCancelRec');
-        return b ? b.textContent.trim() : '';
-      });
-      log('Back button says "← Back" (not "← Back to Forms")', backText === '← Back', `actual: "${backText}"`);
-
       // Back → home cards reappear
-      await page.evaluate(() => document.getElementById('btnGCancelRec').click());
+      await page.goBack();
+      await wait(500);
+      await page.evaluate(() => {
+        const c = document.querySelector('.stat-card[data-screen="screenGermplasm"]');
+        if (c) c.click();
+      });
       await page.waitForSelector('.g-body-card', { timeout: 5000 });
       await shot(page, '08_germplasm_back');
       const cardsAfter = await page.evaluate(() => document.querySelectorAll('.g-body-card').length);

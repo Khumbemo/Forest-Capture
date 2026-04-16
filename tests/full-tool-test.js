@@ -280,13 +280,11 @@ const fieldCount = (page, selector) =>
     await shot(page, '11a_germplasm_icfre');
     log('ICFRE form opens', !!(await fieldExists(page, '#germ_icfre_speciesScientific')));
     log('ICFRE has unique GPS button', !!(await fieldExists(page, '#btnGermICFREGPS')));
-    log('ICFRE back button label "← Back"', await page.evaluate(() => {
-      const b = document.getElementById('btnGCancelRec');
-      return b ? b.textContent.trim() === '← Back' : false;
-    }));
 
     // Back to home
-    await page.evaluate(() => document.getElementById('btnGCancelRec')?.click());
+    await page.goBack();
+    await wait(500);
+    await page.evaluate(() => document.querySelector('.stat-card[data-screen="screenGermplasm"]')?.click());
     await page.waitForSelector('.g-body-card', { timeout: 5000 });
 
     // NBPGR form
@@ -297,7 +295,9 @@ const fieldCount = (page, selector) =>
     log('NBPGR has unique GPS button', !!(await fieldExists(page, '#btnGermNBPGRGPS')));
 
     // Back to home
-    await page.evaluate(() => document.getElementById('btnGCancelRec')?.click());
+    await page.goBack();
+    await wait(500);
+    await page.evaluate(() => document.querySelector('.stat-card[data-screen="screenGermplasm"]')?.click());
     await page.waitForSelector('.g-body-card', { timeout: 5000 });
 
     // ISTA form
@@ -307,7 +307,9 @@ const fieldCount = (page, selector) =>
     log('ISTA form opens', !!(await fieldExists(page, '#germ_ista_speciesScientific')));
 
     // Back to home
-    await page.evaluate(() => document.getElementById('btnGCancelRec')?.click());
+    await page.goBack();
+    await wait(500);
+    await page.evaluate(() => document.querySelector('.stat-card[data-screen="screenGermplasm"]')?.click());
     await page.waitForSelector('.g-body-card', { timeout: 5000 });
 
     // Saved Records list
