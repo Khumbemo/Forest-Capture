@@ -321,8 +321,6 @@ export async function refreshGermplasmUI() {
       <div style="padding:var(--sp-md);">
         ${fieldsHtml}
         <button id="btnGSaveRec" class="btn btn-primary btn-block mt-md">Save Record</button>
-        <!-- FIX #16: Label clarified — 'Back to Forms' was ambiguous -->
-        <button id="btnGCancelRec" class="btn btn-ghost btn-block mt-sm">← Back</button>
       </div>
     `;
 
@@ -334,8 +332,7 @@ export async function refreshGermplasmUI() {
     // FIX #3: Bind each GPS button by its unique ID.
     if ($('#btnGermICFREGPS')) $('#btnGermICFREGPS').addEventListener('click', handleAutoGPS);
     if ($('#btnGermNBPGRGPS')) $('#btnGermNBPGRGPS').addEventListener('click', handleAutoGPS);
-    // FIX #2: await so any caller can rely on DOM being ready.
-    document.getElementById('btnGCancelRec').addEventListener('click', async () => { currentView = 'home'; await refreshGermplasmUI(); });
+    // The 'btnGCancelRec' button was removed; users rely on the system back button.
 
     // Auto-fill today's date
     const isoDate = new Date().toISOString().split('T')[0];
