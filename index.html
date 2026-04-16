@@ -566,8 +566,34 @@
       </div>
 
       <div class="form-card">
+        <h3 class="card-title">Forestry Biomass & Stand Models</h3>
+        <div class="analytics-grid">
+          <div class="analytic-item"><div class="analytic-label">Est. Carbon Stock (ρ=0.65)</div><div class="analytic-value" id="analyticCarbon">0.00 t/ha</div></div>
+          <div class="analytic-item"><div class="analytic-label">Above Ground Biomass </div><div class="analytic-value" id="analyticAGB">0.00 t/ha</div></div>
+          <div class="analytic-item"><div class="analytic-label">QMD</div><div class="analytic-value" id="analyticQMD">0.00 cm</div><div class="analytic-detail" style="font-size:0.65rem;color:var(--text-muted);margin-top:2px;">Quadratic Mean Diameter</div></div>
+          <div class="analytic-item"><div class="analytic-label">Stand Density (SDI)</div><div class="analytic-value" id="analyticSDI">0.00</div><div class="analytic-detail" style="font-size:0.65rem;color:var(--text-muted);margin-top:2px;">Reineke's Index</div></div>
+        </div>
+      </div>
+
+      <div class="form-card">
         <h3 class="card-title">DBH Class Distribution</h3>
         <div id="dbhChart" class="bar-chart-container"></div>
+      </div>
+
+      <div class="form-card">
+        <h3 class="card-title">Regeneration Demographics</h3>
+        <p class="card-desc">Comparison of regeneration stages.</p>
+        <div id="regenChart" class="bar-chart-container"></div>
+        <div style="font-size: 0.8rem; text-align: center; color: var(--text-muted); margin-top: 8px;">Status: <strong id="regenStatus" style="color: var(--emerald);">—</strong></div>
+      </div>
+
+      <div class="form-card">
+        <h3 class="card-title">Transect Canopy & Gap</h3>
+        <p class="card-desc">Calculated via Line Intercepts.</p>
+        <div class="analytics-grid">
+          <div class="analytic-item"><div class="analytic-label">Absolute Linear Cover</div><div class="analytic-value" id="analyticTransectCover">0.0%</div></div>
+          <div class="analytic-item"><div class="analytic-label">Canopy Gap Fraction</div><div class="analytic-value" id="analyticTransectGap">0.0%</div></div>
+        </div>
       </div>
 
       <!-- Compare Surveys Feature Component -->
