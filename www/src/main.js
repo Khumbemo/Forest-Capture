@@ -337,14 +337,23 @@ function setupEventListeners() {
     }
   });
 
-  // Use event delegation for tool cards in the Grid
+  // FIX #13: All tool cards now use data-screen (unified with nav buttons).
+  // Previously used data-tool which was inconsistent and required two separate selectors.
   document.addEventListener('click', (e) => {
-    const card = e.target.closest('.stat-card[data-tool]');
+    const card = e.target.closest('.stat-card[data-screen]');
     if (card) {
-      const screenId = card.getAttribute('data-tool');
-      if (screenId) switchScreen(screenId, screenCallbacks);
+      const screenId = card.getAttribute('data-screen');
+      // Only handle tool screens (not root nav screens)
+      const ROOT = ['screenDashboard', 'screenToolbar', 'screenData'];
+      if (screenId && !ROOT.includes(screenId)) switchScreen(screenId, screenCallbacks);
     }
   });
+
+  // FIX #10: Telemetry dashboard cards navigate to relevant tools on click.
+  document.getElementById('teleCardLocation')?.addEventListener('click', () => switchScreen('screenMap', screenCallbacks));
+  document.getElementById('teleCardAlt')?.addEventListener('click',      () => switchScreen('screenMap', screenCallbacks));
+  document.getElementById('teleCardTemp')?.addEventListener('click',     () => switchScreen('screenEnvironment', screenCallbacks));
+  document.getElementById('teleCardHumidity')?.addEventListener('click', () => switchScreen('screenEnvironment', screenCallbacks));
 
   $('#btnToolOfflineMap')?.addEventListener('click', () => {
     switchScreen('screenMap');
@@ -625,7 +634,26 @@ function setupEventListeners() {
   $('#btnClearAll')?.addEventListener('click', async () => { if(await fcConfirm('Delete ALL surveys?')) { await Store.clearAll(); location.reload(); } });
   $('#btnClearAllSettings')?.addEventListener('click', async () => { if(await fcConfirm('Delete ALL data?')) { await Store.clearAll(); location.reload(); } });
 
-  // Sign out
+  // FIX #20: Sign Out button in Settings panel.
+  // Shows the account section once wired, so anonymous users never see it.
+  const storedUser = JSON.parse(localStorage.getItem('fc_user') || 'null');
+  if (storedUser && storedUser.email) {
+    const accountSection = document.getElementById('settingsAccountSection');
+    const userEmailEl = document.getElementById('settingsUserEmail');
+    if (accountSection) accountSection.style.display = '';
+    if (userEmailEl) userEmailEl.textContent = storedUser.email;
+  }
+  $('#btnSignOut')?.addEventListener('click', async () => {
+    if (await fcConfirm('Sign out? This securely wipes your local cache.')) {
+      toast('Signing out...');
+      await clearUserCache();
+      resetUserRef();
+      await AppSignOut();
+      location.reload();
+    }
+  });
+
+  // Legacy sign-out button (kept for backward compatibility)
   $('#btnSignOutApp')?.addEventListener('click', async () => {
       if (await fcConfirm('Sign out? This securely wipes your local cache.')) {
           toast('Clearing local cache...');

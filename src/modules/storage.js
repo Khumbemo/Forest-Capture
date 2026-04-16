@@ -276,6 +276,14 @@ async function withTimeout(promise, timeoutMs, defaultVal = null) {
 export const Store = {
   async getSurveys() {
     console.log('Store.getSurveys: start');
+    
+    // Snappy offline-first priority
+    const cached = await _loadSurveysFromLocal();
+    if (cached && cached.length > 0) {
+      console.log('Store.getSurveys: returning from cache', cached.length);
+      return Promise.all(cached.map(verifySurveySignature));
+    }
+
     try {
       const userDocRef = await getUserRef();
       console.log('Store.getSurveys: got user ref, fetching collection...');
@@ -296,21 +304,9 @@ export const Store = {
         return Promise.all(surveys.map(verifySurveySignature));
       }
 
-      // Firestore returned nothing — fall back to localStorage cache
-      const cached = await _loadSurveysFromLocal();
-      if (cached.length) {
-        console.log('Store.getSurveys: using idb cache (' + cached.length + ' surveys)');
-        return Promise.all(cached.map(verifySurveySignature));
-      }
-      return surveys;
-    } catch (e) {
-      console.error('Store.getSurveys error:', e);
-      // Fall back to idb on any error
-      const cached = await _loadSurveysFromLocal();
-      if (cached.length) {
-        console.log('Store.getSurveys: error recovery from idb (' + cached.length + ')');
-        return Promise.all(cached.map(verifySurveySignature));
-      }
+      return [];
+    } catch(e) {
+      console.warn('Store.getSurveys failed', e);
       return [];
     }
   },
@@ -326,21 +322,25 @@ export const Store = {
     const cached = await _loadSurveysFromLocal();
     const localMatch = cached.find(s => s.id === activeId);
 
+    if (localMatch) {
+      console.log('Store.getActive: using idb cache for', activeId);
+      return await verifySurveySignature(localMatch);
+    }
+
     try {
       const userDocRef = await getUserRef();
       console.log('Store.getActive: fetching survey doc', activeId);
       const sDoc = await withTimeout(getDoc(doc(collection(userDocRef, 'surveys'), activeId)), 5000, { exists: () => false });
       console.log('Store.getActive: doc received');
-      if (sDoc.exists()) return await verifySurveySignature(sDoc.data());
+      if (sDoc.exists()) {
+        const data = sDoc.data();
+        await _addSurveyToLocalCache(data);
+        return await verifySurveySignature(data);
+      }
     } catch (e) {
-      console.warn('Store.getActive: Firestore failed, trying cache', e.message);
+      console.warn('Store.getActive: Firestore failed', e.message);
     }
 
-    // Fallback to idb
-    if (localMatch) {
-      console.log('Store.getActive: using idb cache for', activeId);
-      return await verifySurveySignature(localMatch);
-    }
     return null;
   },
 

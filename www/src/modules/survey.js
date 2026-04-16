@@ -1,6 +1,6 @@
 // src/modules/survey.js
 
-import { $, $$, toast, esc } from './ui.js';
+import { $, $$, toast, esc, switchScreen } from './ui.js';
 import { Store } from './storage.js';
 import { fmtCoords, curPos } from './gps.js';
 
@@ -70,6 +70,18 @@ export async function refreshDataRecords() {
     if (sv.photos && sv.photos.length) {
       allRecords.push({ type: 'photos', icon: 'P', label: `${sv.photos.length} Photo${sv.photos.length > 1 ? 's' : ''}`, detail: 'Attached to survey', survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
     }
+    // Herbariums
+    if (sv.herbariums && sv.herbariums.length) {
+      sv.herbariums.forEach((h, hi) => {
+        allRecords.push({ type: 'herbarium', icon: 'H', label: `Herbarium Voucher: ${h.collectionNo || 'Unassigned'}`, detail: `${h.speciesScientific || 'Unknown Species'} · ${h.family || 'Unknown Family'}`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
+      });
+    }
+    // Germplasm
+    if (sv.germplasm && sv.germplasm.length) {
+      sv.germplasm.forEach((g, gi) => {
+        allRecords.push({ type: 'germplasm', icon: 'G', label: `Germplasm Record (${g.bodyId ? g.bodyId.toUpperCase() : 'Entry'})`, detail: `${g.speciesScientific || 'Unknown Species'} · ${g.collectionDate || g.acquisitionDate || g.samplingDate || 'Undated'}`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
+      });
+    }
   });
 
   if (filterType !== 'all') allRecords = allRecords.filter(r => r.type === filterType);
@@ -113,6 +125,18 @@ export async function refreshDataRecords() {
         await Store.setActive(card.dataset.sid);
         await populateSurveySelector();
         toast('Survey selected — Session updated', false);
+        
+        // Navigate to the respective screen
+        let tgt = '';
+        if (r.type === 'quadrat') tgt = 'screenQuadrat';
+        else if (r.type === 'transect') tgt = 'screenTransect';
+        else if (r.type === 'environment') tgt = 'screenEnvironment';
+        else if (r.type === 'disturbance') tgt = 'screenDisturbCBI';
+        else if (r.type === 'notes' || r.type === 'photos') tgt = 'screenPhotos';
+        else if (r.type === 'herbarium') tgt = 'screenHerbarium';
+        else if (r.type === 'germplasm') tgt = 'screenGermplasm';
+        
+        if (tgt && typeof switchScreen === 'function') switchScreen(tgt);
       });
       groupDiv.appendChild(card);
     });

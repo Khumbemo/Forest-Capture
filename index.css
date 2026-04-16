@@ -36,6 +36,7 @@
   --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 20px; --radius-full: 9999px;
 
   --header-h: 52px;
+  --banner-h: 24px; /* connectivity banner below header */
   --status-h: 36px;
   --nav-h: 74px;
   --toolbar-w: 72px;
@@ -205,6 +206,20 @@ input,select,textarea,button{font-family:'Roboto',-apple-system,BlinkMacSystemFo
 .header-title{font-size:1.05rem;font-weight:800;letter-spacing:-.2px;background:linear-gradient(135deg,var(--emerald),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .header-right{display:flex;align-items:center;gap:var(--sp-sm);}
 
+/* =========== CONNECTIVITY BANNER =========== */
+.connectivity-banner{
+  position:fixed;top:var(--header-h);left:0;right:0;z-index:99;
+  display:flex;align-items:center;gap:6px;
+  padding:4px var(--sp-lg);
+  font-size:.7rem;font-weight:600;letter-spacing:.3px;
+  transition:background .3s,color .3s;
+}
+.connectivity-banner.online{background:rgba(16,185,129,.12);color:var(--emerald);}
+.connectivity-banner.offline{background:rgba(239,68,68,.12);color:var(--red);}
+.conn-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.conn-dot.online{background:var(--emerald);box-shadow:0 0 4px var(--emerald);}
+.conn-dot.offline{background:var(--red);box-shadow:0 0 4px var(--red);}
+
 .live-clock{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1;}
 .clock-time{font-size:.82rem;font-weight:700;color:var(--emerald);}
 .clock-date{font-size:.6rem;color:var(--text-muted);}
@@ -217,7 +232,7 @@ input,select,textarea,button{font-family:'Roboto',-apple-system,BlinkMacSystemFo
 
 /* =========== MAIN =========== */
 .app-main{
-  padding-top:calc(var(--header-h) + 14px);
+  padding-top:calc(var(--header-h) + var(--banner-h) + 14px);
   padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 16px);
   padding-left:0;padding-right:0;
   width:100%;
@@ -665,6 +680,18 @@ button,.btn,.nav-btn,.stat-card,.map-ctrl-btn,a,input,select,textarea{
 .app-header-custom { height: auto; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; background: var(--bg-primary); border-bottom: 1px solid var(--border); }
 .header-left-flex { display: flex; align-items: center; gap: 8px; }
 .btn-back-custom { display: none; background: none; border: none; color: var(--emerald); font-size: 1.4rem; cursor: pointer; padding: 4px; font-weight: 900; }
+/* FIX #4: Actual back button added to HTML header. Styled to match header aesthetic. */
+.header-back-btn {
+  display: none; /* shown/hidden by switchScreen() */
+  align-items: center; justify-content: center;
+  background: none; border: none;
+  color: var(--emerald); cursor: pointer;
+  padding: 4px 6px; border-radius: var(--radius-sm);
+  transition: background var(--transition), color var(--transition);
+  flex-shrink: 0;
+}
+.header-back-btn:hover { background: var(--emerald-glow); }
+.header-back-btn svg { display: block; }
 .header-title-custom { font-size: 1.25rem; }
 .header-right-flex { display: flex; align-items: center; gap: 10px; }
 .header-weather-icon { font-size: 1.5rem; }

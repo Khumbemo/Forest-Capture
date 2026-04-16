@@ -120,7 +120,8 @@ function renderICFRE() {
     getInputHtml('germ_icfre_latitude', 'Latitude', 'e.g. 11.4102', 'number', '0.000001') +
     getInputHtml('germ_icfre_longitude', 'Longitude', 'e.g. 76.6950', 'number', '0.000001') +
     getInputHtml('germ_icfre_altitude', 'Altitude (m asl)', 'e.g. 1200', 'number') +
-    `<div class="form-group" style="flex:0 0 auto; align-self:flex-end;"><button type="button" class="btn btn-accent gps-fill-btn" id="btnGermGPS">📡 Auto GPS</button></div>`
+    // FIX #3: Unique ID — distinct from NBPGR GPS button.
+    `<div class="form-group" style="flex:0 0 auto; align-self:flex-end;"><button type="button" class="btn btn-accent gps-fill-btn" id="btnGermICFREGPS">📡 Auto GPS</button></div>`
   );
   h += getSection("Stand & Mother Tree", "🌳",
     getSelectHtml('germ_icfre_standType', 'Stand Type', STAND_TYPES) +
@@ -168,7 +169,8 @@ function renderNBPGR() {
     getInputHtml('germ_nbpgr_latitude', 'Latitude', 'e.g. 20.9374', 'number', '0.000001') +
     getInputHtml('germ_nbpgr_longitude', 'Longitude', 'e.g. 85.0985', 'number', '0.000001') +
     getInputHtml('germ_nbpgr_altitude', 'Altitude (m asl)', 'e.g. 450', 'number') + 
-    `<div class="form-group" style="flex:0 0 auto; align-self:flex-end;"><button type="button" class="btn btn-accent gps-fill-btn" id="btnGermGPS">📡 Auto GPS</button></div>`
+    // FIX #3: Unique ID — distinct from ICFRE GPS button.
+    `<div class="form-group" style="flex:0 0 auto; align-self:flex-end;"><button type="button" class="btn btn-accent gps-fill-btn" id="btnGermNBPGRGPS">📡 Auto GPS</button></div>`
   );
   h += getSection("Seed / Material Properties", "🌰",
     getSelectHtml('germ_nbpgr_storageType', 'Storage Behaviour', NBPGR_STORAGE_TYPES, 'Select...', false, 'Determines conservation strategy') +
@@ -302,7 +304,8 @@ export async function refreshGermplasmUI() {
 
   // Home view — no survey needed
   if (currentView === 'home') {
-    renderHome();
+    // FIX #2: await renderHome so DOM is fully settled before callers/tests proceed.
+    await renderHome();
     return;
   }
 
@@ -318,7 +321,8 @@ export async function refreshGermplasmUI() {
       <div style="padding:var(--sp-md);">
         ${fieldsHtml}
         <button id="btnGSaveRec" class="btn btn-primary btn-block mt-md">Save Record</button>
-        <button id="btnGCancelRec" class="btn btn-ghost btn-block mt-sm">← Back to Forms</button>
+        <!-- FIX #16: Label clarified — 'Back to Forms' was ambiguous -->
+        <button id="btnGCancelRec" class="btn btn-ghost btn-block mt-sm">← Back</button>
       </div>
     `;
 
@@ -327,8 +331,11 @@ export async function refreshGermplasmUI() {
       if (s && $('#germTopSurveyName')) $('#germTopSurveyName').textContent = s.name;
     });
 
-    if ($('#btnGermGPS')) $('#btnGermGPS').addEventListener('click', handleAutoGPS);
-    document.getElementById('btnGCancelRec').addEventListener('click', () => { currentView = 'home'; refreshGermplasmUI(); });
+    // FIX #3: Bind each GPS button by its unique ID.
+    if ($('#btnGermICFREGPS')) $('#btnGermICFREGPS').addEventListener('click', handleAutoGPS);
+    if ($('#btnGermNBPGRGPS')) $('#btnGermNBPGRGPS').addEventListener('click', handleAutoGPS);
+    // FIX #2: await so any caller can rely on DOM being ready.
+    document.getElementById('btnGCancelRec').addEventListener('click', async () => { currentView = 'home'; await refreshGermplasmUI(); });
 
     // Auto-fill today's date
     const isoDate = new Date().toISOString().split('T')[0];
@@ -362,7 +369,7 @@ export async function refreshGermplasmUI() {
 
           toast('Record saved!');
           currentView = 'list';
-          refreshGermplasmUI();
+          await refreshGermplasmUI();
         } catch (e) {
           console.error(e);
           toast('Error saving record.', true);
@@ -409,7 +416,8 @@ export async function refreshGermplasmUI() {
     mount.innerHTML = ht;
     if (s.name && $('#germTopSurveyName')) $('#germTopSurveyName').textContent = s.name;
 
-    document.getElementById('btnGNavHome').addEventListener('click', () => { currentView = 'home'; refreshGermplasmUI(); });
+    // FIX #2: await so body cards are in DOM before any test waitForSelector.
+    document.getElementById('btnGNavHome').addEventListener('click', async () => { currentView = 'home'; await refreshGermplasmUI(); });
 
     const applyFilter = (fBody) => {
       $$('.btn-g-filter').forEach(b => {
@@ -473,48 +481,54 @@ export async function refreshGermplasmUI() {
   }
 }
 
-function renderHome() {
+/**
+ * FIX #2: renderHome is now async and awaits Store.getActive() directly.
+ * This eliminates the race condition where DOM was populated asynchronously
+ * in an unawaited .then(), causing Puppeteer waitForSelector to fire before
+ * body cards existed. All callers must await this function.
+ */
+async function renderHome() {
   const mount = $('#germplasmMount');
   if (!mount) return;
-  Store.getActive().then(sv => {
-    const rc = sv ? (sv.germplasm ? sv.germplasm.length : 0) : 0;
-    let bHtml = Object.keys(BODIES).map(k => {
-      const b = BODIES[k];
-      return `
-        <div class="form-card g-body-card" data-b="${k}">
-          <div style="display:flex; align-items:flex-start; gap:var(--sp-lg);">
-            <div class="g-icon-large" style="width:60px; height:60px; flex-shrink:0;">${b.icon}</div>
-            <div style="flex:1;">
-              <h3 class="card-title" style="margin-bottom:4px;">${b.name} <span class="badge">${b.focus}</span></h3>
-              <div class="g-card-meta">${b.full}</div>
-              <div class="card-desc" style="margin-bottom:0;">${b.desc}</div>
-            </div>
+  const sv = await Store.getActive();
+  const rc = sv ? (sv.germplasm ? sv.germplasm.length : 0) : 0;
+  let bHtml = Object.keys(BODIES).map(k => {
+    const b = BODIES[k];
+    return `
+      <div class="form-card g-body-card" data-b="${k}">
+        <div style="display:flex; align-items:flex-start; gap:var(--sp-lg);">
+          <div class="g-icon-large" style="width:60px; height:60px; flex-shrink:0;">${b.icon}</div>
+          <div style="flex:1;">
+            <h3 class="card-title" style="margin-bottom:4px;">${b.name} <span class="badge">${b.focus}</span></h3>
+            <div class="g-card-meta">${b.full}</div>
+            <div class="card-desc" style="margin-bottom:0;">${b.desc}</div>
           </div>
         </div>
-      `;
-    }).join('');
-
-    mount.innerHTML = getHeaderHtml('Germplasm <span>Collector</span>') + `
-      <div style="padding:var(--sp-md);">
-        <div class="form-row" style="margin-bottom:var(--sp-md);">
-           <button class="btn btn-primary" id="btnGNavHome" style="flex:1;">Rules / Forms</button>
-           <button class="btn btn-ghost" id="btnGNavList" style="flex:1; border:1px solid var(--border);">Saved Records (${rc})</button>
-        </div>
-        <p class="card-desc" style="text-align:center; margin-bottom:var(--sp-md);">Select a regulatory body to add new germplasm material:</p>
-        ${bHtml}
       </div>
     `;
+  }).join('');
 
-    if (sv && sv.name && $('#germTopSurveyName')) $('#germTopSurveyName').textContent = sv.name;
+  mount.innerHTML = getHeaderHtml('Germplasm <span>Collector</span>') + `
+    <div style="padding:var(--sp-md);">
+      <div class="form-row" style="margin-bottom:var(--sp-md);">
+         <button class="btn btn-primary" id="btnGNavHome" style="flex:1;">Rules / Forms</button>
+         <button class="btn btn-ghost" id="btnGNavList" style="flex:1; border:1px solid var(--border);">Saved Records (${rc})</button>
+      </div>
+      <p class="card-desc" style="text-align:center; margin-bottom:var(--sp-md);">Select a regulatory body to add new germplasm material:</p>
+      ${bHtml}
+    </div>
+  `;
 
-    document.getElementById('btnGNavList').addEventListener('click', () => { currentView = 'list'; refreshGermplasmUI(); });
+  if (sv && sv.name && $('#germTopSurveyName')) $('#germTopSurveyName').textContent = sv.name;
 
-    $$('.g-body-card').forEach(c => {
-      c.addEventListener('click', () => {
-        currentBody = c.dataset.b;
-        currentView = 'form';
-        refreshGermplasmUI();
-      });
+  // FIX #2: All event listeners wired after DOM is synchronously injected.
+  document.getElementById('btnGNavList').addEventListener('click', async () => { currentView = 'list'; await refreshGermplasmUI(); });
+
+  $$('.g-body-card').forEach(c => {
+    c.addEventListener('click', async () => {
+      currentBody = c.dataset.b;
+      currentView = 'form';
+      await refreshGermplasmUI();
     });
   });
 }

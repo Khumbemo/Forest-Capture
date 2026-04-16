@@ -107,6 +107,10 @@
   <!-- HEADER -->
   <header class="app-header app-header-custom" id="appHeader">
     <div class="header-left header-left-flex">
+      <!-- FIX #4: Back button — hidden on root screens, shown on tool screens by switchScreen() -->
+      <button id="btnHeaderBack" class="header-back-btn" style="display:none;" aria-label="Go back" title="Back">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
       <h1 class="header-title header-title-custom">Forest Capture</h1>
     </div>
     <div class="header-right header-right-flex">
@@ -114,22 +118,24 @@
       <button class="settings-btn" id="btnSettings" title="Settings"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15 1.65 1.65 0 0 0 3.17 14H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 8.82a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6 1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.26.6.77 1.05 1.51 1.08H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     </div>
   </header>
+  <!-- FIX #5: Connectivity banner — static so it's always in DOM; ui.js populates text/class -->
+  <div id="connectivityBanner" class="connectivity-banner online" aria-live="polite">
+    <span class="conn-dot online"></span> Connecting…
+  </div>
 
   <!-- MAIN -->
   <main class="app-main" id="appMain">
 
     <!-- ===== DASHBOARD ===== -->
-    <section class="screen active" id="screenDashboard">
+    <section class="screen active" id="screenDashboard" aria-label="Dashboard">
+      <!-- Telemetry cards: tap to navigate to relevant tools -->
       <div class="telemetry-grid telemetry-grid-custom">
-        <div class="tele-card tele-card-padded">
+        <div class="tele-card tele-card-padded" role="button" tabindex="0" id="teleCardLocation" title="Open Map & GPS" style="cursor:pointer;">
           <div class="tele-3d-bg">
             <svg class="anim-satellite" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <!-- Body -->
               <polygon points="40,40 60,30 60,50 40,60" fill="var(--bg-input)"/>
-              <!-- Solar Panels -->
               <polygon points="20,20 40,30 30,50 10,40" fill="rgba(16,185,129,0.2)" stroke="var(--emerald)"/>
               <polygon points="60,50 80,40 90,60 70,70" fill="rgba(16,185,129,0.2)" stroke="var(--emerald)"/>
-              <!-- Details -->
               <line x1="45" y1="55" x2="75" y2="25" stroke="var(--text-muted)"/>
               <circle cx="75" cy="25" r="5" fill="var(--bg-input)"/>
             </svg>
@@ -138,7 +144,7 @@
           <div class="tele-value tele-value-lg" id="teleLocation">---</div>
           <div class="tele-sub tele-sub-sm" id="teleCoords">---, ---</div>
         </div>
-        <div class="tele-card tele-card-padded">
+        <div class="tele-card tele-card-padded" role="button" tabindex="0" id="teleCardTemp" title="Open Environment" style="cursor:pointer;">
           <div class="tele-3d-bg">
             <svg class="anim-thermo" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
               <path class="thermo-fluid" d="M48 40 L48 68 A 12 12 0 1 0 52 68 L52 40 Z" fill="var(--emerald)" stroke="none"/>
@@ -151,7 +157,7 @@
           <div class="tele-value tele-value-xl" id="teleTemp">--°C</div>
           <div class="tele-sub tele-sub-sm" id="teleWeatherDesc">---</div>
         </div>
-        <div class="tele-card tele-card-padded">
+        <div class="tele-card tele-card-padded" role="button" tabindex="0" id="teleCardAlt" title="Open Map & GPS" style="cursor:pointer;">
           <div class="tele-3d-bg">
             <svg class="anim-mountain" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
               <polygon points="30,80 50,30 65,55 80,80" fill="rgba(16,185,129,0.1)" stroke="var(--emerald)"/>
@@ -164,7 +170,7 @@
           <div class="tele-value tele-value-xl" id="teleAlt">--- m</div>
           <div class="tele-sub tele-sub-sm">Above sea level</div>
         </div>
-        <div class="tele-card tele-card-padded">
+        <div class="tele-card tele-card-padded" role="button" tabindex="0" id="teleCardHumidity" title="Open Environment" style="cursor:pointer;">
           <div class="tele-3d-bg">
              <svg class="anim-cloud" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
                <path d="M25 65 A 15 15 0 0 1 35 45 A 22 22 0 0 1 75 50 A 16 16 0 0 1 70 75 L30 75 Z" fill="rgba(16,185,129,0.2)" stroke="var(--emerald)"/>
@@ -231,7 +237,8 @@
       </div>
 
       <div class="stats-grid" id="toolsMenuGrid">
-        <div class="stat-card" data-tool="screenMap"><div class="stat-icon">
+        <!-- NOTE: All tool cards use data-screen so main.js can use a single unified selector -->
+        <div class="stat-card" role="button" tabindex="0" data-screen="screenMap"><div class="stat-icon">
           <svg class="anim-tool-svg anim-tool-map" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round">
             <polygon points="20,60 50,45 80,60 50,75" fill="rgba(16,185,129,0.1)" stroke="var(--emerald)"/>
             <polygon points="20,40 50,25 80,40 50,55" fill="rgba(16,185,129,0.2)" stroke="var(--emerald)"/>
@@ -239,7 +246,7 @@
           </svg>
         </div><div class="stat-label">Map &amp; GPS</div></div>
 
-        <div class="stat-card" data-tool="screenQuadrat"><div class="stat-icon">
+        <div class="stat-card" role="button" tabindex="0" data-screen="screenQuadrat"><div class="stat-icon">
           <svg class="anim-tool-svg anim-tool-quadrat" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round">
             <polygon points="10,50 50,30 90,50 50,70" fill="rgba(16,185,129,0.1)" stroke="var(--emerald)"/>
             <line x1="30" y1="40" x2="70" y2="60" stroke="rgba(16,185,129,0.5)"/>
@@ -248,7 +255,7 @@
           </svg>
         </div><div class="stat-label">Quadrat</div></div>
 
-        <div class="stat-card" data-tool="screenTransect"><div class="stat-icon">
+        <div class="stat-card" role="button" tabindex="0" data-screen="screenTransect"><div class="stat-icon">
           <svg class="anim-tool-svg anim-tool-transect" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round">
             <path d="M20,70 L20,40" stroke="var(--text-muted)"/>
             <circle cx="20" cy="35" r="10" fill="rgba(16,185,129,0.2)" stroke="var(--emerald)"/>
@@ -258,7 +265,7 @@
           </svg>
         </div><div class="stat-label">Transect</div></div>
 
-        <div class="stat-card" data-tool="screenEnvironment"><div class="stat-icon">
+        <div class="stat-card" role="button" tabindex="0" data-screen="screenEnvironment"><div class="stat-icon">
           <svg class="anim-tool-svg anim-tool-env" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
             <circle cx="65" cy="35" r="12" fill="rgba(245,158,11,0.2)" stroke="var(--amber)"/>
             <path class="sun-rays" d="M65,15 L65,8 M65,55 L65,62 M40,35 L33,35 M90,35 L97,35 M47,17 L42,12 M83,53 L88,58 M47,53 L42,58 M83,17 L88,12" stroke="var(--amber)"/>
@@ -266,14 +273,14 @@
           </svg>
         </div><div class="stat-label">Environment</div></div>
 
-        <div class="stat-card" data-tool="screenDisturbCBI"><div class="stat-icon">
+        <div class="stat-card" role="button" tabindex="0" data-screen="screenDisturbCBI"><div class="stat-icon">
           <svg class="anim-tool-svg anim-tool-cbi" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round">
             <path class="cbi-flame" d="M50 15 C 30 45 25 75 50 85 C 75 75 70 45 50 15 Z" fill="rgba(239,68,68,0.2)" stroke="var(--red)"/>
             <path class="cbi-flame-inner" d="M50 40 C 40 60 40 75 50 75 C 60 75 60 60 50 40 Z" fill="rgba(245,158,11,0.5)" stroke="none"/>
           </svg>
         </div><div class="stat-label">Disturb &amp; CBI</div></div>
 
-        <div class="stat-card" data-tool="screenPhotos"><div class="stat-icon">
+        <div class="stat-card" role="button" tabindex="0" data-screen="screenPhotos"><div class="stat-icon">
           <svg class="anim-tool-svg anim-tool-media" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round">
             <path d="M20 40 L30 25 L70 25 L80 40 L80 80 L20 80 Z" fill="rgba(16,185,129,0.1)" stroke="var(--emerald)"/>
             <circle cx="50" cy="55" r="15" fill="var(--bg-input)" stroke="var(--emerald)"/>
@@ -281,7 +288,7 @@
           </svg>
         </div><div class="stat-label">Media</div></div>
 
-        <div class="stat-card" data-tool="screenAnalytics"><div class="stat-icon">
+        <div class="stat-card" role="button" tabindex="0" data-screen="screenAnalytics"><div class="stat-icon">
           <svg class="anim-tool-svg anim-tool-analytics" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round">
             <polyline points="15,20 15,80 85,80" stroke="var(--text-muted)"/>
             <path class="bar-1" d="M25 80 L25 55 L40 55 L40 80 Z" fill="rgba(16,185,129,0.2)" stroke="var(--emerald)"/>
@@ -290,7 +297,7 @@
           </svg>
         </div><div class="stat-label">Analytics</div></div>
 
-        <div class="stat-card" data-tool="screenExport"><div class="stat-icon">
+        <div class="stat-card" role="button" tabindex="0" data-screen="screenExport"><div class="stat-icon">
           <svg class="anim-tool-svg anim-tool-export" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
             <path d="M20 45 L50 60 L80 45 L50 30 Z" fill="rgba(16,185,129,0.1)" stroke="var(--emerald)"/>
             <path d="M20 60 L50 75 L80 60" stroke="var(--emerald)"/>
@@ -299,7 +306,7 @@
           </svg>
         </div><div class="stat-label">Export</div></div>
 
-        <div class="stat-card" data-tool="screenHerbarium"><div class="stat-icon">
+        <div class="stat-card" role="button" tabindex="0" data-screen="screenHerbarium"><div class="stat-icon">
           <svg class="anim-tool-svg anim-tool-herb" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round">
             <path class="herb-stem" d="M15 85 Q 50 85 85 15" stroke="var(--emerald)"/>
             <path class="herb-leaf l1" d="M50 50 Q 80 50 85 15 Q 50 20 50 50 Z" fill="rgba(16,185,129,0.3)" stroke="var(--emerald)"/>
@@ -307,7 +314,7 @@
           </svg>
         </div><div class="stat-label">E-Herbarium</div></div>
 
-        <div class="stat-card" data-tool="screenGermplasm"><div class="stat-icon">
+        <div class="stat-card" role="button" tabindex="0" data-screen="screenGermplasm"><div class="stat-icon">
           <svg class="anim-tool-svg anim-tool-germplasm" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round">
             <path d="M30,70 Q50,40 50,20 Q50,40 70,70" stroke="var(--amber)" stroke-width="4"/>
             <circle cx="50" cy="20" r="8" fill="rgba(245,158,11,0.2)" stroke="var(--amber)"/>
@@ -450,9 +457,9 @@
         <div class="section-title-row"><h3 class="card-title">Metadata & Topography</h3><button class="btn btn-accent btn-sm" id="btnAutoFillEnv">Auto-Fill</button></div>
         <div class="form-row"><div class="form-group"><label for="envDate">Measurement Date</label><input type="date" id="envDate" /></div><div class="form-group"><label for="envObserver">Observer / Team ID</label><input type="text" id="envObserver" placeholder="e.g., Team B / J. Singh" /></div></div>
         <div class="form-row"><div class="form-group"><label for="envSlope">Slope (°)</label><input type="number" id="envSlope" min="0" max="90" step="0.1" placeholder="0–90" /></div><div class="form-group"><label for="envAspect">Aspect</label><select id="envAspect"><option value="">—</option><option value="N">N</option><option value="NE">NE</option><option value="E">E</option><option value="SE">SE</option><option value="S">S</option><option value="SW">SW</option><option value="W">W</option><option value="NW">NW</option><option value="flat">Flat</option></select></div></div>
+        <!-- FIX: Removed duplicate Elevation/CanopyCover row that caused duplicate HTML IDs -->
         <div class="form-row"><div class="form-group"><label for="envElevation">Elevation (m)</label><input type="number" id="envElevation" min="0" max="9000" placeholder="e.g., 1250" /></div><div class="form-group"><label for="envTopoPosition">Topographic Position</label><select id="envTopoPosition"><option value="">—</option><option value="summit">Summit / Crest</option><option value="ridge">Ridge</option><option value="upper-slope">Upper Slope</option><option value="mid-slope">Mid Slope</option><option value="lower-slope">Lower Slope</option><option value="toe-slope">Toe Slope</option><option value="valley-bottom">Valley Bottom</option><option value="flat">Flat / Plain</option><option value="depression">Depression</option></select></div></div>
         <div class="form-row"><div class="form-group"><label for="envCanopyCover">Canopy Cover (%)</label><input type="number" id="envCanopyCover" min="0" max="100" placeholder="0–100" /></div><div class="form-group"><label for="envHydrology">Drainage / Hydrology</label><select id="envHydrology"><option value="">—</option><option value="excessively-drained">Excessively Drained</option><option value="well-drained">Well Drained</option><option value="moderately-drained">Moderately Drained</option><option value="somewhat-poorly">Somewhat Poorly</option><option value="poorly-drained">Poorly Drained</option><option value="very-poorly">Very Poorly / Swamp</option><option value="river-bank">Riparian / River Bank</option></select></div></div>
-        <div class="form-row"><div class="form-group"><label for="envElevation">Elevation (m)</label><input type="number" id="envElevation" min="0" max="9000" placeholder="e.g., 1250" /></div><div class="form-group"><label for="envCanopyCover">Canopy Cover (%)</label><input type="number" id="envCanopyCover" min="0" max="100" placeholder="0–100" /></div></div>
         <div class="form-group"><label for="envForestType">Forest Type</label><select id="envForestType"><option value="">—</option><option value="tropical-wet-evergreen">Tropical Wet Evergreen</option><option value="tropical-semi-evergreen">Tropical Semi-Evergreen</option><option value="tropical-moist-deciduous">Tropical Moist Deciduous</option><option value="tropical-dry-deciduous">Tropical Dry Deciduous</option><option value="subtropical-broadleaf">Subtropical Broadleaf</option><option value="subtropical-pine">Subtropical Pine</option><option value="temperate-broadleaf">Temperate Broadleaf</option><option value="temperate-conifer">Temperate Conifer</option><option value="subalpine">Sub-alpine</option><option value="alpine">Alpine</option><option value="grassland">Grassland</option><option value="scrubland">Scrubland</option><option value="mangrove">Mangrove</option><option value="plantation">Plantation</option></select></div>
       </div>
       <div class="form-card">
@@ -672,7 +679,8 @@
           <button class="export-btn" id="btnExportJSON"><div class="export-icon">{ }</div><div class="export-info"><strong>JSON</strong><span>Programmatic</span></div></button>
           <button class="export-btn" id="btnExportAllCSV"><div class="export-icon">≡</div><div class="export-info"><strong>All Surveys CSV</strong><span>Batch</span></div></button>
           <button class="export-btn" id="btnExportGPX"><div class="export-icon">⌖</div><div class="export-info"><strong>GPX Waypoints</strong><span>GPS exchange</span></div></button>
-          <button class="export-btn" id="btnExportReport"><div class="export-icon">α</div><div class="export-info"><strong>Summary Report</strong><span>Complete HTML report</span></div></button>
+          <!-- FIX: Replaced meaningless 'α' icon with a proper document SVG -->
+          <button class="export-btn" id="btnExportReport"><div class="export-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div><div class="export-info"><strong>Summary Report</strong><span>Complete HTML report</span></div></button>
         </div>
       </div>
       <div class="form-card">
@@ -722,6 +730,16 @@
     <div class="settings-body">
       <!-- PREFERENCES TAB -->
       <div class="settings-tab-pane active" id="setPref">
+        <!-- Account section (shown when signed in) -->
+        <div class="settings-section" id="settingsAccountSection" style="display:none;">
+          <div class="settings-section-title">Account</div>
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+            <div style="font-size:0.85rem; color:var(--text-muted);" id="settingsUserEmail">—</div>
+          </div>
+          <button class="btn btn-ghost btn-block" id="btnSignOut" style="border:1px solid rgba(239,68,68,0.4); color:var(--red);">
+            Sign Out
+          </button>
+        </div>
         <div class="settings-section"><div class="settings-section-title">Display</div>
           <div class="theme-cards" id="themeCards">
             <div class="theme-card active-theme" data-theme="night"><div class="theme-swatch swatch-night"></div><div class="theme-card-info"><strong>Night</strong><span>Dark</span></div></div>
@@ -851,7 +869,8 @@
       </div>
 
       <!-- DANGER TAB -->
-      <div class="settings-tab-pane" id="setDanger" class="hidden">
+      <!-- FIX: removed duplicate class attribute (was 'class=... class="hidden"') -->
+      <div class="settings-tab-pane hidden" id="setDanger">
         <div class="form-card danger-zone danger-card-custom">
           <h3 class="card-title text-danger-custom">Danger Zone</h3>
           <p class="card-desc text-danger-dim">This action will irreversibly destroy all local survey databases, configurations, and cache. You cannot undo this.</p>

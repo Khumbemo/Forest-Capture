@@ -45,8 +45,9 @@ describe('Forest Capture E2E UI Tests', () => {
   test('Open Quadrat Tool and add a species', async () => {
     try {
       // Try to click Quadrat card
-      await page.waitForSelector('.stat-card[data-tool="screenQuadrat"]', { timeout: 2000 });
-      await page.click('.stat-card[data-tool="screenQuadrat"]');
+      // FIX #13: stat-cards now use data-screen (was data-tool)
+      await page.waitForSelector('.stat-card[data-screen="screenQuadrat"]', { timeout: 2000 });
+      await page.click('.stat-card[data-screen="screenQuadrat"]');
       await new Promise(r => setTimeout(r, 1000));
       
       // Wait for quadrat inputs
@@ -77,8 +78,9 @@ describe('Forest Capture E2E UI Tests', () => {
     await page.click('button[data-screen="screenToolbar"]');
     await new Promise(r => setTimeout(r, 500));
 
-    await page.waitForSelector('.stat-card[data-tool="screenAnalytics"]');
-    await page.click('.stat-card[data-tool="screenAnalytics"]');
+    // FIX #13: stat-cards now use data-screen (was data-tool)
+    await page.waitForSelector('.stat-card[data-screen="screenAnalytics"]');
+    await page.click('.stat-card[data-screen="screenAnalytics"]');
     await new Promise(r => setTimeout(r, 1000));
     
     const bodyText = await page.evaluate(() => document.body.innerText);

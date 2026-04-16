@@ -7,23 +7,27 @@ let toastT;
 export function toast(m, e, action = null) {
   const el = $('#toast');
   if (!el) return;
-  el.textContent = m;
-  if(action) {
-      const btn = document.createElement('button');
-      btn.textContent = action.label;
-      btn.style.marginLeft = '12px';
-      btn.style.background = 'var(--emerald)';
-      btn.style.color = 'var(--text-inverse)';
-      btn.style.border = 'none';
-      btn.style.borderRadius = '4px';
-      btn.style.padding = '2px 8px';
-      btn.style.cursor = 'pointer';
-      btn.onclick = (event) => {
-          event.stopPropagation();
-          action.callback();
-          el.classList.remove('show');
-      };
-      el.appendChild(btn);
+  // FIX #6: Always clear previous content (including stale action buttons)
+  // before rebuilding, to prevent button accumulation on repeated calls.
+  el.innerHTML = '';
+  const textNode = document.createTextNode(m);
+  el.appendChild(textNode);
+  if (action) {
+    const btn = document.createElement('button');
+    btn.textContent = action.label;
+    btn.style.marginLeft = '12px';
+    btn.style.background = 'var(--emerald)';
+    btn.style.color = 'var(--text-inverse)';
+    btn.style.border = 'none';
+    btn.style.borderRadius = '4px';
+    btn.style.padding = '2px 8px';
+    btn.style.cursor = 'pointer';
+    btn.onclick = (event) => {
+      event.stopPropagation();
+      action.callback();
+      el.classList.remove('show');
+    };
+    el.appendChild(btn);
   }
   el.classList.toggle('error', !!e);
   el.classList.add('show');
@@ -74,11 +78,13 @@ export function updateConnectivityBanner() {
   if (!banner) {
     banner = document.createElement('div');
     banner.id = 'connectivityBanner';
-    const header = $('#globalHeader');  // FIXED: was appHeader
+    // FIX #5: Was '#globalHeader' — correct ID is 'appHeader'.
+    // Insert banner immediately after the app header so it appears at the top.
+    const header = $('#appHeader');
     if (header && header.parentNode) {
       header.parentNode.insertBefore(banner, header.nextSibling);
     } else {
-      document.body.appendChild(banner);
+      document.body.prepend(banner);
     }
   }
   if (online) {
@@ -98,16 +104,17 @@ export function updateClock() {
   if (cd) cd.textContent = n.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+// FIX #4: Root screens — the 3 main bottom-nav targets.
+const ROOT_SCREENS = ['screenDashboard', 'screenToolbar', 'screenData'];
+
 export function switchScreen(id, callbacks = {}, updateHistory = true) {
   const curScreen = document.querySelector('.screen.active');
   const curId = curScreen ? curScreen.id : null;
 
   if (curId === id) {
-      if (callbacks[id]) callbacks[id]();
-      return;
+    if (callbacks[id]) callbacks[id]();
+    return;
   }
-
-  const FC_FLOW = ['screenDashboard', 'screenToolbar', 'screenData'];
 
   if (updateHistory) {
     if (!history.state || history.state.screen !== id) {
@@ -121,8 +128,9 @@ export function switchScreen(id, callbacks = {}, updateHistory = true) {
   $$('.screen').forEach(s => {
     if (s.id === id) {
       s.classList.add('active');
-      if (FC_FLOW.includes(curId) && FC_FLOW.includes(id)) {
-        const from = FC_FLOW.indexOf(curId), to = FC_FLOW.indexOf(id);
+      // Slide animation between root screens only
+      if (ROOT_SCREENS.includes(curId) && ROOT_SCREENS.includes(id)) {
+        const from = ROOT_SCREENS.indexOf(curId), to = ROOT_SCREENS.indexOf(id);
         const dir = to > from ? 'slide-in-right' : 'slide-in-left';
         s.classList.add(dir);
         setTimeout(() => s.classList.remove(dir), 220);
@@ -132,21 +140,30 @@ export function switchScreen(id, callbacks = {}, updateHistory = true) {
     }
   });
 
+  // FIX #4: Show back button for non-root (tool) screens so users can
+  // navigate back without relying on a non-existent hardware button.
   const backBtn = $('#btnHeaderBack');
-  const title = $('.header-title');
-  if (id === 'screenDashboard' || id === 'screenToolbar' || id === 'screenData') {
-    if (backBtn) backBtn.style.display = 'none';
-    if (title) title.style.marginLeft = '0';
-  } else {
-    // Phone system will handle back, so we keep back btn hidden globally
-    if (backBtn) backBtn.style.display = 'none';
-    if (title) title.style.marginLeft = '0';
+  const isRoot = ROOT_SCREENS.includes(id);
+  if (backBtn) {
+    backBtn.style.display = isRoot ? 'none' : 'inline-flex';
   }
 
   const isSmall = /Mobi|Android/i.test(navigator.userAgent);
   window.scrollTo({ top: 0, behavior: isSmall ? 'auto' : 'smooth' });
 
   if (callbacks[id]) callbacks[id]();
+}
+
+/**
+ * Wire the browser/hardware back gesture to switchScreen.
+ * Call this once from main.js at startup.
+ * FIX #4: Ensures popstate (browser Back) navigates within the SPA.
+ */
+export function initHistoryNavigation() {
+  window.addEventListener('popstate', (e) => {
+    const target = e.state && e.state.screen ? e.state.screen : 'screenDashboard';
+    switchScreen(target, {}, false); // false = don't push another history entry
+  });
 }
 
 export function dismissSplash(callback) {
