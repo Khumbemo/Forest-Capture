@@ -192,7 +192,8 @@ export async function createNewSurvey() {
       photos: [],
       notes: [],
       audioNotes: [],
-      waypoints: []
+      waypoints: [],
+      taxonomyPack: ($('#surveyTaxonomyPack') ? $('#surveyTaxonomyPack').value : '')
     };
 
     if ($('#surveyAutoGPS') && $('#surveyAutoGPS').checked && curPos.lat) {
@@ -218,6 +219,22 @@ export async function createNewSurvey() {
 
     // Auto-select the newly created survey
     await Store.setActive(sv.id);
+
+    // Download Taxonomy Pack
+    if (sv.taxonomyPack) {
+      try {
+         const packRes = await fetch(`./data/taxonomy/${sv.taxonomyPack}.json`);
+         if (packRes.ok) {
+            const packData = await packRes.json();
+            const { idb } = await import('./storage.js');
+            await idb.set(`taxpack_${sv.taxonomyPack}`, JSON.stringify(packData));
+            toast(`Downloaded ${sv.taxonomyPack} offline dictionary`);
+         }
+      } catch(e) {
+         console.warn('Taxonomy pack download failed', e);
+         toast('Taxonomy download failed (offline?)', true);
+      }
+    }
 
     // Refresh UI without blocking
     populateSurveySelector().catch(e => console.warn('Refresh selector failed', e));

@@ -214,6 +214,13 @@
           <div class="form-group"><label for="surveyInvestigator">Investigator</label><input type="text" id="surveyInvestigator" placeholder="e.g., Dr. Sharma" /></div>
           <div class="form-group"><label for="surveyDate">Date</label><input type="date" id="surveyDate" /></div>
           <div class="form-group"><label><input type="checkbox" id="surveyAutoGPS" checked /> Auto-fill GPS</label></div>
+          <div class="form-group" style="margin-top:12px; padding-top:12px; border-top:1px dashed var(--border);">
+            <label for="surveyTaxonomyPack">Regional Taxonomy Pack (Offline)</label>
+            <select id="surveyTaxonomyPack">
+              <option value="">None (Free Text)</option>
+              <option value="india-nagaland">India — Nagaland</option>
+            </select>
+          </div>
           <div class="modal-actions"><button class="btn btn-ghost" id="btnCancelSurvey">Cancel</button><button class="btn btn-primary" id="btnSaveSurvey">Create</button></div>
         </div>
       </div>

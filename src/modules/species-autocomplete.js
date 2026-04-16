@@ -4,6 +4,8 @@
  * Transect entry forms.
  */
 
+import { Store, idb } from './storage.js';
+
 const _learnedSpecies = new Map(); // scientific name → entry object
 
 export function loadSurveyHistory(surveys) {
@@ -113,12 +115,49 @@ document.addEventListener('click', (e) => {
 
 // ─── Search ───────────────────────────────────────────────────────────────────
 
+async function _getActiveTaxonomyPackResults(query, max) {
+  try {
+     const active = await Store.getActive();
+     if (active && active.taxonomyPack) {
+         const packDataStr = await idb.get(`taxpack_${active.taxonomyPack}`);
+         if (packDataStr) {
+             const packData = JSON.parse(packDataStr);
+             const q = query.toLowerCase().trim();
+             const res = packData.filter(e => 
+                (e.scientific && e.scientific.toLowerCase().includes(q)) ||
+                (e.common && e.common.toLowerCase().includes(q)) ||
+                (e.family && e.family.toLowerCase().includes(q))
+             );
+             return res.map(r => ({ ...r, source: 'regional_pack', status: 'ACCEPTED' })).slice(0, max);
+         }
+     }
+  } catch(e) {
+     console.warn('Failed to scan regional taxonomy cache', e);
+  }
+  return [];
+}
+
 async function _search(query, max) {
   const q = query.toLowerCase().trim();
   const results = [];
   const seen = new Set();
 
-  // Priority 1: researcher's own learned species (sorted by frequency)
+  const regionalPack = await _getActiveTaxonomyPackResults(query, max);
+  let isStrict = false;
+  
+  const active = await Store.getActive();
+  if (active && active.taxonomyPack && regionalPack.length > 0) {
+      isStrict = true; // For real strict mode, we'd block submission, but here we just prioritize autocomplete.
+  }
+
+  // Priority 1: Regional Taxonomy Pack (if active)
+  for (const entry of regionalPack) {
+      if (results.length >= max) break;
+      const key = entry.scientific.toLowerCase();
+      if (!seen.has(key)) { seen.add(key); results.push(entry); }
+  }
+
+  // Priority 2: researcher's own learned species (sorted by frequency)
   const learned = [..._learnedSpecies.values()]
     .filter(e => _matches(e, q))
     .sort((a, b) => b.count - a.count);
@@ -189,7 +228,7 @@ function _render(dropdown, results, activeIndex, onSelect) {
 
     const badge = entry.source === 'history'
       ? `<span class="species-badge-history">used</span>`
-      : '';
+      : entry.source === 'regional_pack' ? `<span class="species-badge-regional" style="background:var(--emerald);color:#000;font-size:0.7em;padding:2px 6px;border-radius:4px;">regional dict</span>` : '';
 
     const statusBadge = entry.status === 'SYNONYM' ? `<span class="species-badge-synonym">synonym</span>` : '';
     li.innerHTML = `

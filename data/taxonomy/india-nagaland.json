@@ -1,0 +1,22 @@
+[
+  { "scientific": "Alnus nepalensis", "common": "Nepalese Alder", "family": "Betulaceae", "genus": "Alnus" },
+  { "scientific": "Gmelina arborea", "common": "Gamari", "family": "Lamiaceae", "genus": "Gmelina" },
+  { "scientific": "Dipterocarpus retusus", "common": "Hollong", "family": "Dipterocarpaceae", "genus": "Dipterocarpus" },
+  { "scientific": "Quercus pachyphylla", "common": "Thick-leaf Oak", "family": "Fagaceae", "genus": "Quercus" },
+  { "scientific": "Quercus griffithii", "common": "Griffith's Oak", "family": "Fagaceae", "genus": "Quercus" },
+  { "scientific": "Castanopsis indica", "common": "Indian Chestnut", "family": "Fagaceae", "genus": "Castanopsis" },
+  { "scientific": "Pinus kesiya", "common": "Khasi Pine", "family": "Pinaceae", "genus": "Pinus" },
+  { "scientific": "Toona ciliata", "common": "Red Cedar / Poma", "family": "Meliaceae", "genus": "Toona" },
+  { "scientific": "Acrocarpus fraxinifolius", "common": "Pink Cedar / Mandania", "family": "Fabaceae", "genus": "Acrocarpus" },
+  { "scientific": "Terminalia myriocarpa", "common": "Hollock", "family": "Combretaceae", "genus": "Terminalia" },
+  { "scientific": "Magnolia campbellii", "common": "Campbell's Magnolia", "family": "Magnoliaceae", "genus": "Magnolia" },
+  { "scientific": "Michelia doltsopa", "common": "Sweet Michelia", "family": "Magnoliaceae", "genus": "Michelia" },
+  { "scientific": "Aquilaria malaccensis", "common": "Agarwood / Sasi", "family": "Thymelaeaceae", "genus": "Aquilaria" },
+  { "scientific": "Phoebe goalparensis", "common": "Bonsum", "family": "Lauraceae", "genus": "Phoebe" },
+  { "scientific": "Schima wallichii", "common": "Needlewood / Chilauni", "family": "Theaceae", "genus": "Schima" },
+  { "scientific": "Artocarpus heterophyllus", "common": "Jackfruit", "family": "Moraceae", "genus": "Artocarpus" },
+  { "scientific": "Ficus hispida", "common": "Hairy Fig", "family": "Moraceae", "genus": "Ficus" },
+  { "scientific": "Ficus semicordata", "common": "Drooping Fig", "family": "Moraceae", "genus": "Ficus" },
+  { "scientific": "Bambusa tulda", "common": "Bengal Bamboo", "family": "Poaceae", "genus": "Bambusa" },
+  { "scientific": "Mesua ferrea", "common": "Ironwood / Nahar", "family": "Calophyllaceae", "genus": "Mesua" }
+]
