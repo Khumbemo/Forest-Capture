@@ -28,6 +28,12 @@ describe('Germplasm Collector E2E Tests', () => {
     await page.click('#btnSaveSurvey');
     await new Promise(r => setTimeout(r, 2000));
 
+    // Wait until selector has a valid survey ID
+    await page.waitForFunction(() => {
+      const sel = document.querySelector('#surveySelector');
+      return sel && sel.value !== '';
+    }, { timeout: 5000 });
+
     // Verify selector has a value
     const selVal = await page.$eval('#surveySelector', el => el.value);
     expect(selVal).toBeTruthy();

@@ -642,19 +642,42 @@ function setupEventListeners() {
   // FIX #20: Sign Out button in Settings panel.
   // Shows the account section once wired, so anonymous users never see it.
   const storedUser = JSON.parse(localStorage.getItem('fc_user') || 'null');
+  const accountSection = document.getElementById('settingsAccountSection');
+  const userEmailEl = document.getElementById('settingsUserEmail');
+  const btnSignOut = document.getElementById('btnSignOut');
+
+  if (accountSection) accountSection.style.display = '';
+
   if (storedUser && storedUser.email) {
-    const accountSection = document.getElementById('settingsAccountSection');
-    const userEmailEl = document.getElementById('settingsUserEmail');
-    if (accountSection) accountSection.style.display = '';
     if (userEmailEl) userEmailEl.textContent = storedUser.email;
+    if (btnSignOut) btnSignOut.textContent = 'Sign Out';
+  } else {
+    if (userEmailEl) userEmailEl.textContent = 'Offline Mode';
+    if (btnSignOut) {
+      btnSignOut.textContent = 'Log In';
+      btnSignOut.classList.remove('btn-ghost');
+      btnSignOut.classList.add('btn-primary');
+      btnSignOut.style.border = 'none';
+      btnSignOut.style.color = '#fff';
+    }
   }
+
   $('#btnSignOut')?.addEventListener('click', async () => {
-    if (await fcConfirm('Sign out? This securely wipes your local cache.')) {
-      toast('Signing out...');
-      await clearUserCache();
-      resetUserRef();
-      await AppSignOut();
-      location.reload();
+    if (storedUser && storedUser.email) {
+      if (await fcConfirm('Sign out? This securely wipes your local cache.')) {
+        toast('Signing out...');
+        await clearUserCache();
+        resetUserRef();
+        await AppSignOut();
+        sessionStorage.removeItem('fc_login_dismissed');
+        localStorage.removeItem('fc_login_dismissed');
+        location.reload();
+      }
+    } else {
+       // Log In logic for offline users
+       sessionStorage.removeItem('fc_login_dismissed');
+       localStorage.removeItem('fc_login_dismissed');
+       location.reload();
     }
   });
 
@@ -665,6 +688,8 @@ function setupEventListeners() {
           await clearUserCache();
           resetUserRef();
           await AppSignOut();
+          sessionStorage.removeItem('fc_login_dismissed');
+          localStorage.removeItem('fc_login_dismissed');
           location.reload();
       }
   });
