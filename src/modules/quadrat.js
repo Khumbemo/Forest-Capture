@@ -1,6 +1,7 @@
 import { $, $$, toast, esc, fcConfirm } from './ui.js';
-import { Store } from './storage.js';
+import { Store, loadSettings } from './storage.js';
 import { fillGPSField } from './gps.js';
+import { toMetric, toImperial } from './utils.js';
 import { attachAutocomplete } from './species-autocomplete.js';
 
 let spCount = 0;
@@ -14,10 +15,10 @@ export function addSpeciesEntry() {
 <div class="form-group"><label>Species Name</label><input type="text" class="sp-name" id="${inputId}" placeholder="e.g., Shorea robusta" /></div>
 <div class="form-row"><div class="form-group"><label>Life Stage</label><select class="sp-stage"><option value="tree">Tree</option><option value="sapling">Sapling</option><option value="seedling">Seedling</option><option value="climber">Climber</option><option value="shrub">Shrub</option><option value="herb">Herb</option></select></div><div class="form-group"><label>Tree Status</label><select class="sp-status"><option value="live">Live</option><option value="dead-standing">Dead Standing</option><option value="dead-fallen">Dead Fallen</option><option value="stump">Stump</option></select></div></div>
 <div class="form-row"><div class="form-group"><label>Abundance</label><input type="number" class="sp-abundance" min="0" placeholder="Count" /></div><div class="form-group"><label>Stem Count</label><input type="number" class="sp-stems" min="1" placeholder="Stems" title="Number of stems per individual (multi-stemmed trees)" /></div></div>
-<div class="form-row"><div class="form-group"><label>DBH (cm)</label><input type="number" class="sp-dbh" min="0" step="0.1" placeholder="Diameter" /></div><div class="form-group"><label>GBH (cm)</label><input type="number" class="sp-gbh" min="0" step="0.1" placeholder="Girth" /></div></div>
-<div class="form-row"><div class="form-group"><label>DBH Meas. Height (m)</label><input type="number" class="sp-dbh-height" min="0" step="0.1" value="1.3" title="Standard: 1.3m. Adjust for buttressed trees." /></div><div class="form-group"><label>Crown Diameter (m)</label><input type="number" class="sp-crown-diam" min="0" step="0.1" placeholder="Avg. of 2 axes" /></div></div>
-<div class="form-row"><div class="form-group"><label>Height (m)</label><input type="number" class="sp-height" min="0" step="0.1" /></div><div class="form-group"><label>Crown Class</label><select class="sp-crown"><option value="">—</option><option value="dominant">Dominant</option><option value="codominant">Co-dominant</option><option value="intermediate">Intermediate</option><option value="suppressed">Suppressed</option></select></div></div>
-<div class="form-row"><div class="form-group"><label>Distance from Center (m)</label><input type="number" class="sp-distance" min="0" step="0.1" placeholder="e.g., 5.2" title="Distance from plot center for re-measurement" /></div><div class="form-group"><label>Azimuth (°)</label><input type="number" class="sp-azimuth" min="0" max="360" step="1" placeholder="0–360" title="Bearing from plot center" /></div></div>
+<div class="form-row"><div class="form-group"><label>DBH (<span class="unit-diam">cm</span>)</label><input type="number" class="sp-dbh" min="0" step="0.1" placeholder="Diameter" /></div><div class="form-group"><label>GBH (<span class="unit-diam">cm</span>)</label><input type="number" class="sp-gbh" min="0" step="0.1" placeholder="Girth" /></div></div>
+<div class="form-row"><div class="form-group"><label>DBH Meas. Height (<span class="unit-dist">m</span>)</label><input type="number" class="sp-dbh-height" min="0" step="0.1" value="1.3" title="Standard: 1.3m. Adjust for buttressed trees." /></div><div class="form-group"><label>Crown Diameter (<span class="unit-dist">m</span>)</label><input type="number" class="sp-crown-diam" min="0" step="0.1" placeholder="Avg. of 2 axes" /></div></div>
+<div class="form-row"><div class="form-group"><label>Height (<span class="unit-dist">m</span>)</label><input type="number" class="sp-height" min="0" step="0.1" /></div><div class="form-group"><label>Crown Class</label><select class="sp-crown"><option value="">—</option><option value="dominant">Dominant</option><option value="codominant">Co-dominant</option><option value="intermediate">Intermediate</option><option value="suppressed">Suppressed</option></select></div></div>
+<div class="form-row"><div class="form-group"><label>Distance from Center (<span class="unit-dist">m</span>)</label><input type="number" class="sp-distance" min="0" step="0.1" placeholder="e.g., 5.2" title="Distance from plot center for re-measurement" /></div><div class="form-group"><label>Azimuth (°)</label><input type="number" class="sp-azimuth" min="0" max="360" step="1" placeholder="0–360" title="Bearing from plot center" /></div></div>
 <div class="form-row"><div class="form-group"><label>Phenology</label><select class="sp-phenology"><option value="">—</option><option value="flowering">Flowering</option><option value="fruiting">Fruiting</option><option value="leaf-flush">Leaf Flush</option><option value="leaf-fall">Leaf Fall</option><option value="dormant">Dormant</option><option value="vegetative">Vegetative</option></select></div><div class="form-group"><label>Health</label><select class="sp-health"><option value="">—</option><option value="healthy">Healthy</option><option value="stressed">Stressed</option><option value="diseased">Diseased</option><option value="dead-standing">Dead Standing</option><option value="fallen">Fallen</option><option value="cut-stump">Cut Stump</option></select></div></div>
 <div class="form-row"><div class="form-group"><label>Bark Condition</label><select class="sp-bark"><option value="">—</option><option value="intact">Intact</option><option value="partially-missing">Partially Missing</option><option value="mostly-missing">Mostly Missing</option><option value="absent">Absent</option></select></div><div class="form-group"><label>Decay Class (Dead only)</label><select class="sp-decay"><option value="">—</option><option value="1">1 — Recently Dead</option><option value="2">2 — Loose Bark</option><option value="3">3 — Soft Sapwood</option><option value="4">4 — Heartwood Decay</option><option value="5">5 — Fully Decomposed</option></select></div></div>`;
   d.querySelector('.species-remove').addEventListener('click', () => d.remove());
@@ -31,6 +32,8 @@ export async function saveQuadrat() {
   if (!s) { toast('Select survey', true); return; }
   const entries = $$('#speciesList .species-entry');
   if (!entries.length) { toast('Add species', true); return; }
+  const sysSettings = await loadSettings();
+  const isImperial = sysSettings.settingUnitSystem === 'imperial';
 
   const q = {
     number: parseInt($('#quadratNumber').value) || 1,
@@ -52,13 +55,13 @@ export async function saveQuadrat() {
       status: e.querySelector('.sp-status')?.value || 'live',
       abundance: parseInt(e.querySelector('.sp-abundance').value) || 1,
       stems: parseInt(e.querySelector('.sp-stems')?.value) || 1,
-      dbh: parseFloat(e.querySelector('.sp-dbh').value) || 0,
-      gbh: parseFloat(e.querySelector('.sp-gbh').value) || 0,
-      dbhMeasHeight: parseFloat(e.querySelector('.sp-dbh-height')?.value) || 1.3,
-      crownDiameter: parseFloat(e.querySelector('.sp-crown-diam')?.value) || 0,
-      height: parseFloat(e.querySelector('.sp-height').value) || 0,
+      dbh: isImperial ? (toMetric(parseFloat(e.querySelector('.sp-dbh').value), 'diam') || 0) : (parseFloat(e.querySelector('.sp-dbh').value) || 0),
+      gbh: isImperial ? (toMetric(parseFloat(e.querySelector('.sp-gbh').value), 'diam') || 0) : (parseFloat(e.querySelector('.sp-gbh').value) || 0),
+      dbhMeasHeight: isImperial ? (toMetric(parseFloat(e.querySelector('.sp-dbh-height')?.value), 'dist') || 1.3) : (parseFloat(e.querySelector('.sp-dbh-height')?.value) || 1.3),
+      crownDiameter: isImperial ? (toMetric(parseFloat(e.querySelector('.sp-crown-diam')?.value), 'dist') || 0) : (parseFloat(e.querySelector('.sp-crown-diam')?.value) || 0),
+      height: isImperial ? (toMetric(parseFloat(e.querySelector('.sp-height').value), 'dist') || 0) : (parseFloat(e.querySelector('.sp-height').value) || 0),
       crownClass: e.querySelector('.sp-crown').value,
-      distance: parseFloat(e.querySelector('.sp-distance')?.value) || 0,
+      distance: isImperial ? (toMetric(parseFloat(e.querySelector('.sp-distance')?.value), 'dist') || 0) : (parseFloat(e.querySelector('.sp-distance')?.value) || 0),
       azimuth: parseFloat(e.querySelector('.sp-azimuth')?.value) || 0,
       phenology: e.querySelector('.sp-phenology').value,
       health: e.querySelector('.sp-health').value,
@@ -102,6 +105,8 @@ export async function refreshQuadratTable() {
   const s = await Store.getActive();
   const tb = $('#quadratTableBody');
   if (!tb) return;
+  const sysSettings = await loadSettings();
+  const isImperial = sysSettings.settingUnitSystem === 'imperial';
   if (!s || !s.quadrats || !s.quadrats.length) {
     tb.innerHTML = '<tr><td colspan="9" class="table-empty">No data</td></tr>';
     return;
@@ -153,13 +158,13 @@ export async function refreshQuadratTable() {
               if (last.querySelector('.sp-status')) last.querySelector('.sp-status').value = sp.status || 'live';
               last.querySelector('.sp-abundance').value = sp.abundance;
               if (last.querySelector('.sp-stems')) last.querySelector('.sp-stems').value = sp.stems || 1;
-              last.querySelector('.sp-dbh').value = sp.dbh;
-              last.querySelector('.sp-gbh').value = sp.gbh || 0;
-              if (last.querySelector('.sp-dbh-height')) last.querySelector('.sp-dbh-height').value = sp.dbhMeasHeight || 1.3;
-              if (last.querySelector('.sp-crown-diam')) last.querySelector('.sp-crown-diam').value = sp.crownDiameter || 0;
-              last.querySelector('.sp-height').value = sp.height;
+              last.querySelector('.sp-dbh').value = isImperial ? toImperial(sp.dbh, 'diam') : sp.dbh;
+              last.querySelector('.sp-gbh').value = isImperial ? toImperial(sp.gbh, 'diam') : (sp.gbh || 0);
+              if (last.querySelector('.sp-dbh-height')) last.querySelector('.sp-dbh-height').value = isImperial ? toImperial(sp.dbhMeasHeight, 'dist') : (sp.dbhMeasHeight || 1.3);
+              if (last.querySelector('.sp-crown-diam')) last.querySelector('.sp-crown-diam').value = isImperial ? toImperial(sp.crownDiameter, 'dist') : (sp.crownDiameter || 0);
+              last.querySelector('.sp-height').value = isImperial ? toImperial(sp.height, 'dist') : sp.height;
               last.querySelector('.sp-crown').value = sp.crownClass || '';
-              if (last.querySelector('.sp-distance')) last.querySelector('.sp-distance').value = sp.distance || 0;
+              if (last.querySelector('.sp-distance')) last.querySelector('.sp-distance').value = isImperial ? toImperial(sp.distance, 'dist') : (sp.distance || 0);
               if (last.querySelector('.sp-azimuth')) last.querySelector('.sp-azimuth').value = sp.azimuth || 0;
               last.querySelector('.sp-phenology').value = sp.phenology;
               last.querySelector('.sp-health').value = sp.health || '';

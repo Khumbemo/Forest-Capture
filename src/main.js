@@ -116,6 +116,11 @@ async function loadAppData() {
   }
   walkDOMAndTranslate();
 
+  // Load and apply unit system immediately
+  if (settings.settingUnitSystem) {
+    import('./modules/ui.js').then(ui => ui.applyUnitSystem(settings.settingUnitSystem));
+  }
+
   Object.entries(settings).forEach(([id, val]) => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -743,6 +748,9 @@ function setupEventListeners() {
   }));
 
   $$('#settingsPanel select, #settingsPanel input').forEach(el => el.addEventListener('change', async () => {
+    // Ignore file inputs since they are handled separately
+    if (el.type === 'file') return;
+    
     const s = await loadSettings();
     if (el.id) {
       if (el.type === 'checkbox') s[el.id] = el.checked;
@@ -752,7 +760,56 @@ function setupEventListeners() {
     if (el.id === 'settingLanguage') {
       toast('Language saved (Restart app to apply)');
     }
+    if (el.id === 'settingUnitSystem') {
+      import('./modules/ui.js').then(ui => ui.applyUnitSystem());
+      toast('Unit system updated');
+    }
+    if (el.id === 'settingMapTileUrl') {
+      toast('Map tile provider updated (Restart app to apply to offline maps)');
+    }
   }));
+
+  // Taxonomy Pack Upload
+  $('#customTaxonomyUpload')?.addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      let parseData = [];
+      if (file.name.endsWith('.json')) {
+        parseData = JSON.parse(text);
+      } else if (file.name.endsWith('.csv')) {
+        const rows = text.split('\n').filter(r => r.trim());
+        const header = rows[0].toLowerCase();
+        let sIdx=0, cIdx=1, fIdx=2;
+        if(header.includes('scientific')) {
+           const hRow = rows[0].split(/[,\t;]/).map(x=>x.trim().toLowerCase());
+           sIdx = hRow.findIndex(x=>x.includes('scientific') || x.includes('name'));
+           cIdx = hRow.findIndex(x=>x.includes('common'));
+           fIdx = hRow.findIndex(x=>x.includes('family'));
+           rows.shift();
+        }
+        parseData = rows.map(r => {
+           const parts = r.split(/[,\t;]/);
+           return {
+              scientific: parts[sIdx] ? parts[sIdx].trim() : "Unknown",
+              common: cIdx >=0 && parts[cIdx] ? parts[cIdx].trim() : "",
+              family: fIdx >=0 && parts[fIdx] ? parts[fIdx].trim() : ""
+           };
+        });
+      }
+      if(parseData.length === 0) throw new Error("Pack is empty or invalid format.");
+      
+      const { idb } = await import('./modules/storage.js');
+      await idb.set('taxpack_custom', JSON.stringify(parseData));
+      toast(`Loaded completely: ${parseData.length} species.`);
+      if($('#customTaxonomyStatus')) $('#customTaxonomyStatus').textContent = `Loaded ${parseData.length} custom flora records. Select "Custom Pack" upon Survey creation.`;
+    } catch(err) {
+      toast("Error parsing taxonomy pack: " + err.message, true);
+    } finally {
+      e.target.value = '';
+    }
+  });
 
   // Help accordion
   document.addEventListener('click', e => {

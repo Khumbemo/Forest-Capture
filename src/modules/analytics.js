@@ -1,6 +1,7 @@
 // src/modules/analytics.js
 
 import { $, esc } from './ui.js';
+import { t } from './i18n.js';
 
 export function calculateIndicesPayload(s) {
   if (!s || !s.quadrats || !s.quadrats.length) {
@@ -206,16 +207,16 @@ export function refreshAnalytics(s) {
     ids.forEach(id => { if ($( '#' + id)) $( '#' + id).textContent = id === 'analyticRichness' || id === 'analyticTotalN' || id === 'analyticChao1' ? '0' : '0.000'; });
     if ($('#analyticBasalTotal')) $('#analyticBasalTotal').textContent = '0.000 m²';
     if ($('#analyticBasalHa')) $('#analyticBasalHa').textContent = '0.000 m²/ha';
-    if ($('#iviTableBody')) $('#iviTableBody').innerHTML = '<tr><td colspan="8" class="table-empty">No data</td></tr>';
-    if ($('#dbhChart')) $('#dbhChart').innerHTML = '<div class="chart-empty">No DBH data</div>';
-    if ($('#speciesAccumChart')) $('#speciesAccumChart').innerHTML = '<div class="chart-empty">No data</div>';
+    if ($('#iviTableBody')) $('#iviTableBody').innerHTML = `<tr><td colspan="8" class="table-empty">${t('No data')}</td></tr>`;
+    if ($('#dbhChart')) $('#dbhChart').innerHTML = `<div class="chart-empty">${t('No DBH data')}</div>`;
+    if ($('#speciesAccumChart')) $('#speciesAccumChart').innerHTML = `<div class="chart-empty">${t('No data')}</div>`;
     if ($('#analyticCarbon')) $('#analyticCarbon').textContent = '0.00 t/ha';
     if ($('#analyticAGB')) $('#analyticAGB').textContent = '0.00 t/ha';
     if ($('#analyticQMD')) $('#analyticQMD').textContent = '0.00 cm';
     if ($('#analyticSDI')) $('#analyticSDI').textContent = '0';
     if ($('#analyticTransectCover')) $('#analyticTransectCover').textContent = '0.0%';
     if ($('#analyticTransectGap')) $('#analyticTransectGap').textContent = '0.0%';
-    if ($('#regenChart')) $('#regenChart').innerHTML = '<div class="chart-empty">No data</div>';
+    if ($('#regenChart')) $('#regenChart').innerHTML = `<div class="chart-empty">${t('No data')}</div>`;
     if ($('#regenStatus')) $('#regenStatus').textContent = '—';
     return;
   }
@@ -245,19 +246,19 @@ export function refreshAnalytics(s) {
   if ($('#regenChart')) {
     const rMax = Math.max(regenCounts.seedling, regenCounts.sapling, regenCounts.tree, 1);
     $('#regenChart').innerHTML = [
-       {k:'Seedling', v: regenCounts.seedling},
-       {k:'Sapling', v: regenCounts.sapling},
-       {k:'Tree', v: regenCounts.tree}
+       {k:t('Seedling'), v: regenCounts.seedling},
+       {k:t('Sapling'), v: regenCounts.sapling},
+       {k:t('Tree'), v: regenCounts.tree}
     ].map(x => `<div class="bar-col">
       <div class="bar-val">${x.v}</div>
       <div class="bar-fill" style="height:${(x.v / rMax) * 140}px;background:var(--sky);"></div>
       <div class="bar-label">${x.k}</div>
     </div>`).join('');
 
-    let status = 'Poor';
-    if (regenCounts.seedling > regenCounts.sapling && regenCounts.sapling > regenCounts.tree) status = 'Good';
-    else if (regenCounts.seedling > regenCounts.tree || regenCounts.sapling > regenCounts.tree) status = 'Fair';
-    if (regenCounts.seedling === 0 && regenCounts.sapling === 0 && regenCounts.tree === 0) status = 'No Data';
+    let status = t('Poor');
+    if (regenCounts.seedling > regenCounts.sapling && regenCounts.sapling > regenCounts.tree) status = t('Good');
+    else if (regenCounts.seedling > regenCounts.tree || regenCounts.sapling > regenCounts.tree) status = t('Fair');
+    if (regenCounts.seedling === 0 && regenCounts.sapling === 0 && regenCounts.tree === 0) status = t('No Data');
     if ($('#regenStatus')) $('#regenStatus').textContent = status;
   }
 

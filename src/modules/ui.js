@@ -89,10 +89,10 @@ export function updateConnectivityBanner() {
   }
   if (online) {
     banner.className = 'connectivity-banner online';
-    banner.innerHTML = '<span class="conn-dot online"></span> Online — GPS & weather auto-fill active';
+    banner.innerHTML = `<span class="conn-dot online"></span> ${t('Online — GPS & weather auto-fill active')}`;
   } else {
     banner.className = 'connectivity-banner offline';
-    banner.innerHTML = '<span class="conn-dot offline"></span> Offline — Manual entry mode';
+    banner.innerHTML = `<span class="conn-dot offline"></span> ${t('Offline — Manual entry mode')}`;
   }
 }
 
@@ -341,6 +341,14 @@ export function fcAlert(message) {
       if (e.key === 'Enter' || e.key === 'Escape') { cleanup(); document.removeEventListener('keydown', handler); }
     });
   });
+}
+
+export function applyUnitSystem(sys) {
+  const isImperial = sys === 'imperial';
+  $$('.unit-dist').forEach(el => { el.textContent = isImperial ? 'ft' : 'm'; });
+  $$('.unit-diam').forEach(el => { el.textContent = isImperial ? 'in' : 'cm'; });
+  $$('.unit-area').forEach(el => { el.textContent = isImperial ? 'sq ft' : 'm²'; });
+  $$('.unit-temp').forEach(el => { el.textContent = isImperial ? '°F' : '°C'; });
 }
 
 export { $, $$ };
