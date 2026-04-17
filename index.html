@@ -757,6 +757,7 @@
     
     <div class="settings-tabs settings-tabs-custom">
       <button class="btn btn-sm btn-primary settings-tab active" data-tab="setPref">Pref</button>
+      <button class="btn btn-sm btn-ghost settings-tab" data-tab="setLang">Lang</button>
       <button class="btn btn-sm btn-ghost settings-tab" data-tab="setData">Data</button>
       <button class="btn btn-sm btn-ghost settings-tab" data-tab="setGuide">Guide</button>
       <button class="btn btn-sm btn-ghost settings-tab text-danger-custom" data-tab="setDanger">Danger</button>
@@ -794,6 +795,28 @@
         </div>
         <div class="settings-section"><div class="settings-section-title">Taxonomy</div>
           <div class="toggle-row"><label>Italicize Scientific Names</label><label class="switch"><input type="checkbox" id="settingItalicSpecies" checked /><span class="slider"></span></label></div>
+        </div>
+      </div>
+
+      <!-- LANGUAGE TAB -->
+      <div class="settings-tab-pane hidden" id="setLang">
+        <div class="settings-section">
+          <div class="settings-section-title">Application Language</div>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Choose your preferred language. (Requires a restart to apply across all modules)</p>
+          <div class="form-group">
+            <select id="settingLanguage" style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px; background: var(--bg-input); color: var(--text); font-weight: 600;">
+              <option value="en">English (US)</option>
+              <option value="es">Español (Spanish)</option>
+              <option value="fr">Français (French)</option>
+              <option value="pt-BR">Português (Portuguese)</option>
+              <option value="zh-CN">中文 (Mandarin Chinese)</option>
+              <option value="hi">हिन्दी (Hindi)</option>
+              <option value="id">Bahasa Indonesia (Indonesian)</option>
+              <option value="ms">Bahasa Melayu (Malay)</option>
+              <option value="sw">Kiswahili (Swahili)</option>
+              <option value="ru">Русский (Russian)</option>
+            </select>
+          </div>
         </div>
       </div>
 

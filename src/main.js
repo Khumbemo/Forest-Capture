@@ -741,6 +741,9 @@ function setupEventListeners() {
       else s[el.id] = el.value;
     }
     saveSettings(s);
+    if (el.id === 'settingLanguage') {
+      toast('Language saved (Restart app to apply)');
+    }
   }));
 
   // Help accordion
