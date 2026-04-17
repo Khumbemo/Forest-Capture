@@ -1,5 +1,5 @@
 // src/modules/ui.js
-
+import { t } from './i18n.js';
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 
@@ -235,11 +235,11 @@ export function fcConfirm(message) {
 
     const cancelBtn = document.createElement('button');
     cancelBtn.className = 'fc-modal-btn fc-modal-cancel';
-    cancelBtn.textContent = 'Cancel';
+    cancelBtn.textContent = t('Cancel');
 
     const okBtn = document.createElement('button');
     okBtn.className = `fc-modal-btn fc-modal-ok${isDelete ? ' fc-modal-danger' : ''}`;
-    okBtn.textContent = isDelete ? 'Delete' : 'Confirm';
+    okBtn.textContent = isDelete ? t('Delete') : t('Confirm');
 
     actions.appendChild(cancelBtn);
     actions.appendChild(okBtn);
@@ -281,11 +281,11 @@ export function fcPrompt(message, defaultValue = '') {
 
     const cancelBtn = document.createElement('button');
     cancelBtn.className = 'fc-modal-btn fc-modal-cancel';
-    cancelBtn.textContent = 'Cancel';
+    cancelBtn.textContent = t('Cancel');
 
     const okBtn = document.createElement('button');
     okBtn.className = 'fc-modal-btn fc-modal-ok';
-    okBtn.textContent = 'OK';
+    okBtn.textContent = t('OK');
 
     actions.appendChild(cancelBtn);
     actions.appendChild(okBtn);
@@ -321,7 +321,7 @@ export function fcAlert(message) {
 
     const okBtn = document.createElement('button');
     okBtn.className = 'fc-modal-btn fc-modal-ok';
-    okBtn.textContent = 'OK';
+    okBtn.textContent = t('OK');
 
     actions.appendChild(okBtn);
     overlay.appendChild(modal);

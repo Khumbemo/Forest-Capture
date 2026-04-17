@@ -1,5 +1,6 @@
 // src/main.js
 
+import { t, setLanguage, walkDOMAndTranslate } from './modules/i18n.js';
 import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot, isOnline, updateConnectivityBanner, fcConfirm, fcPrompt } from './modules/ui.js';
 import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, resetUserRef, migrateFromLocalStorage, migrateInlineMedia, clearUserCache } from './modules/storage.js';
 import { startGPS, fmtCoords, curPos } from './modules/gps.js';
@@ -108,6 +109,13 @@ async function loadAppData() {
   applyTheme(await getTheme());
   applyBrightness(await getBrightness());
   const settings = await loadSettings();
+
+  // Load and apply system language immediately
+  if (settings.settingLanguage) {
+    setLanguage(settings.settingLanguage);
+  }
+  walkDOMAndTranslate();
+
   Object.entries(settings).forEach(([id, val]) => {
     const el = document.getElementById(id);
     if (!el) return;
