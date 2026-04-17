@@ -21,7 +21,7 @@ import { initCompareScreen, runComparison, exportComparisonJSON, init as initCom
 import { loadSurveyHistory } from './modules/species-autocomplete.js';
 import { initHerbarium, handleHerbariumPhoto, saveHerbarium, init as initHerbariumListeners } from './modules/herbarium.js';
 import { init as initGermplasm, refreshGermplasmUI, onScreenEnter as germplasmEnter } from './modules/germplasm.js';
-import { ensureAuth, EmailLogin, EmailSignup, AppSignOut } from './modules/firebase.js';
+import { ensureAuth, EmailLogin, EmailSignup, AppSignOut, AppDeleteAccount } from './modules/firebase.js';
 
 // ===== INIT =====
 
@@ -659,7 +659,24 @@ function setupEventListeners() {
   const storedUser = JSON.parse(localStorage.getItem('fc_user') || 'null');
   const accountSection = document.getElementById('settingsAccountSection');
   const userEmailEl = document.getElementById('settingsUserEmail');
-  const btnSignOut = document.getElementById('btnSignOut');
+  const btnDeleteAccount = $('#btnDeleteAccount');
+  if (btnDeleteAccount) {
+    btnDeleteAccount.addEventListener('click', async () => {
+      const isConfirmed = await fcPrompt('Type "DELETE" to permanently destroy your cloud account and all synced data.', 'DELETE');
+      if (isConfirmed) {
+        toast('Deleting cloud account...', false);
+        try {
+          await AppDeleteAccount();
+          toast('Account fully wiped.');
+          window.location.reload();
+        } catch (e) {
+          toast('Error deleting account: ' + e.message, true);
+        }
+      }
+    });
+  }
+
+  const btnSignOut = $('#btnSignOut');
 
   if (accountSection) accountSection.style.display = '';
 
@@ -747,28 +764,29 @@ function setupEventListeners() {
     }
   }));
 
-  $$('#settingsPanel select, #settingsPanel input').forEach(el => el.addEventListener('change', async () => {
-    // Ignore file inputs since they are handled separately
-    if (el.type === 'file') return;
-    
-    const s = await loadSettings();
-    if (el.id) {
-      if (el.type === 'checkbox') s[el.id] = el.checked;
-      else s[el.id] = el.value;
-    }
-    saveSettings(s);
-    if (el.id === 'settingLanguage') {
-      toast('Language saved (Restart app to apply)');
-    }
-    if (el.id === 'settingUnitSystem') {
-      import('./modules/ui.js').then(ui => ui.applyUnitSystem());
-      toast('Unit system updated');
-    }
-    if (el.id === 'settingMapTileUrl') {
-      toast('Map tile provider updated (Restart app to apply to offline maps)');
-    }
-  }));
-
+  ['settingsGPSContinuous', 'settingLanguage', 'settingUnitSystem', 'settingMapTileUrl', 'settingGBIFEnabled', 'settingItalicSpecies', 'settingAutoSave', 'settingExportGPS', 'settingCoordFormat'].forEach(id => {
+    const el = $('#' + id);
+    if (!el) return;
+    el.addEventListener('change', async () => {
+      const s = await loadSettings();
+      s[id] = el.type === 'checkbox' ? el.checked : el.value;
+      await saveSettings(s);
+      toast('Setting saved', false);
+      
+      if (id === 'settingMapTileUrl') {
+         import('./modules/map.js').then(m => m.setMapLayer(el.value));
+      }
+      if (id === 'settingLanguage') {
+        const confirmed = await fcConfirm('Language changed. The app must restart to apply changes completely. Restart now?');
+        if (confirmed) {
+            window.location.reload();
+        }
+      }
+      if (id === 'settingUnitSystem') {
+          import('./modules/ui.js').then(ui => ui.applyUnitSystem(el.value));
+      }
+    });
+  });
   // Taxonomy Pack Upload
   $('#customTaxonomyUpload')?.addEventListener('change', async e => {
     const file = e.target.files[0];

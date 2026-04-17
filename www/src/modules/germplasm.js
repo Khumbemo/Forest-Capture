@@ -81,7 +81,7 @@ function getSection(title, icon, children) {
   return `
     <div class="form-card">
       <div class="section-title-row">
-        <h3 class="card-title">${icon} ${title}</h3>
+        <h3 class="card-title">${icon ? icon + " " : ""}${title}</h3>
       </div>
       <div class="form-row">
         ${children}
@@ -91,26 +91,26 @@ function getSection(title, icon, children) {
 }
 
 function renderICFRE() {
-  let h = getSection("Species Passport", "🧬",
+  let h = getSection("Species Passport", "",
     getInputHtml('germ_icfre_speciesScientific', 'Scientific Name *', 'e.g. Tectona grandis', 'text', '', true) +
     getInputHtml('germ_icfre_speciesCommon', 'Common Name', 'e.g. Teak') +
     getInputHtml('germ_icfre_localName', 'Local / Vernacular Name', 'e.g. Sagwan') +
     getInputHtml('germ_icfre_family', 'Family', 'e.g. Lamiaceae')
   );
-  h += getSection("Reproductive Material Category", "📜",
+  h += getSection("Reproductive Material Category", "",
     getSelectHtml('germ_icfre_category', 'Category', ICFRE_CATEGORIES, 'Select...', true) +
     getSelectHtml('germ_icfre_seedZone', 'Seed Zone (ICFRE Zonation)', SEED_ZONES, 'Select...', true) +
     getInputHtml('germ_icfre_permitNo', 'Collection Permit No.', 'Permit / Sanction No.') +
     getInputHtml('germ_icfre_labelNo', 'Label No.', 'Seed lot label')
   );
-  h += getSection("Collection Details", "🗓️",
+  h += getSection("Collection Details", "",
     getInputHtml('germ_icfre_collectionDate', 'Date', '', 'date') +
     getInputHtml('germ_icfre_collectionTime', 'Time', '', 'time') +
     getInputHtml('germ_icfre_collectorName', 'Collector Name', 'Full name') +
     getInputHtml('germ_icfre_institution', 'Institution', 'e.g. FRI Dehradun') +
     getSelectHtml('germ_icfre_collectionMethod', 'Collection Method', COLLECTION_METHODS, 'Select...', true)
   );
-  h += getSection("Location", "🗺️",
+  h += getSection("Location", "",
     getInputHtml('germ_icfre_state', 'State', 'State') +
     getInputHtml('germ_icfre_district', 'District', 'District') +
     getInputHtml('germ_icfre_forestDivision', 'Forest Division', 'Division') +
@@ -121,9 +121,9 @@ function renderICFRE() {
     getInputHtml('germ_icfre_longitude', 'Longitude', 'e.g. 76.6950', 'number', '0.000001') +
     getInputHtml('germ_icfre_altitude', 'Altitude (m asl)', 'e.g. 1200', 'number') +
     // FIX #3: Unique ID — distinct from NBPGR GPS button.
-    `<div class="form-group" style="flex:0 0 auto; align-self:flex-end;"><button type="button" class="btn btn-accent gps-fill-btn" id="btnGermICFREGPS">📡 Auto GPS</button></div>`
+    `<div class="form-group" style="flex:0 0 auto; align-self:flex-end;"><button type="button" class="btn btn-accent gps-fill-btn" id="btnGermICFREGPS">Auto GPS</button></div>`
   );
-  h += getSection("Stand & Mother Tree", "🌳",
+  h += getSection("Stand & Mother Tree", "",
     getSelectHtml('germ_icfre_standType', 'Stand Type', STAND_TYPES) +
     getInputHtml('germ_icfre_motherTreeId', 'Mother Tree ID', 'e.g. MT-042') +
     getInputHtml('germ_icfre_treeCount', 'No. of Trees Sampled', 'e.g. 15', 'number') +
@@ -131,7 +131,7 @@ function renderICFRE() {
     getInputHtml('germ_icfre_treeDiameter', 'DBH (cm)', 'Diameter at breast height', 'number') +
     getInputHtml('germ_icfre_treeHeight', 'Tree Height (m)', 'e.g. 18', 'number')
   );
-  h += getSection("Seed Details & Processing", "🔬",
+  h += getSection("Seed Details & Processing", "",
     getSelectHtml('germ_icfre_maturityStage', 'Maturity Stage', MATURITY_STAGES) +
     getInputHtml('germ_icfre_phenologicalState', 'Phenological State', 'e.g. Full flowering') +
     getInputHtml('germ_icfre_seedQuantityKg', 'Quantity (kg)', 'e.g. 2.5', 'number', '0.01') +
@@ -139,12 +139,12 @@ function renderICFRE() {
     getInputHtml('germ_icfre_processingDate', 'Processing Date', '', 'date') +
     getInputHtml('germ_icfre_packagingType', 'Packaging Type', 'e.g. Cloth bag')
   );
-  h += getSection("Remarks", "✍️", getTextareaHtml('germ_icfre_remarks', 'Field Notes / Observations', 'Habitat, associated species...', 3));
+  h += getSection("Remarks", "", getTextareaHtml('germ_icfre_remarks', 'Field Notes / Observations', 'Habitat, associated species...', 3));
   return h;
 }
 
 function renderNBPGR() {
-  let h = getSection("Accession Passport Data", "🧬",
+  let h = getSection("Accession Passport Data", "",
     getInputHtml('germ_nbpgr_speciesScientific', 'Scientific Name *', 'e.g. Shorea robusta', 'text', '', true) +
     getInputHtml('germ_nbpgr_speciesCommon', 'Common Name', 'e.g. Sal') +
     getInputHtml('germ_nbpgr_family', 'Family', 'e.g. Dipterocarpaceae') +
@@ -154,7 +154,7 @@ function renderNBPGR() {
     getInputHtml('germ_nbpgr_pedigree', 'Pedigree / Lineage', 'Parent lines', 'text', '', true) +
     getInputHtml('germ_nbpgr_uniqueTrait', 'Unique Trait', 'e.g. drought tolerant', 'text', '', true)
   );
-  h += getSection("Acquisition Details", "📥",
+  h += getSection("Acquisition Details", "",
     getSelectHtml('germ_nbpgr_acquisitionMode', 'Mode of Acquisition', NBPGR_ACQUISITION) +
     getInputHtml('germ_nbpgr_acquisitionDate', 'Acquisition Date', '', 'date') +
     getInputHtml('germ_nbpgr_donorName', 'Donor Name', 'Individual / Organisation') +
@@ -162,7 +162,7 @@ function renderNBPGR() {
     getSelectHtml('germ_nbpgr_materialTransferAgreement', 'Material Transfer Agreement', ["MTA in place","MTA not required","Pending","Exempt"], 'Select...', false, 'Required for exotic germplasm') +
     getSelectHtml('germ_nbpgr_repatriationStatus', 'Repatriation Status', ["Not applicable","Pending","Completed","Under review"])
   );
-  h += getSection("Collection Origin", "🗺️",
+  h += getSection("Collection Origin", "",
     getInputHtml('germ_nbpgr_collectionCountry', 'Country of Origin', 'India') +
     getInputHtml('germ_nbpgr_collectionState', 'State', 'e.g. Odisha') +
     getInputHtml('germ_nbpgr_collectionDistrict', 'District', 'District') +
@@ -170,36 +170,36 @@ function renderNBPGR() {
     getInputHtml('germ_nbpgr_longitude', 'Longitude', 'e.g. 85.0985', 'number', '0.000001') +
     getInputHtml('germ_nbpgr_altitude', 'Altitude (m asl)', 'e.g. 450', 'number') + 
     // FIX #3: Unique ID — distinct from ICFRE GPS button.
-    `<div class="form-group" style="flex:0 0 auto; align-self:flex-end;"><button type="button" class="btn btn-accent gps-fill-btn" id="btnGermNBPGRGPS">📡 Auto GPS</button></div>`
+    `<div class="form-group" style="flex:0 0 auto; align-self:flex-end;"><button type="button" class="btn btn-accent gps-fill-btn" id="btnGermNBPGRGPS">Auto GPS</button></div>`
   );
-  h += getSection("Seed / Material Properties", "🌰",
+  h += getSection("Seed / Material Properties", "",
     getSelectHtml('germ_nbpgr_storageType', 'Storage Behaviour', NBPGR_STORAGE_TYPES, 'Select...', false, 'Determines conservation strategy') +
     getInputHtml('germ_nbpgr_seedWeight1000', '1000-Seed Weight (g)', 'e.g. 35.2', 'number', '0.01') +
     getInputHtml('germ_nbpgr_viabilityInitial', 'Initial Viability (%)', 'e.g. 92', 'number') +
     getInputHtml('germ_nbpgr_viabilityCheckDate', 'Viability Check Date', '', 'date')
   );
-  h += getSection("Drying Protocol", "💨",
+  h += getSection("Drying Protocol", "",
     getInputHtml('germ_nbpgr_dryingMethod', 'Drying Method', 'e.g. Silica gel', 'text', '', true) +
     getInputHtml('germ_nbpgr_dryingRH', 'Target RH (%)', '15', 'number', '', false, 'NBPGR std: 15%') +
     getInputHtml('germ_nbpgr_dryingTemp', 'Drying Temp. (°C)', '15', 'number', '', false, 'NBPGR std: 15°C') +
     getInputHtml('germ_nbpgr_moistureContent', 'Moisture Content (%)', 'e.g. 6.2', 'number', '0.1')
   );
-  h += getSection("Storage Conditions", "🧊",
+  h += getSection("Storage Conditions", "",
     getSelectHtml('germ_nbpgr_storageCondition', 'Storage Condition', NBPGR_STORAGE_CONDITIONS, 'Select...', true, 'Base: −18 to −20°C | Active: 4°C') +
     getInputHtml('germ_nbpgr_containerType', 'Container Type', 'e.g. foil pouch') +
     getInputHtml('germ_nbpgr_packagingType', 'Packaging Type', 'e.g. Vacuum-sealed')
   );
-  h += getSection("Plant Quarantine & Seed Health", "🔒",
+  h += getSection("Plant Quarantine & Seed Health", "",
     getSelectHtml('germ_nbpgr_healthStatus', 'Health Status', ["Healthy – Passed quarantine","Minor surface contamination","Pathogen detected","Quarantine hold","Rejected"], 'Select...', true) +
     getInputHtml('germ_nbpgr_quarantineStatus', 'Quarantine Clearance No.', 'Clearance cert') +
     getTextareaHtml('germ_nbpgr_pestReport', 'Pest / Pathogen Report', 'Pathogens found...', 2, false)
   );
-  h += getSection("Remarks", "✍️", getTextareaHtml('germ_nbpgr_remarks', 'Additional Notes', 'Conservation priority...', 3));
+  h += getSection("Remarks", "", getTextareaHtml('germ_nbpgr_remarks', 'Additional Notes', 'Conservation priority...', 3));
   return h;
 }
 
 function renderISTA() {
-  let h = getSection("Seed Lot Identification", "🏷️",
+  let h = getSection("Seed Lot Identification", "",
     getInputHtml('germ_ista_speciesScientific', 'Scientific Name *', 'e.g. Dalbergia sissoo', 'text', '', true) +
     getInputHtml('germ_ista_speciesCommon', 'Common Name', 'e.g. Shisham') +
     getInputHtml('germ_ista_family', 'Family', 'e.g. Fabaceae') +
@@ -207,7 +207,7 @@ function renderISTA() {
     getInputHtml('germ_ista_lotSizeKg', 'Lot Size (kg)', 'e.g. 50', 'number', '0.01') +
     getInputHtml('germ_ista_sampleSizeG', 'Working Sample Size (g)', 'e.g. 25', 'number', '0.1')
   );
-  h += getSection("Certificate & Testing Lab", "📜",
+  h += getSection("Certificate & Testing Lab", "",
     getSelectHtml('germ_ista_certType', 'Certificate Type', ISTA_CERT_TYPES, 'Select...', true) +
     getInputHtml('germ_ista_submittingLab', 'Submitting Laboratory', 'Lab name') +
     getInputHtml('germ_ista_testingLab', 'Testing Laboratory', 'ISTA-accredited lab name') +
@@ -215,7 +215,7 @@ function renderISTA() {
     getInputHtml('germ_ista_samplingDate', 'Sampling Date', '', 'date') +
     getInputHtml('germ_ista_validityPeriod', 'Certificate Validity Period', 'e.g. 6 months')
   );
-  h += getSection("Seed Origin (OECD)", "🗺️",
+  h += getSection("Seed Origin (OECD)", "",
     getInputHtml('germ_ista_originCountry', 'Country of Origin', 'India') +
     getInputHtml('germ_ista_originState', 'State / Province', 'e.g. Karnataka') +
     getInputHtml('germ_ista_originSeedZone', 'OECD Seed Zone', 'e.g. Southern Dry Deccan') +
@@ -223,13 +223,13 @@ function renderISTA() {
     getInputHtml('germ_ista_oecdCertNo', 'OECD Certificate No.', 'OECD-IN-XXXX') +
     getInputHtml('germ_ista_oecdApprovedStand', 'Approved Stand', 'Registered stand ID')
   );
-  h += getSection("Purity Analysis", "🔍",
+  h += getSection("Purity Analysis", "",
     getInputHtml('germ_ista_pureSeedPct', 'Pure Seed (%)', 'e.g. 95.2', 'number', '0.01', false, '% by weight') +
     getInputHtml('germ_ista_inertMatterPct', 'Inert Matter (%)', 'e.g. 3.8', 'number', '0.01') +
     getInputHtml('germ_ista_otherCropPct', 'Other Crop Seeds (%)', 'e.g. 0.5', 'number', '0.01') +
     getInputHtml('germ_ista_weedSeedPct', 'Weed Seeds (%)', 'e.g. 0.5', 'number', '0.01')
   );
-  h += getSection("Germination Test", "🌱",
+  h += getSection("Germination Test", "",
     getSelectHtml('germ_ista_germSubstrate', 'Substrate', ISTA_GERM_SUBSTRATE) +
     getInputHtml('germ_ista_germTemp', 'Temperature (°C)', 'e.g. 20/30 alt') +
     getInputHtml('germ_ista_germDuration', 'Duration (days)', 'e.g. 28', 'number') +
@@ -240,20 +240,20 @@ function renderISTA() {
     getSelectHtml('germ_ista_dormancyType', 'Dormancy Type', ISTA_DORMANCY) +
     getInputHtml('germ_ista_dormancyTreatment', 'Dormancy Treatment', 'e.g. Scarification', 'text', '', true)
   );
-  h += getSection("Moisture Content", "💧",
+  h += getSection("Moisture Content", "",
     getInputHtml('germ_ista_moistureContent', 'Moisture Content (%)', 'e.g. 8.4', 'number', '0.1') +
     getSelectHtml('germ_ista_moistureMethod', 'Testing Method', ["Low-constant temp oven","High-constant temp oven","Karl Fischer titration","Capacitance meter"])
   );
-  h += getSection("1000-Seed Weight & Vigour", "⚖️",
+  h += getSection("1000-Seed Weight & Vigour", "",
     getInputHtml('germ_ista_weight1000Seed', '1000-Seed Weight (g)', 'e.g. 42.5', 'number', '0.01') +
     getSelectHtml('germ_ista_vigourTest', 'Vigour Test Used', ["None","Accelerated Ageing","Controlled Deterioration","TZ (Tetrazolium)","Electrical Conductivity","Cold Test"]) +
     getInputHtml('germ_ista_vigourResult', 'Vigour Result', 'e.g. TZ viability 85%', 'text', '', true)
   );
-  h += getSection("Seed Health Testing", "🧫",
+  h += getSection("Seed Health Testing", "",
     getInputHtml('germ_ista_healthTests', 'Tests Conducted', 'e.g. Blotter, Agar plate', 'text', '', true) +
     getTextareaHtml('germ_ista_pathogensFound', 'Pathogens / Organisms', 'Species name...', 2, true)
   );
-  h += getSection("Remarks", "✍️", getTextareaHtml('germ_ista_remarks', 'Additional Notes', 'Deviations...', 3));
+  h += getSection("Remarks", "", getTextareaHtml('germ_ista_remarks', 'Additional Notes', 'Deviations...', 3));
   return h;
 }
 
@@ -321,8 +321,6 @@ export async function refreshGermplasmUI() {
       <div style="padding:var(--sp-md);">
         ${fieldsHtml}
         <button id="btnGSaveRec" class="btn btn-primary btn-block mt-md">Save Record</button>
-        <!-- FIX #16: Label clarified — 'Back to Forms' was ambiguous -->
-        <button id="btnGCancelRec" class="btn btn-ghost btn-block mt-sm">← Back</button>
       </div>
     `;
 
@@ -334,8 +332,7 @@ export async function refreshGermplasmUI() {
     // FIX #3: Bind each GPS button by its unique ID.
     if ($('#btnGermICFREGPS')) $('#btnGermICFREGPS').addEventListener('click', handleAutoGPS);
     if ($('#btnGermNBPGRGPS')) $('#btnGermNBPGRGPS').addEventListener('click', handleAutoGPS);
-    // FIX #2: await so any caller can rely on DOM being ready.
-    document.getElementById('btnGCancelRec').addEventListener('click', async () => { currentView = 'home'; await refreshGermplasmUI(); });
+    // The 'btnGCancelRec' button was removed; users rely on the system back button.
 
     // Auto-fill today's date
     const isoDate = new Date().toISOString().split('T')[0];
@@ -387,7 +384,7 @@ export async function refreshGermplasmUI() {
   if (!s) {
     mount.innerHTML = getHeaderHtml('Germplasm <span>Registry</span>') + `
       <div style="padding:var(--sp-xl); text-align:center; color:var(--text-muted);">
-        <div style="font-size:2.5rem; margin-bottom:var(--sp-sm);">🌿</div>
+        
         <p>No active survey selected.</p>
         <p style="font-size:0.85rem;">Go to <strong>Tools</strong> and select or create a survey first.</p>
         <button class="btn btn-primary mt-md" id="btnGGoTools">Go to Tools</button>
@@ -432,7 +429,7 @@ export async function refreshGermplasmUI() {
       if (filtered.length === 0) {
         cont.innerHTML = `
           <div class="empty-state" style="padding:var(--sp-xl) 0;text-align:center;color:var(--text-muted);background:var(--bg-deep);border-radius:var(--radius-md);">
-            <div style="font-size:2.5rem;margin-bottom:var(--sp-sm);">🌱</div>
+            
             <div>No ${fBody === 'all' ? '' : BODIES[fBody].name} records found yet</div>
             <button class="btn btn-primary mt-md" id="btnGNewFirst">Add Record</button>
           </div>
@@ -455,9 +452,9 @@ export async function refreshGermplasmUI() {
                 <button class="btn-ghost btn-g-del" data-id="${r.id}" style="color:var(--red); padding:4px;">✕</button>
               </div>
               <div style="font-size:0.75rem; color:var(--text-muted); margin-top:12px; display:flex; gap:12px; flex-wrap:wrap; font-weight:500;">
-                ${r.collectionDate||r.acquisitionDate||r.samplingDate ? `<span>📅 ${r.collectionDate||r.acquisitionDate||r.samplingDate}</span>` : ''}
-                ${r.district||r.collectionDistrict ? `<span>📍 ${r.district||r.collectionDistrict}</span>` : ''}
-                ${r.collectorName||r.samplingOfficer ? `<span>👤 ${r.collectorName||r.samplingOfficer}</span>` : ''}
+                ${r.collectionDate||r.acquisitionDate||r.samplingDate ? `<span>${r.collectionDate||r.acquisitionDate||r.samplingDate}</span>` : ''}
+                ${r.district||r.collectionDistrict ? `<span>${r.district||r.collectionDistrict}</span>` : ''}
+                ${r.collectorName||r.samplingOfficer ? `<span>${r.collectorName||r.samplingOfficer}</span>` : ''}
               </div>
             </div>
           `;

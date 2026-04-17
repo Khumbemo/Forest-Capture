@@ -68,3 +68,33 @@ export function dl(c, fn, m) {
   a.click();
   URL.revokeObjectURL(a.href);
 }
+
+// Global Metric <-> Imperial Converters
+export function toMetric(val, type) {
+  if (val == null || val === '') return null;
+  const v = parseFloat(val);
+  if (isNaN(v)) return val;
+  // Type: dist (ft -> m), diam (in -> cm), area (sq ft -> m²), temp (°F -> °C)
+  switch (type) {
+    case 'dist': return Number((v * 0.3048).toFixed(2));
+    case 'diam': return Number((v * 2.54).toFixed(2));
+    case 'area': return Number((v * 0.092903).toFixed(2));
+    case 'temp': return Number(((v - 32) * 5 / 9).toFixed(1));
+    case 'ha':   return Number((v * 0.404686).toFixed(3)); // ac -> ha
+  }
+  return v;
+}
+
+export function toImperial(val, type) {
+  if (val == null || val === '') return null;
+  const v = parseFloat(val);
+  if (isNaN(v)) return val;
+  switch (type) {
+    case 'dist': return Number((v / 0.3048).toFixed(2));
+    case 'diam': return Number((v / 2.54).toFixed(2));
+    case 'area': return Number((v / 0.092903).toFixed(2));
+    case 'temp': return Number(((v * 9 / 5) + 32).toFixed(1));
+    case 'ha':   return Number((v / 0.404686).toFixed(3)); // ha -> ac
+  }
+  return v;
+}

@@ -260,7 +260,7 @@ async function withTimeout(promise, timeoutMs, defaultVal = null) {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       timedOut = true;
-      console.warn('Firestore call timed out');
+      console.debug('Firestore call timed out (working offline)');
       resolve(defaultVal);
     }, timeoutMs);
     promise.then((res) => {

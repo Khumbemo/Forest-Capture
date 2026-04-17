@@ -4,6 +4,8 @@
  * Transect entry forms.
  */
 
+import { Store, idb } from './storage.js';
+
 const _learnedSpecies = new Map(); // scientific name → entry object
 
 export function loadSurveyHistory(surveys) {
@@ -113,12 +115,49 @@ document.addEventListener('click', (e) => {
 
 // ─── Search ───────────────────────────────────────────────────────────────────
 
+async function _getActiveTaxonomyPackResults(query, max) {
+  try {
+     const active = await Store.getActive();
+     if (active && active.taxonomyPack) {
+         const packDataStr = await idb.get(`taxpack_${active.taxonomyPack}`);
+         if (packDataStr) {
+             const packData = JSON.parse(packDataStr);
+             const q = query.toLowerCase().trim();
+             const res = packData.filter(e => 
+                (e.scientific && e.scientific.toLowerCase().includes(q)) ||
+                (e.common && e.common.toLowerCase().includes(q)) ||
+                (e.family && e.family.toLowerCase().includes(q))
+             );
+             return res.map(r => ({ ...r, source: 'regional_pack', status: 'ACCEPTED' })).slice(0, max);
+         }
+     }
+  } catch(e) {
+     console.warn('Failed to scan regional taxonomy cache', e);
+  }
+  return [];
+}
+
 async function _search(query, max) {
   const q = query.toLowerCase().trim();
   const results = [];
   const seen = new Set();
 
-  // Priority 1: researcher's own learned species (sorted by frequency)
+  const regionalPack = await _getActiveTaxonomyPackResults(query, max);
+  let isStrict = false;
+  
+  const active = await Store.getActive();
+  if (active && active.taxonomyPack && regionalPack.length > 0) {
+      isStrict = true; // For real strict mode, we'd block submission, but here we just prioritize autocomplete.
+  }
+
+  // Priority 1: Regional Taxonomy Pack (if active)
+  for (const entry of regionalPack) {
+      if (results.length >= max) break;
+      const key = entry.scientific.toLowerCase();
+      if (!seen.has(key)) { seen.add(key); results.push(entry); }
+  }
+
+  // Priority 2: researcher's own learned species (sorted by frequency)
   const learned = [..._learnedSpecies.values()]
     .filter(e => _matches(e, q))
     .sort((a, b) => b.count - a.count);
@@ -129,8 +168,18 @@ async function _search(query, max) {
     if (!seen.has(key)) { seen.add(key); results.push({ ...entry, source: 'history' }); }
   }
 
+  // Check if GBIF is manually disabled
+  let gbifEnabled = true;
+  try {
+     const settingsRaw = await idb.get('fc_app_settings');
+     if (settingsRaw) {
+        const settings = JSON.parse(settingsRaw);
+        if (settings.settingGBIFEnabled === false) gbifEnabled = false;
+     }
+  } catch(e) {}
+
   // Priority 2: GBIF Remote API (Fail-safe)
-  if (results.length < max && navigator.onLine) {
+  if (results.length < max && navigator.onLine && gbifEnabled) {
     try {
       const res = await fetch(`https://api.gbif.org/v1/species/suggest?datasetKey=d7dddbf4-2cf0-4f39-9b2a-bb099caae36c&q=${encodeURIComponent(query)}`);
       if (res.ok) {
@@ -189,18 +238,27 @@ function _render(dropdown, results, activeIndex, onSelect) {
 
     const badge = entry.source === 'history'
       ? `<span class="species-badge-history">used</span>`
-      : '';
+      : entry.source === 'regional_pack' ? `<span class="species-badge-regional" style="background:var(--emerald);color:#000;font-size:0.7em;padding:2px 6px;border-radius:4px;">regional dict</span>` : '';
 
     const statusBadge = entry.status === 'SYNONYM' ? `<span class="species-badge-synonym">synonym</span>` : '';
+    const thumbnailHtml = entry.thumbnail 
+      ? `<img src="${entry.thumbnail}" style="width:36px; height:36px; border-radius:4px; object-fit:cover; margin-right:12px; border:1px solid var(--border); background:#fff;" loading="lazy" />` 
+      : '';
+
     li.innerHTML = `
-      <div class="species-option-main">
-        <span class="species-scientific">${_highlight(entry.scientific, dropdown._query || '')}</span>
-        ${entry.common ? `<span class="species-common">${escapeHtml(entry.common)}</span>` : ''}
-      </div>
-      <div class="species-option-meta">
-        ${entry.family ? `<span class="species-family">${escapeHtml(entry.family)}</span>` : ''}
-        ${badge}
-        ${statusBadge}
+      <div style="display:flex; align-items:center;">
+        ${thumbnailHtml}
+        <div style="flex:1;">
+          <div class="species-option-main">
+            <span class="species-scientific">${_highlight(entry.scientific, dropdown._query || '')}</span>
+            ${entry.common ? `<span class="species-common">${escapeHtml(entry.common)}</span>` : ''}
+          </div>
+          <div class="species-option-meta">
+            ${entry.family ? `<span class="species-family">${escapeHtml(entry.family)}</span>` : ''}
+            ${badge}
+            ${statusBadge}
+          </div>
+        </div>
       </div>
     `;
 

@@ -1,6 +1,7 @@
 // src/modules/analytics.js
 
 import { $, esc } from './ui.js';
+import { t } from './i18n.js';
 
 export function calculateIndicesPayload(s) {
   if (!s || !s.quadrats || !s.quadrats.length) {
@@ -10,6 +11,9 @@ export function calculateIndicesPayload(s) {
   const speciesMap = {};
   const totalArea = s.quadrats.reduce((a, q) => a + (parseFloat(q.size) || 0), 0) / 10000;
   let totalN = 0;
+  let totalAGB = 0;
+  let regenCounts = { seedling: 0, sapling: 0, tree: 0 };
+  let allDBH = [];
 
   s.quadrats.forEach((q, qi) => {
     if (q.species) q.species.forEach(sp => {
@@ -19,6 +23,26 @@ export function calculateIndicesPayload(s) {
       const abundance = parseInt(sp.abundance) || 0;
       speciesMap[k].abundance += abundance;
       totalN += abundance;
+      
+      const stage = (sp.stage || '').toLowerCase();
+      if (regenCounts.hasOwnProperty(stage)) {
+        regenCounts[stage] += abundance;
+      }
+      
+      let dbhVal = parseFloat(sp.dbh) || 0;
+      let hVal = parseFloat(sp.height) || 0;
+      if (dbhVal > 0) {
+        for(let i=0; i<abundance; i++) allDBH.push(dbhVal);
+        let treeAGB = 0;
+        const rho = 0.65;
+        if (hVal > 0) {
+           treeAGB = 0.0673 * Math.pow((rho * dbhVal * dbhVal * hVal), 0.976);
+        } else {
+           treeAGB = Math.exp(-2.289 + 2.649*Math.log(dbhVal) - 0.021*Math.pow(Math.log(dbhVal), 2));
+        }
+        totalAGB += (treeAGB * abundance);
+      }
+
       if (parseFloat(sp.dbh) > 0) {
         speciesMap[k].dbhSum += parseFloat(sp.dbh);
         speciesMap[k].dbhCount++;
@@ -125,7 +149,56 @@ export function calculateIndicesPayload(s) {
     });
   });
 
-  return { S, H, D, E, margalef, fisherAlpha, chao1, totalN, totalBA, totalArea, iviData, dbhClasses, speciesList };
+  let qmd = 0;
+  let sdi = 0;
+  if (allDBH.length > 0) {
+    const sumD2 = allDBH.reduce((sum, d) => sum + (d * d), 0);
+    qmd = Math.sqrt(sumD2 / allDBH.length);
+    const nPerHa = totalArea > 0 ? (allDBH.length / totalArea) : allDBH.length;
+    sdi = nPerHa * Math.pow((qmd / 25), 1.605);
+  }
+
+  const carbonHa = totalArea > 0 ? ((totalAGB * 0.47) / 1000) / totalArea : 0;
+  const agbHa = totalArea > 0 ? (totalAGB / 1000) / totalArea : 0;
+
+  let transectCover = 0;
+  let transectGap = 0;
+  if (s.transects && s.transects.length > 0) {
+     let totalLength = 0;
+     let totalCoveredLength = 0;
+     s.transects.forEach(t => {
+       const len = parseFloat(t.length) || 0;
+       if (len <= 0) return;
+       totalLength += len;
+       if (t.intercepts && t.intercepts.length > 0) {
+          let intervals = t.intercepts.map(i => [parseFloat(i.startDist)||0, parseFloat(i.endDist)||0]);
+          intervals = intervals.filter(iv => iv[1] > iv[0]);
+          intervals.sort((a,b) => a[0] - b[0]);
+          let merged = [];
+          if (intervals.length > 0) {
+            let current = intervals[0];
+            for(let i=1; i<intervals.length; i++) {
+               if (intervals[i][0] <= current[1]) {
+                  current[1] = Math.max(current[1], intervals[i][1]);
+               } else {
+                  merged.push(current);
+                  current = intervals[i];
+               }
+            }
+            merged.push(current);
+          }
+          let tCover = merged.reduce((sum, iv) => sum + (Math.min(iv[1], len) - Math.min(iv[0], len)), 0);
+          totalCoveredLength += tCover;
+       }
+     });
+
+     if (totalLength > 0) {
+        transectCover = (totalCoveredLength / totalLength) * 100;
+        transectGap = 100 - transectCover;
+     }
+  }
+
+  return { S, H, D, E, margalef, fisherAlpha, chao1, totalN, totalBA, totalArea, iviData, dbhClasses, speciesList, carbonHa, agbHa, qmd, sdi, regenCounts, transectCover, transectGap };
 }
 
 export function refreshAnalytics(s) {
@@ -134,13 +207,21 @@ export function refreshAnalytics(s) {
     ids.forEach(id => { if ($( '#' + id)) $( '#' + id).textContent = id === 'analyticRichness' || id === 'analyticTotalN' || id === 'analyticChao1' ? '0' : '0.000'; });
     if ($('#analyticBasalTotal')) $('#analyticBasalTotal').textContent = '0.000 m²';
     if ($('#analyticBasalHa')) $('#analyticBasalHa').textContent = '0.000 m²/ha';
-    if ($('#iviTableBody')) $('#iviTableBody').innerHTML = '<tr><td colspan="8" class="table-empty">No data</td></tr>';
-    if ($('#dbhChart')) $('#dbhChart').innerHTML = '<div class="chart-empty">No DBH data</div>';
-    if ($('#speciesAccumChart')) $('#speciesAccumChart').innerHTML = '<div class="chart-empty">No data</div>';
+    if ($('#iviTableBody')) $('#iviTableBody').innerHTML = `<tr><td colspan="8" class="table-empty">${t('No data')}</td></tr>`;
+    if ($('#dbhChart')) $('#dbhChart').innerHTML = `<div class="chart-empty">${t('No DBH data')}</div>`;
+    if ($('#speciesAccumChart')) $('#speciesAccumChart').innerHTML = `<div class="chart-empty">${t('No data')}</div>`;
+    if ($('#analyticCarbon')) $('#analyticCarbon').textContent = '0.00 t/ha';
+    if ($('#analyticAGB')) $('#analyticAGB').textContent = '0.00 t/ha';
+    if ($('#analyticQMD')) $('#analyticQMD').textContent = '0.00 cm';
+    if ($('#analyticSDI')) $('#analyticSDI').textContent = '0';
+    if ($('#analyticTransectCover')) $('#analyticTransectCover').textContent = '0.0%';
+    if ($('#analyticTransectGap')) $('#analyticTransectGap').textContent = '0.0%';
+    if ($('#regenChart')) $('#regenChart').innerHTML = `<div class="chart-empty">${t('No data')}</div>`;
+    if ($('#regenStatus')) $('#regenStatus').textContent = '—';
     return;
   }
 
-  const { S, H, D, E, margalef, fisherAlpha, chao1, totalN, totalBA, totalArea, iviData, dbhClasses } = calculateIndicesPayload(s);
+  const { S, H, D, E, margalef, fisherAlpha, chao1, totalN, totalBA, totalArea, iviData, dbhClasses, carbonHa, agbHa, qmd, sdi, regenCounts, transectCover, transectGap } = calculateIndicesPayload(s);
 
   if ($('#analyticRichness')) $('#analyticRichness').textContent = S;
   if ($('#analyticShannon')) $('#analyticShannon').textContent = totalN > 0 ? H.toFixed(3) : '0.000';
@@ -153,6 +234,33 @@ export function refreshAnalytics(s) {
   if ($('#analyticTotalN')) $('#analyticTotalN').textContent = totalN;
   if ($('#analyticBasalTotal')) $('#analyticBasalTotal').textContent = totalBA.toFixed(4) + ' m²';
   if ($('#analyticBasalHa')) $('#analyticBasalHa').textContent = (totalArea > 0 ? (totalBA / totalArea).toFixed(3) : '—') + ' m²/ha';
+
+  if ($('#analyticCarbon')) $('#analyticCarbon').textContent = carbonHa > 0 ? carbonHa.toFixed(2) + ' t/ha' : '0.00 t/ha';
+  if ($('#analyticAGB')) $('#analyticAGB').textContent = agbHa > 0 ? agbHa.toFixed(2) + ' t/ha' : '0.00 t/ha';
+  if ($('#analyticQMD')) $('#analyticQMD').textContent = qmd > 0 ? qmd.toFixed(2) + ' cm' : '0.00 cm';
+  if ($('#analyticSDI')) $('#analyticSDI').textContent = sdi > 0 ? Math.round(sdi).toString() : '0';
+  
+  if ($('#analyticTransectCover')) $('#analyticTransectCover').textContent = transectCover > 0 ? transectCover.toFixed(1) + '%' : '0.0%';
+  if ($('#analyticTransectGap')) $('#analyticTransectGap').textContent = transectGap > 0 ? transectGap.toFixed(1) + '%' : '0.0%';
+
+  if ($('#regenChart')) {
+    const rMax = Math.max(regenCounts.seedling, regenCounts.sapling, regenCounts.tree, 1);
+    $('#regenChart').innerHTML = [
+       {k:t('Seedling'), v: regenCounts.seedling},
+       {k:t('Sapling'), v: regenCounts.sapling},
+       {k:t('Tree'), v: regenCounts.tree}
+    ].map(x => `<div class="bar-col">
+      <div class="bar-val">${x.v}</div>
+      <div class="bar-fill" style="height:${(x.v / rMax) * 140}px;background:var(--sky);"></div>
+      <div class="bar-label">${x.k}</div>
+    </div>`).join('');
+
+    let status = t('Poor');
+    if (regenCounts.seedling > regenCounts.sapling && regenCounts.sapling > regenCounts.tree) status = t('Good');
+    else if (regenCounts.seedling > regenCounts.tree || regenCounts.sapling > regenCounts.tree) status = t('Fair');
+    if (regenCounts.seedling === 0 && regenCounts.sapling === 0 && regenCounts.tree === 0) status = t('No Data');
+    if ($('#regenStatus')) $('#regenStatus').textContent = status;
+  }
 
   if ($('#iviTableBody')) {
     $('#iviTableBody').innerHTML = iviData.map(x => `<tr>

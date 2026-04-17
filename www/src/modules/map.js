@@ -2,22 +2,25 @@
 
 import { $, toast, esc, fcPrompt } from './ui.js';
 import { curPos } from './gps.js';
-import { getWps, saveWps } from './storage.js';
+import { getWps, saveWps, loadSettings } from './storage.js';
 import { initOfflineMapUI } from './map-offline.js';
 
 let map = null, userMarker = null, wpMarkers = [], satLayer, terLayer, hybLayer;
 
-export function initMap() {
+export async function initMap() {
   if (typeof L === 'undefined') return;
   if (map) {
     map.invalidateSize();
     return;
   }
+  const sysSettings = await loadSettings();
+  const satUrl = sysSettings.settingMapTileUrl || 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+
   const la = (curPos.lat !== null && curPos.lat !== undefined) ? curPos.lat : 20.5937;
   const ln = (curPos.lng !== null && curPos.lng !== undefined) ? curPos.lng : 78.9629;
   try {
     map = L.map('mapView', { zoomControl: false }).setView([la, ln], 14);
-    satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
+    satLayer = L.tileLayer(satUrl, { maxZoom: 19 });
     terLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
     hybLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
     satLayer.addTo(map);

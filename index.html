@@ -92,6 +92,9 @@
           <p class="login-terms">
             Sign in to sync surveys across devices. The app works fully offline.
           </p>
+          <p class="login-privacy" style="font-size: 0.7rem; color: var(--text-muted); margin-top: 8px;">
+            By using Forest Capture, you agree to our Terms of Service. Essential session cookies are used for authentication. All synced data belongs to the researcher.
+          </p>
         </div>
       </div>
     </div>
@@ -776,6 +779,9 @@
           <button class="btn btn-ghost btn-block" id="btnSignOut" style="border:1px solid rgba(239,68,68,0.4); color:var(--red);">
             Sign Out
           </button>
+          <button class="btn btn-ghost btn-block" id="btnDeleteAccount" style="border:1px dashed var(--red); color:var(--red); font-size:0.75rem; margin-top:8px;">
+            Delete Cloud Account & All Data
+          </button>
         </div>
         <div class="settings-section"><div class="settings-section-title">Display</div>
           <div class="theme-cards" id="themeCards">
@@ -803,6 +809,7 @@
             <select id="settingUnitSystem"><option value="metric">Metric (m, cm, °C, ha)</option><option value="imperial">Imperial (ft, in, °F, ac)</option></select>
           </div>
           <div class="toggle-row"><label>Italicize Scientific Names</label><label class="switch"><input type="checkbox" id="settingItalicSpecies" checked /><span class="slider"></span></label></div>
+          <div class="toggle-row"><label>Enable Global GBIF Dictionary (Requires Internet)</label><label class="switch"><input type="checkbox" id="settingGBIFEnabled" checked /><span class="slider"></span></label></div>
           <div class="form-group" style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border);">
             <label for="customTaxonomyUpload">Upload Custom Taxonomy (CSV/JSON)</label>
             <input type="file" id="customTaxonomyUpload" accept=".csv,.json" class="hidden-input" style="display:none;" />

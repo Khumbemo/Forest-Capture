@@ -1,5 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, deleteUser } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
 import { initializeFirestore, persistentLocalCache, persistentSingleTabManager, getFirestore } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 import { getStorage } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js';
 import { toast } from './ui.js';
@@ -102,4 +102,14 @@ export async function AppSignOut() {
     await signOut(auth);
     localStorage.removeItem('fc_user');
     console.log('AppSignOut: success');
+}
+
+// Delete user account permanently
+export async function AppDeleteAccount() {
+    const user = auth.currentUser;
+    if (user) {
+        await deleteUser(user);
+    }
+    localStorage.removeItem('fc_user');
+    console.log('AppDeleteAccount: success');
 }

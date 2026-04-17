@@ -1,5 +1,5 @@
 // src/modules/ui.js
-
+import { t } from './i18n.js';
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 
@@ -89,10 +89,10 @@ export function updateConnectivityBanner() {
   }
   if (online) {
     banner.className = 'connectivity-banner online';
-    banner.innerHTML = '<span class="conn-dot online"></span> Online — GPS & weather auto-fill active';
+    banner.innerHTML = `<span class="conn-dot online"></span> ${t('Online — GPS & weather auto-fill active')}`;
   } else {
     banner.className = 'connectivity-banner offline';
-    banner.innerHTML = '<span class="conn-dot offline"></span> Offline — Manual entry mode';
+    banner.innerHTML = `<span class="conn-dot offline"></span> ${t('Offline — Manual entry mode')}`;
   }
 }
 
@@ -235,11 +235,11 @@ export function fcConfirm(message) {
 
     const cancelBtn = document.createElement('button');
     cancelBtn.className = 'fc-modal-btn fc-modal-cancel';
-    cancelBtn.textContent = 'Cancel';
+    cancelBtn.textContent = t('Cancel');
 
     const okBtn = document.createElement('button');
     okBtn.className = `fc-modal-btn fc-modal-ok${isDelete ? ' fc-modal-danger' : ''}`;
-    okBtn.textContent = isDelete ? 'Delete' : 'Confirm';
+    okBtn.textContent = isDelete ? t('Delete') : t('Confirm');
 
     actions.appendChild(cancelBtn);
     actions.appendChild(okBtn);
@@ -281,11 +281,11 @@ export function fcPrompt(message, defaultValue = '') {
 
     const cancelBtn = document.createElement('button');
     cancelBtn.className = 'fc-modal-btn fc-modal-cancel';
-    cancelBtn.textContent = 'Cancel';
+    cancelBtn.textContent = t('Cancel');
 
     const okBtn = document.createElement('button');
     okBtn.className = 'fc-modal-btn fc-modal-ok';
-    okBtn.textContent = 'OK';
+    okBtn.textContent = t('OK');
 
     actions.appendChild(cancelBtn);
     actions.appendChild(okBtn);
@@ -321,7 +321,7 @@ export function fcAlert(message) {
 
     const okBtn = document.createElement('button');
     okBtn.className = 'fc-modal-btn fc-modal-ok';
-    okBtn.textContent = 'OK';
+    okBtn.textContent = t('OK');
 
     actions.appendChild(okBtn);
     overlay.appendChild(modal);
@@ -341,6 +341,14 @@ export function fcAlert(message) {
       if (e.key === 'Enter' || e.key === 'Escape') { cleanup(); document.removeEventListener('keydown', handler); }
     });
   });
+}
+
+export function applyUnitSystem(sys) {
+  const isImperial = sys === 'imperial';
+  $$('.unit-dist').forEach(el => { el.textContent = isImperial ? 'ft' : 'm'; });
+  $$('.unit-diam').forEach(el => { el.textContent = isImperial ? 'in' : 'cm'; });
+  $$('.unit-area').forEach(el => { el.textContent = isImperial ? 'sq ft' : 'm²'; });
+  $$('.unit-temp').forEach(el => { el.textContent = isImperial ? '°F' : '°C'; });
 }
 
 export { $, $$ };

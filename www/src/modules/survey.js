@@ -36,26 +36,35 @@ export async function refreshDataRecords() {
     // Quadrats
     if (sv.quadrats && sv.quadrats.length) {
       sv.quadrats.forEach((q, qi) => {
-        allRecords.push({ type: 'quadrat', icon: 'Q', label: `Quadrat #${q.number || qi + 1}`, detail: `${q.species ? q.species.length : 0} species · ${q.size || '—'}m²`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
+        allRecords.push({ type: 'quadrat', icon: 'Q', label: `Quadrat #${q.number || qi + 1}`, detail: `${q.species ? q.species.length : 0} species · ${q.size ? q.size + 'm²' : 'Area unspecified'}`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
       });
     }
     // Transects
     if (sv.transects && sv.transects.length) {
       sv.transects.forEach((t, ti) => {
-        allRecords.push({ type: 'transect', icon: 'T', label: `Transect #${t.number || ti + 1}`, detail: `${t.length || '—'}m × ${t.width || '—'}m · ${t.intercepts ? t.intercepts.length : 0} intercepts`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
+        const dimStr = (t.length && t.width) ? `${t.length}m × ${t.width}m` : 'Dimensions unspecified';
+        allRecords.push({ type: 'transect', icon: 'T', label: `Transect #${t.number || ti + 1}`, detail: `${dimStr} · ${t.intercepts ? t.intercepts.length : 0} intercepts`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
       });
     }
     // Environment
     if (sv.environment) {
-      allRecords.push({ type: 'environment', icon: 'E', label: 'Environment Data', detail: `Elev: ${sv.environment.elevation || '—'}m · Slope: ${sv.environment.slope || '—'}° · ${sv.environment.weather || '—'}`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
+      const envDetails = [];
+      if (sv.environment.elevation) envDetails.push(`Elev: ${sv.environment.elevation}m`);
+      if (sv.environment.slope) envDetails.push(`Slope: ${sv.environment.slope}°`);
+      if (sv.environment.weather) envDetails.push(sv.environment.weather);
+      const envDetailStr = envDetails.length ? envDetails.join(' · ') : 'No data specified';
+      allRecords.push({ type: 'environment', icon: 'E', label: 'Environment Data', detail: envDetailStr, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
     }
     // Disturbance
     if (sv.disturbance) {
       const dTypes = [];
-      if (sv.disturbance.grazing && sv.disturbance.grazing.present) dTypes.push('Grazing');
-      if (sv.disturbance.logging && sv.disturbance.logging.present) dTypes.push('Logging');
-      if (sv.disturbance.fire && sv.disturbance.fire.present) dTypes.push('Fire');
-      if (sv.disturbance.human && sv.disturbance.human.present) dTypes.push('Human');
+      const isPresent = (field) => field && (field.present === true || field.present === 'true');
+      if (isPresent(sv.disturbance.grazing)) dTypes.push('Grazing');
+      if (isPresent(sv.disturbance.logging)) dTypes.push('Logging');
+      if (isPresent(sv.disturbance.fire)) dTypes.push('Fire');
+      if (isPresent(sv.disturbance.human)) dTypes.push('Human');
+      if (isPresent(sv.disturbance.biotic)) dTypes.push('Biotic');
+      if (isPresent(sv.disturbance.abiotic)) dTypes.push('Abiotic');
       allRecords.push({ type: 'disturbance', icon: 'D', label: 'Disturbance & CBI', detail: dTypes.length ? dTypes.join(', ') : 'No disturbance recorded', survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
     }
     // Notes
@@ -175,6 +184,7 @@ export async function createNewSurvey() {
       date: ($('#surveyDate') ? $('#surveyDate').value : new Date().toISOString().split('T')[0]),
       createdAt: _getLocalISOString(),
       deviceTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      timezoneOffset: new Date().getTimezoneOffset(),
       quadrats: [],
       transects: [],
       environment: null,
@@ -183,7 +193,8 @@ export async function createNewSurvey() {
       photos: [],
       notes: [],
       audioNotes: [],
-      waypoints: []
+      waypoints: [],
+      taxonomyPack: ($('#surveyTaxonomyPack') ? $('#surveyTaxonomyPack').value : '')
     };
 
     if ($('#surveyAutoGPS') && $('#surveyAutoGPS').checked && curPos.lat) {
@@ -209,6 +220,22 @@ export async function createNewSurvey() {
 
     // Auto-select the newly created survey
     await Store.setActive(sv.id);
+
+    // Download Taxonomy Pack
+    if (sv.taxonomyPack) {
+      try {
+         const packRes = await fetch(`./data/taxonomy/${sv.taxonomyPack}.json`);
+         if (packRes.ok) {
+            const packData = await packRes.json();
+            const { idb } = await import('./storage.js');
+            await idb.set(`taxpack_${sv.taxonomyPack}`, JSON.stringify(packData));
+            toast(`Downloaded ${sv.taxonomyPack} offline dictionary`);
+         }
+      } catch(e) {
+         console.warn('Taxonomy pack download failed', e);
+         toast('Taxonomy download failed (offline?)', true);
+      }
+    }
 
     // Refresh UI without blocking
     populateSurveySelector().catch(e => console.warn('Refresh selector failed', e));

@@ -1,9 +1,10 @@
 // src/modules/transect.js
 
 import { $, $$, toast, esc, fcConfirm } from './ui.js';
-import { Store } from './storage.js';
+import { Store, loadSettings } from './storage.js';
 import { attachAutocomplete } from './species-autocomplete.js';
 import { fillGPSField } from './gps.js';
+import { toMetric, toImperial } from './utils.js';
 
 let intCount = 0;
 
@@ -15,11 +16,11 @@ export function addIntercept() {
   d.innerHTML = `<div class="species-entry-header"><span class="species-entry-num">Intercept #${intCount}</span><button class="species-remove" type="button">✕</button></div>
 <div class="form-group"><label>Species / Feature</label><input type="text" class="int-name" id="${inputId}" placeholder="Species name or substrate" /></div>
 <div class="form-row"><div class="form-group"><label>Life Form</label><select class="int-lifeform"><option value="">—</option><option value="tree">Tree</option><option value="shrub">Shrub</option><option value="herb">Herb</option><option value="grass">Grass</option><option value="liana">Liana</option><option value="epiphyte">Epiphyte</option><option value="moss-lichen">Moss/Lichen</option><option value="fern">Fern</option></select></div><div class="form-group"><label>Intercept Type</label><select class="int-type"><option value="canopy">Canopy</option><option value="basal">Basal</option><option value="foliar">Foliar</option></select></div></div>
-<div class="form-row"><div class="form-group"><label>Start Distance (m)</label><input type="number" class="int-start" min="0" step="0.01" placeholder="Canfield start" title="Where species intercept begins along the tape" /></div><div class="form-group"><label>End Distance (m)</label><input type="number" class="int-end" min="0" step="0.01" placeholder="Canfield end" title="Where species intercept ends along the tape" /></div></div>
-<div class="form-row"><div class="form-group"><label>Distance (m)</label><input type="number" class="int-dist" min="0" step="0.1" placeholder="Position along line" title="Point position along the transect" /></div><div class="form-group"><label>Cover %</label><input type="number" class="int-cover" min="0" max="100" placeholder="0–100" /></div></div>
-<div class="form-row"><div class="form-group"><label>Height (m)</label><input type="number" class="int-height" min="0" step="0.1" /></div><div class="form-group"><label>DBH (cm)</label><input type="number" class="int-dbh" min="0" step="0.1" placeholder="Belt transect" title="For belt transect tree surveys" /></div></div>
+<div class="form-row"><div class="form-group"><label>Start Distance (<span class="unit-dist">m</span>)</label><input type="number" class="int-start" min="0" step="0.01" placeholder="Canfield start" title="Where species intercept begins along the tape" /></div><div class="form-group"><label>End Distance (<span class="unit-dist">m</span>)</label><input type="number" class="int-end" min="0" step="0.01" placeholder="Canfield end" title="Where species intercept ends along the tape" /></div></div>
+<div class="form-row"><div class="form-group"><label>Distance (<span class="unit-dist">m</span>)</label><input type="number" class="int-dist" min="0" step="0.1" placeholder="Position along line" title="Point position along the transect" /></div><div class="form-group"><label>Cover %</label><input type="number" class="int-cover" min="0" max="100" placeholder="0–100" /></div></div>
+<div class="form-row"><div class="form-group"><label>Height (<span class="unit-dist">m</span>)</label><input type="number" class="int-height" min="0" step="0.1" /></div><div class="form-group"><label>DBH (<span class="unit-diam">cm</span>)</label><input type="number" class="int-dbh" min="0" step="0.1" placeholder="Belt transect" title="For belt transect tree surveys" /></div></div>
 <div class="form-row"><div class="form-group"><label>Abundance</label><input type="number" class="int-abundance" min="0" placeholder="Count" title="Number of individuals (belt transect)" /></div><div class="form-group"><label>Stratum</label><select class="int-stratum"><option value="">—</option><option value="canopy">Canopy</option><option value="sub-canopy">Sub-canopy</option><option value="shrub">Shrub layer</option><option value="herb">Herb layer</option><option value="ground">Ground cover</option></select></div></div>
-<div class="form-row"><div class="form-group"><label>Substrate</label><select class="int-substrate"><option value="">—</option><option value="soil">Bare Soil</option><option value="litter">Litter</option><option value="rock">Rock</option><option value="moss">Moss</option><option value="water">Water</option><option value="wood">Dead Wood</option></select></div><div class="form-group"><label>Perp. Distance (m)</label><input type="number" class="int-perp" min="0" step="0.1" placeholder="For distance sampling" title="Perpendicular distance from the line to observation (distance sampling)" /></div></div>
+<div class="form-row"><div class="form-group"><label>Substrate</label><select class="int-substrate"><option value="">—</option><option value="soil">Bare Soil</option><option value="litter">Litter</option><option value="rock">Rock</option><option value="moss">Moss</option><option value="water">Water</option><option value="wood">Dead Wood</option></select></div><div class="form-group"><label>Perp. Distance (<span class="unit-dist">m</span>)</label><input type="number" class="int-perp" min="0" step="0.1" placeholder="For distance sampling" title="Perpendicular distance from the line to observation (distance sampling)" /></div></div>
 <div class="form-group"><label>Notes</label><input type="text" class="int-notes" placeholder="e.g., damaged, flowering, seedling cluster" /></div>`;
   d.querySelector('.species-remove').addEventListener('click', () => d.remove());
   $('#interceptList').appendChild(d);
@@ -30,11 +31,13 @@ export function addIntercept() {
 export async function saveTransect() {
   const s = await Store.getActive();
   if (!s) { toast('Select survey', true); return; }
+  const sysSettings = await loadSettings();
+  const isImperial = sysSettings.settingUnitSystem === 'imperial';
   const t = {
     number: parseInt($('#transectNumber').value) || 1,
     type: $('#transectType')?.value || 'belt',
-    length: parseFloat($('#transectLength').value) || 0,
-    width: parseFloat($('#transectWidth').value) || 0,
+    length: isImperial ? (toMetric(parseFloat($('#transectLength').value), 'dist') || 0) : (parseFloat($('#transectLength').value) || 0),
+    width: isImperial ? (toMetric(parseFloat($('#transectWidth').value), 'dist') || 0) : (parseFloat($('#transectWidth').value) || 0),
     bearing: parseFloat($('#transectBearing').value) || 0,
     slope: parseFloat($('#transectSlope')?.value) || 0,
     measDate: $('#transectDate')?.value || new Date().toISOString().split('T')[0],
@@ -45,16 +48,16 @@ export async function saveTransect() {
       name: e.querySelector('.int-name').value.trim(),
       lifeForm: e.querySelector('.int-lifeform')?.value || '',
       interceptType: e.querySelector('.int-type')?.value || 'canopy',
-      startDist: parseFloat(e.querySelector('.int-start')?.value) || 0,
-      endDist: parseFloat(e.querySelector('.int-end')?.value) || 0,
-      distance: parseFloat(e.querySelector('.int-dist').value) || 0,
+      startDist: isImperial ? (toMetric(parseFloat(e.querySelector('.int-start')?.value), 'dist') || 0) : (parseFloat(e.querySelector('.int-start')?.value) || 0),
+      endDist: isImperial ? (toMetric(parseFloat(e.querySelector('.int-end')?.value), 'dist') || 0) : (parseFloat(e.querySelector('.int-end')?.value) || 0),
+      distance: isImperial ? (toMetric(parseFloat(e.querySelector('.int-dist').value), 'dist') || 0) : (parseFloat(e.querySelector('.int-dist').value) || 0),
       cover: Math.max(0, Math.min(100, parseFloat(e.querySelector('.int-cover').value) || 0)),
-      height: parseFloat(e.querySelector('.int-height').value) || 0,
-      dbh: parseFloat(e.querySelector('.int-dbh')?.value) || 0,
+      height: isImperial ? (toMetric(parseFloat(e.querySelector('.int-height').value), 'dist') || 0) : (parseFloat(e.querySelector('.int-height').value) || 0),
+      dbh: isImperial ? (toMetric(parseFloat(e.querySelector('.int-dbh')?.value), 'diam') || 0) : (parseFloat(e.querySelector('.int-dbh')?.value) || 0),
       abundance: parseInt(e.querySelector('.int-abundance')?.value) || 0,
       stratum: e.querySelector('.int-stratum').value,
       substrate: e.querySelector('.int-substrate')?.value || '',
-      perpDistance: parseFloat(e.querySelector('.int-perp')?.value) || 0,
+      perpDistance: isImperial ? (toMetric(parseFloat(e.querySelector('.int-perp')?.value), 'dist') || 0) : (parseFloat(e.querySelector('.int-perp')?.value) || 0),
       notes: e.querySelector('.int-notes')?.value.trim() || ''
     }))
   };
@@ -102,6 +105,8 @@ export async function refreshTransectTable() {
   const s = await Store.getActive();
   const tb = $('#transectTableBody');
   if (!tb) return;
+  const sysSettings = await loadSettings();
+  const isImperial = sysSettings.settingUnitSystem === 'imperial';
   if (!s || !s.transects || !s.transects.length) {
     tb.innerHTML = '<tr><td colspan="7" class="table-empty">No data</td></tr>';
     return;
@@ -122,8 +127,8 @@ export async function refreshTransectTable() {
       const t = s.transects[idx];
       $('#transectNumber').value = t.number;
       if ($('#transectType')) $('#transectType').value = t.type || 'belt';
-      $('#transectLength').value = t.length;
-      $('#transectWidth').value = t.width;
+      $('#transectLength').value = isImperial ? toImperial(t.length, 'dist') : t.length;
+      $('#transectWidth').value = isImperial ? toImperial(t.width, 'dist') : t.width;
       $('#transectBearing').value = t.bearing;
       if ($('#transectSlope')) $('#transectSlope').value = t.slope || 0;
       if ($('#transectDate') && t.measDate) $('#transectDate').value = t.measDate;
@@ -138,16 +143,16 @@ export async function refreshTransectTable() {
         last.querySelector('.int-name').value = int.name;
         if (last.querySelector('.int-lifeform')) last.querySelector('.int-lifeform').value = int.lifeForm || '';
         if (last.querySelector('.int-type')) last.querySelector('.int-type').value = int.interceptType || 'canopy';
-        if (last.querySelector('.int-start')) last.querySelector('.int-start').value = int.startDist || 0;
-        if (last.querySelector('.int-end')) last.querySelector('.int-end').value = int.endDist || 0;
-        last.querySelector('.int-dist').value = int.distance;
+        if (last.querySelector('.int-start')) last.querySelector('.int-start').value = isImperial ? toImperial(int.startDist, 'dist') : (int.startDist || 0);
+        if (last.querySelector('.int-end')) last.querySelector('.int-end').value = isImperial ? toImperial(int.endDist, 'dist') : (int.endDist || 0);
+        last.querySelector('.int-dist').value = isImperial ? toImperial(int.distance, 'dist') : int.distance;
         last.querySelector('.int-cover').value = int.cover;
-        last.querySelector('.int-height').value = int.height || 0;
-        if (last.querySelector('.int-dbh')) last.querySelector('.int-dbh').value = int.dbh || 0;
+        last.querySelector('.int-height').value = isImperial ? toImperial(int.height, 'dist') : (int.height || 0);
+        if (last.querySelector('.int-dbh')) last.querySelector('.int-dbh').value = isImperial ? toImperial(int.dbh, 'diam') : (int.dbh || 0);
         if (last.querySelector('.int-abundance')) last.querySelector('.int-abundance').value = int.abundance || 0;
         last.querySelector('.int-stratum').value = int.stratum || '';
         if (last.querySelector('.int-substrate')) last.querySelector('.int-substrate').value = int.substrate || '';
-        if (last.querySelector('.int-perp')) last.querySelector('.int-perp').value = int.perpDistance || 0;
+        if (last.querySelector('.int-perp')) last.querySelector('.int-perp').value = isImperial ? toImperial(int.perpDistance, 'dist') : (int.perpDistance || 0);
         if (last.querySelector('.int-notes')) last.querySelector('.int-notes').value = int.notes || '';
       });
       $('#btnSaveTransect').textContent = 'Update Transect';

@@ -1,8 +1,9 @@
 // src/modules/environment.js
 
 import { $, toast, fcConfirm } from './ui.js';
-import { Store } from './storage.js';
+import { Store, loadSettings } from './storage.js';
 import { curPos } from './gps.js';
+import { toMetric, toImperial } from './utils.js';
 
 export function autoFillEnv() {
   if (curPos.alt !== null) $('#envElevation').value = Math.round(curPos.alt);
@@ -23,12 +24,14 @@ function numOrNull(v) {
 export async function saveEnv() {
   const s = await Store.getActive();
   if (!s) { toast('Select survey', true); return; }
+  const sysSettings = await loadSettings();
+  const isImperial = sysSettings.settingUnitSystem === 'imperial';
   const eData = {
     date: $('#envDate') ? $('#envDate').value : '',
     observer: $('#envObserver') ? $('#envObserver').value.trim() : '',
     slope: numOrNull($('#envSlope').value),
     aspect: $('#envAspect').value,
-    elevation: numOrNull($('#envElevation').value),
+    elevation: isImperial ? toMetric(numOrNull($('#envElevation').value), 'dist') : numOrNull($('#envElevation').value),
     topoPosition: $('#envTopoPosition') ? $('#envTopoPosition').value : '',
     canopyCover: numOrNull($('#envCanopyCover').value),
     hydrology: $('#envHydrology') ? $('#envHydrology').value : '',
@@ -37,10 +40,10 @@ export async function saveEnv() {
     soilMoisture: $('#envSoilMoisture').value,
     soilColor: $('#envSoilColor').value.trim(),
     soilPH: numOrNull($('#envSoilPH') ? $('#envSoilPH').value : ''),
-    litter_depth: numOrNull($('#envLitterDepth') ? $('#envLitterDepth').value : ''),
-    humus_depth: numOrNull($('#envHumusDepth') ? $('#envHumusDepth').value : ''),
-    bedrock_depth: numOrNull($('#envBedrockDepth') ? $('#envBedrockDepth').value : ''),
-    temperature: numOrNull($('#envTemperature').value),
+    litter_depth: isImperial ? toMetric(numOrNull($('#envLitterDepth') ? $('#envLitterDepth').value : ''), 'diam') : numOrNull($('#envLitterDepth') ? $('#envLitterDepth').value : ''),
+    humus_depth: isImperial ? toMetric(numOrNull($('#envHumusDepth') ? $('#envHumusDepth').value : ''), 'diam') : numOrNull($('#envHumusDepth') ? $('#envHumusDepth').value : ''),
+    bedrock_depth: isImperial ? toMetric(numOrNull($('#envBedrockDepth') ? $('#envBedrockDepth').value : ''), 'diam') : numOrNull($('#envBedrockDepth') ? $('#envBedrockDepth').value : ''),
+    temperature: isImperial ? toMetric(numOrNull($('#envTemperature').value), 'temp') : numOrNull($('#envTemperature').value),
     humidity: numOrNull($('#envHumidity').value),
     windSpeed: numOrNull($('#envWindSpeed') ? $('#envWindSpeed').value : ''),
     lightCondition: $('#envLightCondition') ? $('#envLightCondition').value : '',
@@ -70,12 +73,14 @@ export async function saveEnv() {
 export async function loadEnvData() {
   const s = await Store.getActive();
   if (!s || !s.environment) return;
+  const sysSettings = await loadSettings();
+  const isImperial = sysSettings.settingUnitSystem === 'imperial';
   const e = s.environment;
   if (e.date && $('#envDate')) $('#envDate').value = e.date;
   if (e.observer && $('#envObserver')) $('#envObserver').value = e.observer;
   if (e.slope != null) $('#envSlope').value = e.slope;
   if (e.aspect) $('#envAspect').value = e.aspect;
-  if (e.elevation != null) $('#envElevation').value = e.elevation;
+  if (e.elevation != null) $('#envElevation').value = isImperial ? toImperial(e.elevation, 'dist') : e.elevation;
   if (e.topoPosition && $('#envTopoPosition')) $('#envTopoPosition').value = e.topoPosition;
   if (e.canopyCover != null) $('#envCanopyCover').value = e.canopyCover;
   if (e.hydrology && $('#envHydrology')) $('#envHydrology').value = e.hydrology;
@@ -84,10 +89,10 @@ export async function loadEnvData() {
   if (e.soilMoisture) $('#envSoilMoisture').value = e.soilMoisture;
   if (e.soilColor) $('#envSoilColor').value = e.soilColor;
   if (e.soilPH != null && $('#envSoilPH')) $('#envSoilPH').value = e.soilPH;
-  if (e.litter_depth != null && $('#envLitterDepth')) $('#envLitterDepth').value = e.litter_depth;
-  if (e.humus_depth != null && $('#envHumusDepth')) $('#envHumusDepth').value = e.humus_depth;
-  if (e.bedrock_depth != null && $('#envBedrockDepth')) $('#envBedrockDepth').value = e.bedrock_depth;
-  if (e.temperature != null) $('#envTemperature').value = e.temperature;
+  if (e.litter_depth != null && $('#envLitterDepth')) $('#envLitterDepth').value = isImperial ? toImperial(e.litter_depth, 'diam') : e.litter_depth;
+  if (e.humus_depth != null && $('#envHumusDepth')) $('#envHumusDepth').value = isImperial ? toImperial(e.humus_depth, 'diam') : e.humus_depth;
+  if (e.bedrock_depth != null && $('#envBedrockDepth')) $('#envBedrockDepth').value = isImperial ? toImperial(e.bedrock_depth, 'diam') : e.bedrock_depth;
+  if (e.temperature != null) $('#envTemperature').value = isImperial ? toImperial(e.temperature, 'temp') : e.temperature;
   if (e.humidity != null) $('#envHumidity').value = e.humidity;
   if (e.windSpeed != null && $('#envWindSpeed')) $('#envWindSpeed').value = e.windSpeed;
   if (e.lightCondition && $('#envLightCondition')) $('#envLightCondition').value = e.lightCondition;

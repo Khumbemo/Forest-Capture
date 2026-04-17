@@ -1,5 +1,6 @@
 // src/main.js
 
+import { t, setLanguage, walkDOMAndTranslate } from './modules/i18n.js';
 import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot, isOnline, updateConnectivityBanner, fcConfirm, fcPrompt } from './modules/ui.js';
 import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, resetUserRef, migrateFromLocalStorage, migrateInlineMedia, clearUserCache } from './modules/storage.js';
 import { startGPS, fmtCoords, curPos } from './modules/gps.js';
@@ -20,7 +21,7 @@ import { initCompareScreen, runComparison, exportComparisonJSON, init as initCom
 import { loadSurveyHistory } from './modules/species-autocomplete.js';
 import { initHerbarium, handleHerbariumPhoto, saveHerbarium, init as initHerbariumListeners } from './modules/herbarium.js';
 import { init as initGermplasm, refreshGermplasmUI, onScreenEnter as germplasmEnter } from './modules/germplasm.js';
-import { ensureAuth, EmailLogin, EmailSignup, AppSignOut } from './modules/firebase.js';
+import { ensureAuth, EmailLogin, EmailSignup, AppSignOut, AppDeleteAccount } from './modules/firebase.js';
 
 // ===== INIT =====
 
@@ -76,6 +77,8 @@ async function initApp() {
   setTimeout(updateOnlineDot, 500);
   setTimeout(updateConnectivityBanner, 600);
   setTimeout(_updateWelcomeStatus, 700);
+  // Expose for smoke tests — zero production impact.
+  window.__fc = { updateConnectivityBanner };
 
   // Show login if no valid Firebase session exists.
   // The user can always dismiss login with "Continue Offline" and use the app fully.
@@ -86,6 +89,8 @@ async function initApp() {
     const anonId = 'anon_' + Date.now();
     localStorage.setItem('fc_user', JSON.stringify({ uid: anonId, email: null, anonymous: true, time: Date.now() }));
     // Show login after splash fades, but it's dismissible via "Continue Offline"
+    setTimeout(showLogin, 2900);
+  } else if (!storedUser.email || storedUser.anonymous) {
     setTimeout(showLogin, 2900);
   }
 
@@ -104,6 +109,18 @@ async function loadAppData() {
   applyTheme(await getTheme());
   applyBrightness(await getBrightness());
   const settings = await loadSettings();
+
+  // Load and apply system language immediately
+  if (settings.settingLanguage) {
+    setLanguage(settings.settingLanguage);
+  }
+  walkDOMAndTranslate();
+
+  // Load and apply unit system immediately
+  if (settings.settingUnitSystem) {
+    import('./modules/ui.js').then(ui => ui.applyUnitSystem(settings.settingUnitSystem));
+  }
+
   Object.entries(settings).forEach(([id, val]) => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -290,6 +307,9 @@ function setupEventListeners() {
       switchScreen('screenDashboard', screenCallbacks, false);
     }
   });
+
+  // FIX #4: Back button in header — pops history (triggers popstate listener above).
+  $('#btnHeaderBack')?.addEventListener('click', () => window.history.back());
 
   // Global Swipe Gestures for Fluid Navigation
   let touchStartX = 0;
@@ -637,19 +657,59 @@ function setupEventListeners() {
   // FIX #20: Sign Out button in Settings panel.
   // Shows the account section once wired, so anonymous users never see it.
   const storedUser = JSON.parse(localStorage.getItem('fc_user') || 'null');
-  if (storedUser && storedUser.email) {
-    const accountSection = document.getElementById('settingsAccountSection');
-    const userEmailEl = document.getElementById('settingsUserEmail');
-    if (accountSection) accountSection.style.display = '';
-    if (userEmailEl) userEmailEl.textContent = storedUser.email;
+  const accountSection = document.getElementById('settingsAccountSection');
+  const userEmailEl = document.getElementById('settingsUserEmail');
+  const btnDeleteAccount = $('#btnDeleteAccount');
+  if (btnDeleteAccount) {
+    btnDeleteAccount.addEventListener('click', async () => {
+      const isConfirmed = await fcPrompt('Type "DELETE" to permanently destroy your cloud account and all synced data.', 'DELETE');
+      if (isConfirmed) {
+        toast('Deleting cloud account...', false);
+        try {
+          await AppDeleteAccount();
+          toast('Account fully wiped.');
+          window.location.reload();
+        } catch (e) {
+          toast('Error deleting account: ' + e.message, true);
+        }
+      }
+    });
   }
+
+  const btnSignOut = $('#btnSignOut');
+
+  if (accountSection) accountSection.style.display = '';
+
+  if (storedUser && storedUser.email) {
+    if (userEmailEl) userEmailEl.textContent = storedUser.email;
+    if (btnSignOut) btnSignOut.textContent = 'Sign Out';
+  } else {
+    if (userEmailEl) userEmailEl.textContent = 'Offline Mode';
+    if (btnSignOut) {
+      btnSignOut.textContent = 'Log In';
+      btnSignOut.classList.remove('btn-ghost');
+      btnSignOut.classList.add('btn-primary');
+      btnSignOut.style.border = 'none';
+      btnSignOut.style.color = '#fff';
+    }
+  }
+
   $('#btnSignOut')?.addEventListener('click', async () => {
-    if (await fcConfirm('Sign out? This securely wipes your local cache.')) {
-      toast('Signing out...');
-      await clearUserCache();
-      resetUserRef();
-      await AppSignOut();
-      location.reload();
+    if (storedUser && storedUser.email) {
+      if (await fcConfirm('Sign out? This securely wipes your local cache.')) {
+        toast('Signing out...');
+        await clearUserCache();
+        resetUserRef();
+        await AppSignOut();
+        sessionStorage.removeItem('fc_login_dismissed');
+        localStorage.removeItem('fc_login_dismissed');
+        location.reload();
+      }
+    } else {
+       // Log In logic for offline users
+       sessionStorage.removeItem('fc_login_dismissed');
+       localStorage.removeItem('fc_login_dismissed');
+       location.reload();
     }
   });
 
@@ -660,6 +720,8 @@ function setupEventListeners() {
           await clearUserCache();
           resetUserRef();
           await AppSignOut();
+          sessionStorage.removeItem('fc_login_dismissed');
+          localStorage.removeItem('fc_login_dismissed');
           location.reload();
       }
   });
@@ -702,14 +764,70 @@ function setupEventListeners() {
     }
   }));
 
-  $$('#settingsPanel select, #settingsPanel input').forEach(el => el.addEventListener('change', async () => {
-    const s = await loadSettings();
-    if (el.id) {
-      if (el.type === 'checkbox') s[el.id] = el.checked;
-      else s[el.id] = el.value;
+  ['settingsGPSContinuous', 'settingLanguage', 'settingUnitSystem', 'settingMapTileUrl', 'settingGBIFEnabled', 'settingItalicSpecies', 'settingAutoSave', 'settingExportGPS', 'settingCoordFormat'].forEach(id => {
+    const el = $('#' + id);
+    if (!el) return;
+    el.addEventListener('change', async () => {
+      const s = await loadSettings();
+      s[id] = el.type === 'checkbox' ? el.checked : el.value;
+      await saveSettings(s);
+      toast('Setting saved', false);
+      
+      if (id === 'settingMapTileUrl') {
+         import('./modules/map.js').then(m => m.setMapLayer(el.value));
+      }
+      if (id === 'settingLanguage') {
+        const confirmed = await fcConfirm('Language changed. The app must restart to apply changes completely. Restart now?');
+        if (confirmed) {
+            window.location.reload();
+        }
+      }
+      if (id === 'settingUnitSystem') {
+          import('./modules/ui.js').then(ui => ui.applyUnitSystem(el.value));
+      }
+    });
+  });
+  // Taxonomy Pack Upload
+  $('#customTaxonomyUpload')?.addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      let parseData = [];
+      if (file.name.endsWith('.json')) {
+        parseData = JSON.parse(text);
+      } else if (file.name.endsWith('.csv')) {
+        const rows = text.split('\n').filter(r => r.trim());
+        const header = rows[0].toLowerCase();
+        let sIdx=0, cIdx=1, fIdx=2;
+        if(header.includes('scientific')) {
+           const hRow = rows[0].split(/[,\t;]/).map(x=>x.trim().toLowerCase());
+           sIdx = hRow.findIndex(x=>x.includes('scientific') || x.includes('name'));
+           cIdx = hRow.findIndex(x=>x.includes('common'));
+           fIdx = hRow.findIndex(x=>x.includes('family'));
+           rows.shift();
+        }
+        parseData = rows.map(r => {
+           const parts = r.split(/[,\t;]/);
+           return {
+              scientific: parts[sIdx] ? parts[sIdx].trim() : "Unknown",
+              common: cIdx >=0 && parts[cIdx] ? parts[cIdx].trim() : "",
+              family: fIdx >=0 && parts[fIdx] ? parts[fIdx].trim() : ""
+           };
+        });
+      }
+      if(parseData.length === 0) throw new Error("Pack is empty or invalid format.");
+      
+      const { idb } = await import('./modules/storage.js');
+      await idb.set('taxpack_custom', JSON.stringify(parseData));
+      toast(`Loaded completely: ${parseData.length} species.`);
+      if($('#customTaxonomyStatus')) $('#customTaxonomyStatus').textContent = `Loaded ${parseData.length} custom flora records. Select "Custom Pack" upon Survey creation.`;
+    } catch(err) {
+      toast("Error parsing taxonomy pack: " + err.message, true);
+    } finally {
+      e.target.value = '';
     }
-    saveSettings(s);
-  }));
+  });
 
   // Help accordion
   document.addEventListener('click', e => {

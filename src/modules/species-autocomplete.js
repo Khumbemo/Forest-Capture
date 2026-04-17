@@ -168,8 +168,18 @@ async function _search(query, max) {
     if (!seen.has(key)) { seen.add(key); results.push({ ...entry, source: 'history' }); }
   }
 
+  // Check if GBIF is manually disabled
+  let gbifEnabled = true;
+  try {
+     const settingsRaw = await idb.get('fc_app_settings');
+     if (settingsRaw) {
+        const settings = JSON.parse(settingsRaw);
+        if (settings.settingGBIFEnabled === false) gbifEnabled = false;
+     }
+  } catch(e) {}
+
   // Priority 2: GBIF Remote API (Fail-safe)
-  if (results.length < max && navigator.onLine) {
+  if (results.length < max && navigator.onLine && gbifEnabled) {
     try {
       const res = await fetch(`https://api.gbif.org/v1/species/suggest?datasetKey=d7dddbf4-2cf0-4f39-9b2a-bb099caae36c&q=${encodeURIComponent(query)}`);
       if (res.ok) {

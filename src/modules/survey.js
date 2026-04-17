@@ -184,6 +184,7 @@ export async function createNewSurvey() {
       date: ($('#surveyDate') ? $('#surveyDate').value : new Date().toISOString().split('T')[0]),
       createdAt: _getLocalISOString(),
       deviceTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      timezoneOffset: new Date().getTimezoneOffset(),
       quadrats: [],
       transects: [],
       environment: null,
