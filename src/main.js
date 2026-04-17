@@ -89,6 +89,8 @@ async function initApp() {
     localStorage.setItem('fc_user', JSON.stringify({ uid: anonId, email: null, anonymous: true, time: Date.now() }));
     // Show login after splash fades, but it's dismissible via "Continue Offline"
     setTimeout(showLogin, 2900);
+  } else if (!storedUser.email || storedUser.anonymous) {
+    setTimeout(showLogin, 2900);
   }
 
   // Initial species/intercept entry
