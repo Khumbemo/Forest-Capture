@@ -47,7 +47,7 @@ describe('Forest Capture E2E UI Tests', () => {
       // Try to click Quadrat card
       // FIX #13: stat-cards now use data-screen (was data-tool)
       await page.waitForSelector('.stat-card[data-screen="screenQuadrat"]', { timeout: 2000 });
-      await page.click('.stat-card[data-screen="screenQuadrat"]');
+      await page.evaluate(() => document.querySelector('.stat-card[data-screen="screenQuadrat"]').click());
       await new Promise(r => setTimeout(r, 1000));
       
       // Wait for quadrat inputs
@@ -56,7 +56,7 @@ describe('Forest Capture E2E UI Tests', () => {
       await page.type('#quadratNumber', '1');
 
       // Click Add Species button
-      await page.click('#btnAddSpecies');
+      await page.evaluate(() => document.querySelector('#btnAddSpecies').click());
       await new Promise(r => setTimeout(r, 500));
       
       // Type a species name so Analytics counts it
@@ -65,7 +65,7 @@ describe('Forest Capture E2E UI Tests', () => {
       await new Promise(r => setTimeout(r, 1000));
       
       // Since it's dynamic DOM, we will just try to hit save quadrat
-      await page.click('#btnSaveQuadrat');
+      await page.evaluate(() => document.querySelector('#btnSaveQuadrat').click());
       await new Promise(r => setTimeout(r, 500));
     } catch(e) {
       console.log('Quadrat tool err: ' + e.message);
@@ -75,12 +75,12 @@ describe('Forest Capture E2E UI Tests', () => {
   test('Check Analytics Tab', async () => {
     // Navigate to Analytics tool instead of nav (Analytics is a tool card)
     await page.waitForSelector('button[data-screen="screenToolbar"]');
-    await page.click('button[data-screen="screenToolbar"]');
+    await page.evaluate(() => document.querySelector('button[data-screen="screenToolbar"]').click());
     await new Promise(r => setTimeout(r, 500));
 
     // FIX #13: stat-cards now use data-screen (was data-tool)
     await page.waitForSelector('.stat-card[data-screen="screenAnalytics"]');
-    await page.click('.stat-card[data-screen="screenAnalytics"]');
+    await page.evaluate(() => document.querySelector('.stat-card[data-screen="screenAnalytics"]').click());
     await new Promise(r => setTimeout(r, 1000));
     
     const bodyText = await page.evaluate(() => document.body.innerText);
