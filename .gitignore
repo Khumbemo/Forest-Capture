@@ -35,3 +35,7 @@ status.txt
 
 # Qodo
 .qodo/
+
+# Local testing scratch
+scratch/
+server_log.txt
