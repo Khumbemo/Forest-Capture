@@ -30,6 +30,13 @@ async function initApp() {
   setupEventListeners();
 
   try {
+    // Request persistent storage to block Safari 7-day wipe
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().then(granted => {
+        if (!granted) console.warn('App: Persistent storage denied or unsupported.');
+      });
+    }
+
     await migrateFromLocalStorage();
     // Move any inline base64 photos/audio out of survey docs into MediaStore
     await migrateInlineMedia();
