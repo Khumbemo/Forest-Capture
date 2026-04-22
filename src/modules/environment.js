@@ -3,7 +3,7 @@
 import { $, toast, fcConfirm } from './ui.js';
 import { Store, loadSettings } from './storage.js';
 import { curPos } from './gps.js';
-import { toMetric, toImperial } from './utils.js';
+import { toMetric, toImperial, getLocalISO } from './utils.js';
 
 export function autoFillEnv() {
   if (curPos.alt !== null) $('#envElevation').value = Math.round(curPos.alt);
@@ -47,7 +47,8 @@ export async function saveEnv() {
     humidity: numOrNull($('#envHumidity').value),
     windSpeed: numOrNull($('#envWindSpeed') ? $('#envWindSpeed').value : ''),
     lightCondition: $('#envLightCondition') ? $('#envLightCondition').value : '',
-    weather: $('#envWeather').value
+    weather: $('#envWeather').value,
+    recordedAt: getLocalISO()
   };
 
   // Scientific Range Validation

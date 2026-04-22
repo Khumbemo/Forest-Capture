@@ -1,0 +1,52 @@
+[
+  {
+    "scientific": "Picea mariana",
+    "common": "Black spruce",
+    "family": "Pinaceae"
+  },
+  {
+    "scientific": "Pinus banksiana",
+    "common": "Jack pine",
+    "family": "Pinaceae"
+  },
+  {
+    "scientific": "Abies balsamea",
+    "common": "Balsam fir",
+    "family": "Pinaceae"
+  },
+  {
+    "scientific": "Populus tremuloides",
+    "common": "Trembling aspen",
+    "family": "Salicaceae"
+  },
+  {
+    "scientific": "Betula papyrifera",
+    "common": "Paper birch",
+    "family": "Betulaceae"
+  },
+  {
+    "scientific": "Larix laricina",
+    "common": "Tamarack",
+    "family": "Pinaceae"
+  },
+  {
+    "scientific": "Picea glauca",
+    "common": "White spruce",
+    "family": "Pinaceae"
+  },
+  {
+    "scientific": "Alnus incana",
+    "common": "Speckled alder",
+    "family": "Betulaceae"
+  },
+  {
+    "scientific": "Salix bebbiana",
+    "common": "Bebb willow",
+    "family": "Salicaceae"
+  },
+  {
+    "scientific": "Tsuga canadensis",
+    "common": "Eastern hemlock",
+    "family": "Pinaceae"
+  }
+]

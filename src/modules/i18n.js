@@ -462,6 +462,7 @@ let activeLang = 'en';
 export function setLanguage(lang) {
     if (dicts[lang] || lang === 'en') {
         activeLang = lang;
+        document.documentElement.lang = lang;
     }
 }
 

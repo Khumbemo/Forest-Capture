@@ -1,0 +1,52 @@
+[
+  {
+    "scientific": "Hevea brasiliensis",
+    "common": "Pará rubber tree",
+    "family": "Euphorbiaceae"
+  },
+  {
+    "scientific": "Bertholletia excelsa",
+    "common": "Brazil nut",
+    "family": "Lecythidaceae"
+  },
+  {
+    "scientific": "Swietenia macrophylla",
+    "common": "Big-leaf mahogany",
+    "family": "Meliaceae"
+  },
+  {
+    "scientific": "Theobroma cacao",
+    "common": "Cacao tree",
+    "family": "Malvaceae"
+  },
+  {
+    "scientific": "Cecropia peltata",
+    "common": "Trumpet tree",
+    "family": "Urticaceae"
+  },
+  {
+    "scientific": "Euterpe oleracea",
+    "common": "Açaí palm",
+    "family": "Arecaceae"
+  },
+  {
+    "scientific": "Ceiba pentandra",
+    "common": "Kapok tree",
+    "family": "Malvaceae"
+  },
+  {
+    "scientific": "Dipteryx odorata",
+    "common": "Tonka bean",
+    "family": "Fabaceae"
+  },
+  {
+    "scientific": "Cedrela odorata",
+    "common": "Spanish cedar",
+    "family": "Meliaceae"
+  },
+  {
+    "scientific": "Manilkara bidentata",
+    "common": "Balatá",
+    "family": "Sapotaceae"
+  }
+]

@@ -2,6 +2,7 @@
 
 import { $, $$, toast } from './ui.js';
 import { Store } from './storage.js';
+import { getLocalISO } from './utils.js';
 
 const cbiL = { substrate: ['cbiSubLitter', 'cbiSubDuff', 'cbiSubSoil'], herbaceous: ['cbiHerbFreq', 'cbiHerbMort'], shrub: ['cbiShrubMort', 'cbiShrubChar'], intermediate: ['cbiIntChar', 'cbiIntMort'], overstory: ['cbiOverScorch', 'cbiOverMort', 'cbiOverChar'] };
 
@@ -51,7 +52,8 @@ export async function saveDisturbCBI() {
       recency: $('#distHumanRecency')?$('#distHumanRecency').value:'', 
       extent: $('#distHumanExtent')?$('#distHumanExtent').value:''
     },
-    notes: $('#distNotes').value.trim()
+    notes: $('#distNotes').value.trim(),
+    recordedAt: getLocalISO()
   };
   s.cbi = {};
   Object.entries(cbiL).forEach(([l, ids]) => {

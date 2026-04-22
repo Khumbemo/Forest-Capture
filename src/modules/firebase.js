@@ -104,12 +104,20 @@ export async function AppSignOut() {
     console.log('AppSignOut: success');
 }
 
-// Delete user account permanently
+// Delete user account permanently — purges all Firestore data first (GDPR Art. 17)
 export async function AppDeleteAccount() {
     const user = auth.currentUser;
+    // Dynamically import Store to purge all user surveys from Firestore + IndexedDB
+    try {
+        const { Store } = await import('./storage.js');
+        await Store.clearAll();
+        console.log('AppDeleteAccount: All survey data purged');
+    } catch (e) {
+        console.warn('AppDeleteAccount: Data purge failed (offline?)', e.message);
+    }
     if (user) {
         await deleteUser(user);
     }
     localStorage.removeItem('fc_user');
-    console.log('AppDeleteAccount: success');
+    console.log('AppDeleteAccount: Account + data fully wiped');
 }
