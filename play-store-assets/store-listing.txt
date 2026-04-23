@@ -1,0 +1,28 @@
+App Name (Max 30 chars):
+Forest Capture
+
+Short Description (Max 80 chars):
+Offline ecological field survey tool. GPS, analytics, quadrats, & cloud sync.
+
+Full Description (Max 4000 chars):
+Forest Capture is a research-grade, offline-first ecological field data collection tool designed specifically for foresters, ecologists, and field researchers. Whether you are conducting carbon stock assessments deep in the Amazon, biodiversity surveys in Nagaland, or timber inventories in Canada, Forest Capture replaces paper forms with a powerful, secure, and automated digital workflow.
+
+KEY FEATURES
+🌿 10 Specialized Survey Tools: Complete modules for Quadrat sampling, Transects (Belt, Point, Line-Intercept), Environmental/Topographical data, Disturbance assessments (including CBI scoring), and Germplasm collection.
+📍 Automated GPS & Weather: Instantly pulls precise coordinates, altitude, and live meteorological data.
+📊 On-Device Analytics: Instantly calculates biodiversity indices (Shannon-Wiener, Simpson, Margalef, etc.), Basal Area, Stand Density, and Carbon Stock estimations offline.
+🌳 Regional Taxonomy Packs: Supports pre-loaded offline flora dictionaries (e.g., India-Nagaland, Tropics-Amazon, Boreal-Canada) for rapid, error-free species autocomplete.
+📸 Media & E-Herbarium: Capture geotagged field photos, dictate voice notes, and build digital voucher specimens directly linked to your plots.
+☁️ Offline-First & Cloud Sync: Collect data without cellular service. Sync to the cloud automatically when you return to base camp. 
+📤 Universal Export: Download your data instantly as CSV (Excel/R/SPSS), JSON, GPX waypoints, or full HTML summary reports.
+
+PRIVACY & SECURITY
+Fully GDPR compliant. We respect your research data. Your surveys are stored securely, encrypted in transit and at rest. You have the full right to export or permanently erase your data at any time.
+
+Built by field researchers, for field researchers. Leave the clipboard behind and digitize your forest surveys with Forest Capture.
+
+--
+Categorization:
+App Category: Education (or Productivity / Tools)
+Tags: Ecology, Forestry, Research, GPS, Science
+Content Rating: Everyone (No violence, no restricted content)
