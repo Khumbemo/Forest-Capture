@@ -1,5 +1,5 @@
 // src/modules/ui.js
-import { t } from './i18n.js';
+import { t, walkDOMAndTranslate } from './i18n.js';
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 
@@ -152,6 +152,9 @@ export function switchScreen(id, callbacks = {}, updateHistory = true) {
   window.scrollTo({ top: 0, behavior: isSmall ? 'auto' : 'smooth' });
 
   if (callbacks[id]) callbacks[id]();
+
+  // Re-translate any dynamically rendered content in the new screen
+  setTimeout(() => walkDOMAndTranslate(), 50);
 }
 
 /**

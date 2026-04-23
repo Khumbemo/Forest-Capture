@@ -39,3 +39,7 @@ status.txt
 # Local testing scratch
 scratch/
 server_log.txt
+
+# Keystores
+*.jks
+android/app/release.jks

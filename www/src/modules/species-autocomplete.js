@@ -7,6 +7,7 @@
 import { Store, idb } from './storage.js';
 
 const _learnedSpecies = new Map(); // scientific name → entry object
+const _gbifCache = new Map(); // query string → cached GBIF results
 
 export function loadSurveyHistory(surveys) {
   for (const survey of (surveys || [])) {
@@ -70,7 +71,7 @@ export function attachAutocomplete(inputId, options = {}) {
         _select(input, entry, dropdown, onSelect);
       });
       _show(dropdown);
-    }, 300);
+    }, 600);
   });
 
   // ── Keyboard navigation ───────────────────────────────────────────────────
@@ -178,33 +179,46 @@ async function _search(query, max) {
      }
   } catch(e) {}
 
-  // Priority 2: GBIF Remote API (Fail-safe)
+  // Priority 3: GBIF Remote API (Fail-safe)
   if (results.length < max && navigator.onLine && gbifEnabled) {
-    try {
-      const res = await fetch(`https://api.gbif.org/v1/species/suggest?datasetKey=d7dddbf4-2cf0-4f39-9b2a-bb099caae36c&q=${encodeURIComponent(query)}`);
-      if (res.ok) {
-        const data = await res.json();
-        for (const item of data) {
-          if (results.length >= max) break;
-          const scientific = item.canonicalName || item.scientificName;
-          if (!scientific || item.rank !== 'SPECIES') continue;
-          
-          const key = scientific.toLowerCase();
-          if (!seen.has(key)) {
-            seen.add(key);
-            results.push({
-              scientific: scientific,
-              common: '',
-              family: item.family || '',
-              genus: item.genus || '',
-              status: item.status || 'ACCEPTED',
-              source: 'gbif'
-            });
-          }
-        }
+    if (_gbifCache.has(q)) {
+      // Use cached GBIF result
+      for (const item of _gbifCache.get(q)) {
+        if (results.length >= max) break;
+        const key = item.scientific.toLowerCase();
+        if (!seen.has(key)) { seen.add(key); results.push(item); }
       }
-    } catch (e) {
-      console.warn('GBIF API fetch failed, falling back to local only', e);
+    } else {
+      try {
+        const res = await fetch(`https://api.gbif.org/v1/species/suggest?datasetKey=d7dddbf4-2cf0-4f39-9b2a-bb099caae36c&q=${encodeURIComponent(query)}`);
+        if (res.ok) {
+          const data = await res.json();
+          const gbifFetchResults = [];
+          for (const item of data) {
+            const scientific = item.canonicalName || item.scientificName;
+            if (!scientific || item.rank !== 'SPECIES') continue;
+            
+            const key = scientific.toLowerCase();
+            const formatted = {
+                scientific: scientific,
+                common: '',
+                family: item.family || '',
+                genus: item.genus || '',
+                status: item.status || 'ACCEPTED',
+                source: 'gbif'
+            };
+            gbifFetchResults.push(formatted);
+            if (results.length < max && !seen.has(key)) {
+              seen.add(key);
+              results.push(formatted);
+            }
+          }
+          // Cache the hit to spare the GBIF server down the road
+          _gbifCache.set(q, gbifFetchResults);
+        }
+      } catch (e) {
+        console.warn('GBIF API fetch failed, falling back to local only', e);
+      }
     }
   }
 

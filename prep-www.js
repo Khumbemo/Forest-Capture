@@ -16,7 +16,8 @@ const copyFiles = [
 
 const copyDirs = [
   'src',
-  'vendor'
+  'vendor',
+  'data'
 ];
 
 if (fs.existsSync(www)) {

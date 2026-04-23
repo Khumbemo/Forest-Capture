@@ -30,6 +30,13 @@ async function initApp() {
   setupEventListeners();
 
   try {
+    // Request persistent storage to block Safari 7-day wipe
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().then(granted => {
+        if (!granted) console.warn('App: Persistent storage denied or unsupported.');
+      });
+    }
+
     await migrateFromLocalStorage();
     // Move any inline base64 photos/audio out of survey docs into MediaStore
     await migrateInlineMedia();
@@ -427,6 +434,7 @@ function setupEventListeners() {
     const email = $('#loginEmail')?.value.trim();
     const pwd   = $('#loginPassword')?.value;
     if (!email || !pwd) { setLoginError('Please enter your email and password.'); return; }
+    if (!$('#gdprConsent')?.checked) { setLoginError('You must agree to the Privacy Policy to continue.'); return; }
     setLoginError('');
     _authAttempts++;
     $('#btnSignIn').disabled = true;
@@ -454,6 +462,7 @@ function setupEventListeners() {
     const pwd   = $('#loginPassword')?.value;
     if (!email || !pwd) { setLoginError('Please enter your email and password.'); return; }
     if (pwd.length < 6)  { setLoginError('Password must be at least 6 characters.'); return; }
+    if (!$('#gdprConsent')?.checked) { setLoginError('You must agree to the Privacy Policy to register.'); return; }
     setLoginError('');
     _authAttempts++;
     $('#btnRegister').disabled = true;
@@ -835,5 +844,15 @@ function setupEventListeners() {
     if (!title) return;
     const item = title.closest('.help-item');
     if (item) item.classList.toggle('open');
+  });
+
+  // Privacy Policy Modal
+  $('#linkPrivacyPolicy')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    $('#modalPrivacyPolicy')?.classList.add('show');
+  });
+  $('#btnAcceptPrivacy')?.addEventListener('click', () => {
+    $('#modalPrivacyPolicy')?.classList.remove('show');
+    if ($('#gdprConsent')) $('#gdprConsent').checked = true;
   });
 }

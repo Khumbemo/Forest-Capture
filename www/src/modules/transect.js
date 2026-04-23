@@ -4,7 +4,7 @@ import { $, $$, toast, esc, fcConfirm } from './ui.js';
 import { Store, loadSettings } from './storage.js';
 import { attachAutocomplete } from './species-autocomplete.js';
 import { fillGPSField } from './gps.js';
-import { toMetric, toImperial } from './utils.js';
+import { toMetric, toImperial, getLocalISO } from './utils.js';
 
 let intCount = 0;
 
@@ -41,6 +41,7 @@ export async function saveTransect() {
     bearing: parseFloat($('#transectBearing').value) || 0,
     slope: parseFloat($('#transectSlope')?.value) || 0,
     measDate: $('#transectDate')?.value || new Date().toISOString().split('T')[0],
+    recordedAt: getLocalISO(),
     observer: $('#transectObserver')?.value.trim() || '',
     startGPS: $('#transectStartGPS').value,
     endGPS: $('#transectEndGPS').value,

@@ -1,7 +1,7 @@
 import { $, $$, toast, esc, fcConfirm } from './ui.js';
 import { Store, loadSettings } from './storage.js';
 import { fillGPSField } from './gps.js';
-import { toMetric, toImperial } from './utils.js';
+import { toMetric, toImperial, getLocalISO } from './utils.js';
 import { attachAutocomplete } from './species-autocomplete.js';
 
 let spCount = 0;
@@ -41,6 +41,7 @@ export async function saveQuadrat() {
     shape: $('#quadratShape').value,
     vegType: $('#quadratVegType') ? $('#quadratVegType').value : '',
     measDate: $('#quadratDate')?.value || new Date().toISOString().split('T')[0],
+    recordedAt: getLocalISO(),
     observer: $('#quadratObserver')?.value.trim() || '',
     gps: $('#quadratGPS').value,
     corners: {

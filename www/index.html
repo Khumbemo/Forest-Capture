@@ -81,6 +81,14 @@
           <input type="password" id="loginPassword" placeholder="Your password" class="login-input" autocomplete="current-password" />
         </div>
         <div id="loginError" style="color: var(--red, #ef4444); font-size: 0.8rem; min-height: 1.2em; margin: 8px 0; text-align: center;"></div>
+        
+        <div class="login-form-group gdpr-consent" style="margin: 12px 0; display: flex; align-items: flex-start; gap: 8px; font-size: 0.8rem; color: var(--text-base);">
+          <input type="checkbox" id="gdprConsent" style="margin-top: 3px;" />
+          <label for="gdprConsent">
+            I agree to the <a href="#" id="linkPrivacyPolicy" style="color: var(--emerald); text-decoration: underline;">Privacy Policy</a> and consent to the fully stated data processing. I understand I have the Right to Erasure.
+          </label>
+        </div>
+
         <div style="display: flex; gap: 10px; margin-top: 4px;">
           <button class="btn btn-primary" style="flex: 1;" id="btnSignIn">Sign In</button>
           <button class="btn btn-ghost" style="flex: 1; border: 1px solid rgba(16,185,129,0.4);" id="btnRegister">Register</button>
@@ -91,9 +99,6 @@
         <div class="login-footer" style="margin-top: 12px;">
           <p class="login-terms">
             Sign in to sync surveys across devices. The app works fully offline.
-          </p>
-          <p class="login-privacy" style="font-size: 0.7rem; color: var(--text-muted); margin-top: 8px;">
-            By using Forest Capture, you agree to our Terms of Service. Essential session cookies are used for authentication. All synced data belongs to the researcher.
           </p>
         </div>
       </div>
@@ -222,6 +227,8 @@
             <select id="surveyTaxonomyPack">
               <option value="">None (Free Text)</option>
               <option value="india-nagaland">India — Nagaland</option>
+              <option value="boreal-canada">Boreal — Canada</option>
+              <option value="tropics-amazon">Tropics — Amazon</option>
               <option value="custom">Custom Pack (Uploaded)</option>
             </select>
           </div>
@@ -959,6 +966,20 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="modalPrivacyPolicy" style="z-index: 10000;">
+    <div class="modal-card" style="max-width: 600px; text-align: left; max-height: 80vh; overflow-y: auto;">
+      <h3 style="margin-bottom: 12px; font-size: 1.2rem;">Privacy Policy & GDPR Consent</h3>
+      <div style="font-size: 0.85rem; line-height: 1.5; color: var(--text-base);">
+        <p><strong>1. Data Collection & Processing</strong><br>Forest Capture collects ecological field data (species, locations, images) strictly for your scientific research. If you create an account, we store your email address for authentication and sync purposes only.</p>
+        <p><strong>2. Local Storage & Cloud Sync</strong><br>Data is primarily stored locally on your device (IndexedDB). If authenticated, it synchronizes with Firebase Cloud Firestore. You retain raw ownership of all collected data.</p>
+        <p><strong>3. Right to Erasure (Article 17)</strong><br>You have the right to request full deletion of your account and all associated scientific data stored in the cloud. You can permanently delete your account from the <strong>Settings &gt; Account</strong> menu (Action: "DELETE").</p>
+        <p><strong>4. Telemetry & Analytics</strong><br>Basic anonymized crash logs and offline/online telemetry statuses may be collected to improve application stability in remote regions.</p>
+      </div>
+      <div class="modal-actions" style="margin-top: 20px;">
+        <button class="btn btn-primary" id="btnAcceptPrivacy" style="width: 100%;">I Understand</button>
+      </div>
+    </div>
+  </div>
 
   <div class="toast" id="toast"></div>
   <div class="brightness-overlay" id="brightnessOverlay"></div>

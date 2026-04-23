@@ -85,6 +85,37 @@ export function toMetric(val, type) {
   return v;
 }
 
+// ─── Global Timestamp Helpers (ISO 8601 + UTC offset) ─────────────────────
+/**
+ * Returns a full ISO 8601 string with the local UTC offset, e.g.
+ * "2026-04-22T19:45:00+05:30"
+ */
+export function getLocalISO() {
+  const d = new Date();
+  const tzo = -d.getTimezoneOffset();
+  const sign = tzo >= 0 ? '+' : '-';
+  const pad = n => (n < 10 ? '0' : '') + n;
+  return d.getFullYear()
+    + '-' + pad(d.getMonth() + 1)
+    + '-' + pad(d.getDate())
+    + 'T' + pad(d.getHours())
+    + ':' + pad(d.getMinutes())
+    + ':' + pad(d.getSeconds())
+    + sign + pad(Math.floor(Math.abs(tzo) / 60))
+    + ':' + pad(Math.abs(tzo) % 60);
+}
+
+/** Returns the device's IANA timezone name, e.g. "Asia/Kolkata" */
+export function getDeviceTimezone() {
+  try { return Intl.DateTimeFormat().resolvedOptions().timeZone; }
+  catch (_) { return 'UTC'; }
+}
+
+/** Returns the UTC offset in minutes (same as Date.getTimezoneOffset()) */
+export function getUTCOffsetMinutes() {
+  return new Date().getTimezoneOffset();
+}
+
 export function toImperial(val, type) {
   if (val == null || val === '') return null;
   const v = parseFloat(val);
