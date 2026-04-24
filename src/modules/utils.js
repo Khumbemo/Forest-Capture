@@ -108,7 +108,7 @@ export function getLocalISO() {
 /** Returns the device's IANA timezone name, e.g. "Asia/Kolkata" */
 export function getDeviceTimezone() {
   try { return Intl.DateTimeFormat().resolvedOptions().timeZone; }
-  catch (_) { return 'UTC'; }
+  catch { return 'UTC'; }
 }
 
 /** Returns the UTC offset in minutes (same as Date.getTimezoneOffset()) */

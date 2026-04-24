@@ -199,7 +199,6 @@ function _bindPanelEvents(map) {
   const closeBtn    = document.getElementById('offlinePanelClose');
   const zoomSlider  = document.getElementById('offlineZoomSlider');
   const zoomVal     = document.getElementById('offlineZoomVal');
-  const tileCount   = document.getElementById('offlineTileCount');
   const downloadBtn = document.getElementById('offlineDownloadBtn');
   const cancelBtn   = document.getElementById('offlineCancelBtn');
   const clearBtn    = document.getElementById('offlineClearBtn');

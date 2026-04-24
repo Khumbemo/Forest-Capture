@@ -144,6 +144,52 @@ export async function runComparison() {
   document.getElementById('compareResults')?.scrollIntoView({ behavior: 'smooth' });
 }
 
+/**
+ * Simplified IVI calculation for a specific species in a survey.
+ */
+function _calculateIVIForSpecies(survey, targetSpecies, totalN) {
+  if (!survey.quadrats?.length || totalN === 0) return 0;
+
+  const nQuads = survey.quadrats.length;
+  const target = targetSpecies.toLowerCase().trim();
+  const speciesStats = new Map();
+  let totalBasalArea = 0;
+
+  for (const q of survey.quadrats) {
+    const seenInQuad = new Set();
+    for (const sp of (q.species || [])) {
+      const name = sp.name?.toLowerCase().trim();
+      if (!name || name === '—') continue;
+
+      const count = parseInt(sp.abundance) || 0;
+      const dbh = parseFloat(sp.dbh) || 0;
+      const ba = Math.PI * Math.pow(dbh / 200, 2) * count;
+
+      if (!speciesStats.has(name)) speciesStats.set(name, { n: 0, f: 0, ba: 0 });
+      const stats = speciesStats.get(name);
+      stats.n += count;
+      stats.ba += ba;
+      if (!seenInQuad.has(name)) {
+        stats.f += 1;
+        seenInQuad.add(name);
+      }
+      totalBasalArea += ba;
+    }
+  }
+
+  let sumFreq = 0;
+  speciesStats.forEach(s => sumFreq += (s.f / nQuads));
+
+  const stats = speciesStats.get(target);
+  if (!stats) return 0;
+
+  const relDensity = (stats.n / totalN) * 100;
+  const relFreq    = sumFreq > 0 ? ((stats.f / nQuads) / sumFreq) * 100 : 0;
+  const relDom     = totalBasalArea > 0 ? (stats.ba / totalBasalArea) * 100 : 0;
+
+  return parseFloat((relDensity + relFreq + relDom).toFixed(2));
+}
+
 // ─── Index calculations (Shannon, Simpson, Pielou, richness) ─────────────────
 
 function _calculateIndices(survey) {

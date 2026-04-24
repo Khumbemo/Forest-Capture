@@ -273,6 +273,27 @@ async function withTimeout(promise, timeoutMs, defaultVal = null) {
   });
 }
 
+/**
+ * withRetry()
+ *
+ * Wraps an async function with exponential backoff retry logic.
+ */
+async function withRetry(fn, maxRetries = 3, initialDelay = 1000) {
+  let lastErr;
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      console.warn(`withRetry: Attempt ${i + 1} failed. Retrying...`, err.message);
+      if (i < maxRetries - 1) {
+        await new Promise(res => setTimeout(res, initialDelay * Math.pow(2, i)));
+      }
+    }
+  }
+  throw lastErr;
+}
+
 export const Store = {
   async getSurveys() {
     console.log('Store.getSurveys: start');
@@ -400,15 +421,15 @@ export const Store = {
 
       // We don't necessarily want to wait for the server acknowledgment if persistence is on.
       // Firestore's setDoc with persistence enabled resolves when written to local cache.
-      const p = setDoc(surveyDocRef, s);
+      setDoc(surveyDocRef, s);
 
       // Update active session locally first
       await idb.set(await _getActiveCacheKey(), s.id);
 
       // Attempt background Firestore update for activeId
-      setDoc(doc(collection(userDocRef, 'settings'), 'activeId'), { id: s.id }).catch(e => {
-        console.warn('Store.add: Background activeId sync failed', e);
-      });
+    withRetry(() => setDoc(doc(collection(userDocRef, 'settings'), 'activeId'), { id: s.id })).catch(() => {
+      console.warn('Store.add: Background activeId sync failed after retries');
+    });
 
       console.log('Store.add: Survey written to local cache');
       return true;
@@ -425,9 +446,9 @@ export const Store = {
     await _addSurveyToLocalCache(s);
     try {
       const userDocRef = await getUserRef();
-      setDoc(doc(collection(userDocRef, 'surveys'), s.id), s);
+      await withRetry(() => setDoc(doc(collection(userDocRef, 'surveys'), s.id), s));
     } catch (e) {
-      console.warn('Store.update: Firestore write failed (offline?)', e.message);
+      console.warn('Store.update: Firestore write failed after retries', e.message);
     }
   },
 
@@ -491,7 +512,7 @@ async function _loadWpsFromLocal() {
   try {
     const raw = await idb.get(await _getWpsCacheKey());
     return raw ? JSON.parse(raw) : [];
-  } catch (e) { return []; }
+  } catch { return []; }
 }
 
 export async function getWps() {
@@ -522,7 +543,7 @@ export async function saveWps(wps) {
 
 export async function saveSettings(s) {
   // Cache locally for offline access
-  try { await idb.set('fc_app_settings', JSON.stringify(s)); } catch (_) {}
+  try { await idb.set('fc_app_settings', JSON.stringify(s)); } catch {}
   try {
     const userDocRef = await getUserRef();
     await setDoc(doc(collection(userDocRef, 'settings'), 'app_settings'), s);
@@ -540,7 +561,7 @@ export async function loadSettings() {
     console.log('loadSettings: done');
     if (docSnap.exists()) {
       const data = docSnap.data();
-      try { await idb.set('fc_app_settings', JSON.stringify(data)); } catch (_) {}
+      try { await idb.set('fc_app_settings', JSON.stringify(data)); } catch {}
       return data;
     }
   } catch (e) {
@@ -550,7 +571,7 @@ export async function loadSettings() {
   try {
     const raw = await idb.get('fc_app_settings');
     return raw ? JSON.parse(raw) : {};
-  } catch (_) { return {}; }
+  } catch { return {}; }
 }
 
 export async function getTheme() {
@@ -562,7 +583,7 @@ export async function getTheme() {
     console.log('getTheme: done');
     if (docSnap.exists()) {
       const val = docSnap.data().value;
-      try { await idb.set('fc_theme', val); } catch (_) {}
+      try { await idb.set('fc_theme', val); } catch {}
       return val;
     }
   } catch (e) {
@@ -572,7 +593,7 @@ export async function getTheme() {
 }
 
 export async function setTheme(t) {
-  try { await idb.set('fc_theme', t); } catch (_) {}
+  try { await idb.set('fc_theme', t); } catch {}
   try {
     const userDocRef = await getUserRef();
     setDoc(doc(collection(userDocRef, 'settings'), 'theme'), { value: t });
@@ -590,7 +611,7 @@ export async function getBrightness() {
     console.log('getBrightness: done');
     if (docSnap.exists()) {
       const val = docSnap.data().value;
-      try { await idb.set('fc_brightness', String(val)); } catch (_) {}
+      try { await idb.set('fc_brightness', String(val)); } catch {}
       return val;
     }
   } catch (e) {
@@ -601,7 +622,7 @@ export async function getBrightness() {
 }
 
 export async function setBrightness(v) {
-  try { await idb.set('fc_brightness', String(v)); } catch (_) {}
+  try { await idb.set('fc_brightness', String(v)); } catch {}
   try {
     const userDocRef = await getUserRef();
     setDoc(doc(collection(userDocRef, 'settings'), 'brightness'), { value: v });

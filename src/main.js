@@ -1,7 +1,7 @@
 // src/main.js
 
-import { t, setLanguage, walkDOMAndTranslate } from './modules/i18n.js';
-import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot, isOnline, updateConnectivityBanner, fcConfirm, fcPrompt } from './modules/ui.js';
+import { setLanguage, walkDOMAndTranslate } from './modules/i18n.js';
+import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot, updateConnectivityBanner, fcConfirm, fcPrompt } from './modules/ui.js';
 import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, resetUserRef, migrateFromLocalStorage, migrateInlineMedia, clearUserCache } from './modules/storage.js';
 import { startGPS, fmtCoords, curPos } from './modules/gps.js';
 import { fetchWeather } from './modules/weather.js';
@@ -9,18 +9,17 @@ import { refreshDataRecords, createNewSurvey, populateSurveySelector } from './m
 import { SYMBOLS } from './modules/symbols.js';
 import { initMap, locateMe, setMapLayer, addWaypoint } from './modules/map.js';
 import { refreshWpList } from './modules/waypoints.js';
-import { addSpeciesEntry, saveQuadrat, refreshQuadratTable, init as initQuadrat } from './modules/quadrat.js';
-import { addIntercept, saveTransect, refreshTransectTable, init as initTransect } from './modules/transect.js';
-import { autoFillEnv, saveEnv, loadEnvData, estimateCanopy, init as initEnv } from './modules/environment.js';
-import { recalcCBI, saveDisturbCBI, loadDistData, loadCBIData, init as initDisturb } from './modules/disturbance.js';
-import { refreshPhotos, handlePhotoInput, startRecording, stopRecording, refreshAudio, init as initMedia } from './modules/media.js';
-import { refreshNotes, addNote, init as initNotes } from './modules/notes.js';
+import { addSpeciesEntry, refreshQuadratTable, init as initQuadrat } from './modules/quadrat.js';
+import { addIntercept, refreshTransectTable, init as initTransect } from './modules/transect.js';
+import { loadEnvData, init as initEnv } from './modules/environment.js';
+import { loadDistData, loadCBIData, init as initDisturb } from './modules/disturbance.js';
+import { refreshPhotos, refreshAudio, init as initMedia } from './modules/media.js';
+import { refreshNotes, init as initNotes } from './modules/notes.js';
 import { refreshAnalytics } from './modules/analytics.js';
 import { refreshPreview, exportSurveyCSV, exportSurveyJSON, exportAllSurveysCSV, exportGPX, generateReport, backupAll, restoreData } from './modules/export.js';
-import { initCompareScreen, runComparison, exportComparisonJSON, init as initCompare } from './modules/analytics-compare.js';
-import { loadSurveyHistory } from './modules/species-autocomplete.js';
-import { initHerbarium, handleHerbariumPhoto, saveHerbarium, init as initHerbariumListeners } from './modules/herbarium.js';
-import { init as initGermplasm, refreshGermplasmUI, onScreenEnter as germplasmEnter } from './modules/germplasm.js';
+import { initCompareScreen, init as initCompare } from './modules/analytics-compare.js';
+import { initHerbarium, init as initHerbariumListeners } from './modules/herbarium.js';
+import { init as initGermplasm, onScreenEnter as germplasmEnter } from './modules/germplasm.js';
 import { ensureAuth, EmailLogin, EmailSignup, AppSignOut, AppDeleteAccount } from './modules/firebase.js';
 
 // ===== INIT =====
@@ -55,8 +54,7 @@ async function initApp() {
       applyBrightness(100);
     }
 
-    
-    const surveys = await Store.getSurveys();
+    await Store.getSurveys();
 
     await populateSurveySelector();
 

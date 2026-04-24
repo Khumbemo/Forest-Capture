@@ -69,7 +69,7 @@ export function startGPS(onUpdate, onError) {
     curPos.acc = p.coords.accuracy;
 
     if (onUpdate) onUpdate(curPos);
-  }, e => {
+  }, () => {
     if (onError) onError('NO SIGNAL');
     setHeaderWeatherIcon(navigator.onLine ? 'online' : 'offline');
   }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 });
