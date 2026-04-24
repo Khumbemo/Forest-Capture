@@ -1,6 +1,6 @@
 // src/modules/map.js
 
-import { $, toast, esc, fcPrompt } from './ui.js';
+import { toast, esc, fcPrompt } from './ui.js';
 import { curPos } from './gps.js';
 import { getWps, saveWps, loadSettings } from './storage.js';
 import { initOfflineMapUI } from './map-offline.js';
@@ -34,7 +34,7 @@ export async function initMap() {
 
 export async function refreshMapWps() {
   if (!map || typeof L === 'undefined') return;
-  wpMarkers.forEach(m => { try { map.removeLayer(m); } catch (_) { } });
+  wpMarkers.forEach(m => { try { map.removeLayer(m); } catch { } });
   wpMarkers = [];
   const wps = await getWps();
   wps.forEach(wp => {

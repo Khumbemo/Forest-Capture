@@ -35,13 +35,13 @@ export async function refreshPhotos() {
           try {
             const storageRef = ref(storage, p.path);
             await deleteObject(storageRef);
-          } catch(e) {}
+          } catch {}
         }
         // Delete from native filesystem
         if (p.localUri && NativeFS) {
           try {
             await NativeFS.deleteFile({ path: p.localUri });
-          } catch(e) {}
+          } catch {}
         }
         // Delete from IndexedDB MediaStore
         if (p.mediaId) {
@@ -263,7 +263,7 @@ export async function startRecording(onStart) {
     };
     mediaRec.start();
     if (onStart) onStart();
-  } catch (e) {
+  } catch {
     toast('Mic unavailable', true);
   }
 }
@@ -316,7 +316,7 @@ export async function refreshAudio() {
           await deleteObject(storageRef);
         }
         if (note && note.localUri && NativeFS) {
-          try { await NativeFS.deleteFile({ path: note.localUri }); } catch(e) {}
+          try { await NativeFS.deleteFile({ path: note.localUri }); } catch {}
         }
       } catch (err) {
         console.warn('Audio storage delete failed', err);

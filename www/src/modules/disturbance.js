@@ -22,7 +22,8 @@ export function recalcCBI() {
   const c = cnt ? tot / cnt : 0;
   const cs = $('#cbiCompositeScore'), cf = $('#cbiScoreFill'), cl = $('#cbiSeverityClass');
   if (cs) cs.textContent = c.toFixed(2);
-  // FIX #8: Clamp to 100% so bar never overflows its container.\n  if (cf) cf.style.width = Math.min(100, (c / 3) * 100) + '%';
+  // FIX #8: Clamp to 100% so bar never overflows its container.
+  if (cf) cf.style.width = Math.min(100, (c / 3) * 100) + '%';
   
   if (cl) {
     let severity = 'Unburned';

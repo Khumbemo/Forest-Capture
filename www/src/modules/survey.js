@@ -1,6 +1,6 @@
 // src/modules/survey.js
 
-import { $, $$, toast, esc, switchScreen } from './ui.js';
+import { $, toast, esc, switchScreen } from './ui.js';
 import { Store } from './storage.js';
 import { fmtCoords, curPos } from './gps.js';
 import { getLocalISO, getDeviceTimezone, getUTCOffsetMinutes } from './utils.js';
@@ -24,27 +24,31 @@ export async function populateSurveySelector() {
   selector.innerHTML = html;
 }
 
+let _allDataRecords = [];
+let _recordsPerPage = 50;
+let _currentPage = 1;
+
 export async function refreshDataRecords() {
   const surveys = await Store.getSurveys();
   const list = $('#dataRecordsList');
   if (!list) return;
   const filterType = $('#dataFilterType') ? $('#dataFilterType').value : 'all';
 
-  let allRecords = [];
+  _allDataRecords = [];
   surveys.forEach(sv => {
     const svName = sv.name || 'Unnamed';
     const svDate = sv.date || '';
     // Quadrats
     if (sv.quadrats && sv.quadrats.length) {
       sv.quadrats.forEach((q, qi) => {
-        allRecords.push({ type: 'quadrat', icon: 'Q', label: `Quadrat #${q.number || qi + 1}`, detail: `${q.species ? q.species.length : 0} species · ${q.size ? q.size + 'm²' : 'Area unspecified'}`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
+        _allDataRecords.push({ type: 'quadrat', icon: 'Q', label: `Quadrat #${q.number || qi + 1}`, detail: `${q.species ? q.species.length : 0} species · ${q.size ? q.size + 'm²' : 'Area unspecified'}`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
       });
     }
     // Transects
     if (sv.transects && sv.transects.length) {
       sv.transects.forEach((t, ti) => {
         const dimStr = (t.length && t.width) ? `${t.length}m × ${t.width}m` : 'Dimensions unspecified';
-        allRecords.push({ type: 'transect', icon: 'T', label: `Transect #${t.number || ti + 1}`, detail: `${dimStr} · ${t.intercepts ? t.intercepts.length : 0} intercepts`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
+        _allDataRecords.push({ type: 'transect', icon: 'T', label: `Transect #${t.number || ti + 1}`, detail: `${dimStr} · ${t.intercepts ? t.intercepts.length : 0} intercepts`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
       });
     }
     // Environment
@@ -54,7 +58,7 @@ export async function refreshDataRecords() {
       if (sv.environment.slope) envDetails.push(`Slope: ${sv.environment.slope}°`);
       if (sv.environment.weather) envDetails.push(sv.environment.weather);
       const envDetailStr = envDetails.length ? envDetails.join(' · ') : 'No data specified';
-      allRecords.push({ type: 'environment', icon: 'E', label: 'Environment Data', detail: envDetailStr, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
+      _allDataRecords.push({ type: 'environment', icon: 'E', label: 'Environment Data', detail: envDetailStr, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
     }
     // Disturbance
     if (sv.disturbance) {
@@ -66,45 +70,62 @@ export async function refreshDataRecords() {
       if (isPresent(sv.disturbance.human)) dTypes.push('Human');
       if (isPresent(sv.disturbance.biotic)) dTypes.push('Biotic');
       if (isPresent(sv.disturbance.abiotic)) dTypes.push('Abiotic');
-      allRecords.push({ type: 'disturbance', icon: 'D', label: 'Disturbance & CBI', detail: dTypes.length ? dTypes.join(', ') : 'No disturbance recorded', survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
+      _allDataRecords.push({ type: 'disturbance', icon: 'D', label: 'Disturbance & CBI', detail: dTypes.length ? dTypes.join(', ') : 'No disturbance recorded', survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
     }
     // Notes
     if (sv.notes && sv.notes.length) {
       sv.notes.forEach(n => {
         const noteDate = n.time ? n.time.split('T')[0] : svDate;
         const noteTime = n.time ? new Date(n.time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
-        allRecords.push({ type: 'notes', icon: 'N', label: `Note: ${n.category || 'General'}`, detail: n.text ? n.text.substring(0, 60) + '…' : '', survey: svName, date: noteDate, sortDate: noteDate || '0000-00-00', time: noteTime, surveyId: sv.id, isTampered: sv.isTampered });
+        _allDataRecords.push({ type: 'notes', icon: 'N', label: `Note: ${n.category || 'General'}`, detail: n.text ? n.text.substring(0, 60) + '…' : '', survey: svName, date: noteDate, sortDate: noteDate || '0000-00-00', time: noteTime, surveyId: sv.id, isTampered: sv.isTampered });
       });
     }
     // Photos
     if (sv.photos && sv.photos.length) {
-      allRecords.push({ type: 'photos', icon: 'P', label: `${sv.photos.length} Photo${sv.photos.length > 1 ? 's' : ''}`, detail: 'Attached to survey', survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
+      _allDataRecords.push({ type: 'photos', icon: 'P', label: `${sv.photos.length} Photo${sv.photos.length > 1 ? 's' : ''}`, detail: 'Attached to survey', survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
     }
     // Herbariums
     if (sv.herbariums && sv.herbariums.length) {
-      sv.herbariums.forEach((h, hi) => {
-        allRecords.push({ type: 'herbarium', icon: 'H', label: `Herbarium Voucher: ${h.collectionNo || 'Unassigned'}`, detail: `${h.speciesScientific || 'Unknown Species'} · ${h.family || 'Unknown Family'}`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
+      sv.herbariums.forEach((h) => {
+        _allDataRecords.push({ type: 'herbarium', icon: 'H', label: `Herbarium Voucher: ${h.collectionNo || 'Unassigned'}`, detail: `${h.speciesScientific || 'Unknown Species'} · ${h.family || 'Unknown Family'}`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
       });
     }
     // Germplasm
     if (sv.germplasm && sv.germplasm.length) {
-      sv.germplasm.forEach((g, gi) => {
-        allRecords.push({ type: 'germplasm', icon: 'G', label: `Germplasm Record (${g.bodyId ? g.bodyId.toUpperCase() : 'Entry'})`, detail: `${g.speciesScientific || 'Unknown Species'} · ${g.collectionDate || g.acquisitionDate || g.samplingDate || 'Undated'}`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
+      sv.germplasm.forEach((g) => {
+        _allDataRecords.push({ type: 'germplasm', icon: 'G', label: `Germplasm Record (${g.bodyId ? g.bodyId.toUpperCase() : 'Entry'})`, detail: `${g.speciesScientific || 'Unknown Species'} · ${g.collectionDate || g.acquisitionDate || g.samplingDate || 'Undated'}`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
       });
     }
   });
 
-  if (filterType !== 'all') allRecords = allRecords.filter(r => r.type === filterType);
+  if (filterType !== 'all') _allDataRecords = _allDataRecords.filter(r => r.type === filterType);
 
-  if (!allRecords.length) {
+  if (!_allDataRecords.length) {
     list.innerHTML = '<div class="data-records-empty"><p>No recorded data</p></div>';
     return;
   }
 
-  allRecords.sort((a, b) => (b.sortDate || '').localeCompare(a.sortDate || ''));
+  _allDataRecords.sort((a, b) => (b.sortDate || '').localeCompare(a.sortDate || ''));
+  _currentPage = 1;
+  _renderPagedRecords(true);
+}
+
+function _renderPagedRecords(isReset = false) {
+  const list = $('#dataRecordsList');
+  if (!list) return;
+
+  if (isReset) list.innerHTML = '';
+
+  // Remove existing "Load More" button if it exists
+  const existingBtn = $('#btnLoadMoreRecords');
+  if (existingBtn) existingBtn.remove();
+
+  const start = (_currentPage - 1) * _recordsPerPage;
+  const end = _currentPage * _recordsPerPage;
+  const paged = _allDataRecords.slice(start, end);
 
   const groups = {};
-  allRecords.forEach(r => {
+  paged.forEach(r => {
     const dateKey = r.date || 'Undated';
     if (!groups[dateKey]) groups[dateKey] = [];
     groups[dateKey].push(r);
@@ -112,10 +133,16 @@ export async function refreshDataRecords() {
 
   const fragment = document.createDocumentFragment();
   Object.entries(groups).forEach(([dateKey, records]) => {
-    const groupDiv = document.createElement('div');
-    groupDiv.className = 'data-date-group';
-    const displayDate = dateKey !== 'Undated' ? new Date(dateKey + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : dateKey;
-    groupDiv.innerHTML = `<div class="data-date-label">${displayDate}</div>`;
+    // Check if this date group header already exists in the list
+    let groupDiv = Array.from(list.querySelectorAll('.data-date-group')).find(g => g.querySelector('.data-date-label').textContent === (dateKey !== 'Undated' ? new Date(dateKey + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : dateKey));
+
+    if (!groupDiv) {
+      groupDiv = document.createElement('div');
+      groupDiv.className = 'data-date-group';
+      const displayDate = dateKey !== 'Undated' ? new Date(dateKey + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : dateKey;
+      groupDiv.innerHTML = `<div class="data-date-label">${displayDate}</div>`;
+      fragment.appendChild(groupDiv);
+    }
 
     records.forEach(r => {
       const card = document.createElement('div');
@@ -150,10 +177,23 @@ export async function refreshDataRecords() {
       });
       groupDiv.appendChild(card);
     });
-    fragment.appendChild(groupDiv);
   });
-  list.innerHTML = '';
+
   list.appendChild(fragment);
+
+  // If there are more records, show the button
+  if (end < _allDataRecords.length) {
+    const moreBtn = document.createElement('button');
+    moreBtn.id = 'btnLoadMoreRecords';
+    moreBtn.className = 'btn btn-ghost btn-block';
+    moreBtn.style.margin = '20px 0';
+    moreBtn.textContent = `Load More (${_allDataRecords.length - end} remaining)`;
+    moreBtn.addEventListener('click', () => {
+      _currentPage++;
+      _renderPagedRecords(false);
+    });
+    list.appendChild(moreBtn);
+  }
 }
 
 export async function createNewSurvey() {

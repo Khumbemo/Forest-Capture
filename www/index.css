@@ -35,7 +35,8 @@
   --sp-xs: 4px; --sp-sm: 8px; --sp-md: 12px; --sp-lg: 16px; --sp-xl: 24px; --sp-2xl: 32px;
   --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 20px; --radius-full: 9999px;
 
-  --header-h: 52px;
+  --status-bar-h: env(safe-area-inset-top, 24px);
+  --header-h: calc(52px + var(--status-bar-h));
   --banner-h: 24px; /* connectivity banner below header */
   --status-h: 36px;
   --nav-h: 74px;
@@ -195,7 +196,7 @@ input,select,textarea,button{font-family:'Roboto',-apple-system,BlinkMacSystemFo
 .app-header{
   position:fixed;top:0;left:0;right:0;height:var(--header-h);
   display:flex;align-items:center;justify-content:space-between;
-  padding:0 var(--sp-lg);
+  padding:var(--status-bar-h) var(--sp-lg) 0 var(--sp-lg);
   background:linear-gradient(180deg,var(--bg-primary) 70%,transparent);
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   z-index:100;border-bottom:1px solid var(--border);

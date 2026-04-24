@@ -1,9 +1,9 @@
 // src/modules/herbarium.js
 
-import { $, $$, toast, esc, fcConfirm } from './ui.js';
+import { $, toast, esc, fcConfirm } from './ui.js';
 import { Store, MediaStore } from './storage.js';
-import { fmtCoords, curPos, fillGPSField } from './gps.js';
-import { dl } from './utils.js';
+import { fillGPSField } from './gps.js';
+import { } from './utils.js';
 import { attachAutocomplete } from './species-autocomplete.js';
 import { storage, ensureAuth } from './firebase.js';
 import { ref, uploadString, getDownloadURL } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js';

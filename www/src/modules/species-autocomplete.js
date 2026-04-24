@@ -144,12 +144,8 @@ async function _search(query, max) {
   const seen = new Set();
 
   const regionalPack = await _getActiveTaxonomyPackResults(query, max);
-  let isStrict = false;
-  
-  const active = await Store.getActive();
-  if (active && active.taxonomyPack && regionalPack.length > 0) {
-      isStrict = true; // For real strict mode, we'd block submission, but here we just prioritize autocomplete.
-  }
+
+  await Store.getActive();
 
   // Priority 1: Regional Taxonomy Pack (if active)
   for (const entry of regionalPack) {
@@ -177,7 +173,7 @@ async function _search(query, max) {
         const settings = JSON.parse(settingsRaw);
         if (settings.settingGBIFEnabled === false) gbifEnabled = false;
      }
-  } catch(e) {}
+  } catch {}
 
   // Priority 3: GBIF Remote API (Fail-safe)
   if (results.length < max && navigator.onLine && gbifEnabled) {
