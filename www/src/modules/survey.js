@@ -54,8 +54,10 @@ export async function refreshDataRecords() {
     // Environment
     if (sv.environment) {
       const envDetails = [];
-      if (sv.environment.elevation) envDetails.push(`Elev: ${sv.environment.elevation}m`);
-      if (sv.environment.slope) envDetails.push(`Slope: ${sv.environment.slope}°`);
+      if (sv.environment.elevation != null && sv.environment.elevation !== '') envDetails.push(`Elev: ${sv.environment.elevation}m`);
+      if (sv.environment.slope != null && sv.environment.slope !== '') envDetails.push(`Slope: ${sv.environment.slope}°`);
+      if (sv.environment.temperature != null && sv.environment.temperature !== '') envDetails.push(`Temp: ${sv.environment.temperature}°`);
+      if (sv.environment.humidity != null && sv.environment.humidity !== '') envDetails.push(`Hum: ${sv.environment.humidity}%`);
       if (sv.environment.weather) envDetails.push(sv.environment.weather);
       const envDetailStr = envDetails.length ? envDetails.join(' · ') : 'No data specified';
       _allDataRecords.push({ type: 'environment', icon: 'E', label: 'Environment Data', detail: envDetailStr, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });

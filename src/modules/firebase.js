@@ -50,13 +50,21 @@ export async function ensureAuth() {
 
     console.log('ensureAuth: checking cached credentials');
     authPromise = new Promise((resolve) => {
+        if (!navigator.onLine) {
+            console.warn('ensureAuth: Offline — proceeding without waiting for Firebase Auth');
+            authInitialized = true;
+            lastUser = null;
+            authPromise = null;
+            return resolve(null);
+        }
+
         const timeout = setTimeout(() => {
             console.warn('ensureAuth: Timeout — proceeding offline/unauthenticated');
             authInitialized = true;
             lastUser = null;
             authPromise = null;
             resolve(null);
-        }, 3000);
+        }, 1500);
 
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             clearTimeout(timeout);
