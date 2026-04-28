@@ -21,7 +21,6 @@ import { initCompareScreen, init as initCompare } from './modules/analytics-comp
 import { initHerbarium, init as initHerbariumListeners } from './modules/herbarium.js';
 import { init as initGermplasm, onScreenEnter as germplasmEnter } from './modules/germplasm.js';
 import { ensureAuth, EmailLogin, EmailSignup, AppSignOut, AppDeleteAccount } from './modules/firebase.js';
-import { App } from '@capacitor/app';
 
 // ===== INIT =====
 
@@ -322,46 +321,48 @@ function setupEventListeners() {
   // Prevent app exit on hardware back button during tool usage.
   // NEVER relies on window.history.back() which can underflow and exit the app.
   // Instead, directly navigate to the appropriate parent screen.
-  App.addListener('backButton', ({ canGoBack }) => {
-    // Check if settings panel is open — close it first
-    const settingsPanel = $('#settingsPanel');
-    if (settingsPanel && settingsPanel.classList.contains('show')) {
-      $('#settingsOverlay')?.classList.remove('show');
-      settingsPanel.classList.remove('show');
-      return;
-    }
+  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+    window.Capacitor.Plugins.App.addListener('backButton', ({ canGoBack }) => {
+      // Check if settings panel is open — close it first
+      const settingsPanel = $('#settingsPanel');
+      if (settingsPanel && settingsPanel.classList.contains('show')) {
+        $('#settingsOverlay')?.classList.remove('show');
+        settingsPanel.classList.remove('show');
+        return;
+      }
 
-    // Check if any modal is open — close it first
-    const openModal = document.querySelector('.modal-overlay.show, .fc-modal-overlay.show');
-    if (openModal) {
-      openModal.classList.remove('show');
-      return;
-    }
+      // Check if any modal is open — close it first
+      const openModal = document.querySelector('.modal-overlay.show, .fc-modal-overlay.show');
+      if (openModal) {
+        openModal.classList.remove('show');
+        return;
+      }
 
-    // Check if login screen is visible — dismiss it
-    const loginScreen = $('#loginScreen');
-    if (loginScreen && loginScreen.style.display === 'flex') {
-      // Don't dismiss login — just ignore back on login
-      return;
-    }
+      // Check if login screen is visible — dismiss it
+      const loginScreen = $('#loginScreen');
+      if (loginScreen && loginScreen.style.display === 'flex') {
+        // Don't dismiss login — just ignore back on login
+        return;
+      }
 
-    const curScreen = document.querySelector('.screen.active');
-    const ROOT_SCREENS = ['screenDashboard', 'screenToolbar', 'screenData'];
-    
-    if (curScreen && !ROOT_SCREENS.includes(curScreen.id)) {
-      // Inside a tool screen → go back to Tools menu (NOT history.back())
-      switchScreen('screenToolbar', screenCallbacks);
-    } else if (curScreen && curScreen.id === 'screenData') {
-      // On Data screen → go to Home
-      switchScreen('screenDashboard', screenCallbacks);
-    } else if (curScreen && curScreen.id === 'screenToolbar') {
-      // On Tools screen → go to Home
-      switchScreen('screenDashboard', screenCallbacks);
-    } else {
-      // On Home screen — only then allow app exit
-      App.exitApp();
-    }
-  });
+      const curScreen = document.querySelector('.screen.active');
+      const ROOT_SCREENS = ['screenDashboard', 'screenToolbar', 'screenData'];
+      
+      if (curScreen && !ROOT_SCREENS.includes(curScreen.id)) {
+        // Inside a tool screen → go back to Tools menu (NOT history.back())
+        switchScreen('screenToolbar', screenCallbacks);
+      } else if (curScreen && curScreen.id === 'screenData') {
+        // On Data screen → go to Home
+        switchScreen('screenDashboard', screenCallbacks);
+      } else if (curScreen && curScreen.id === 'screenToolbar') {
+        // On Tools screen → go to Home
+        switchScreen('screenDashboard', screenCallbacks);
+      } else {
+        // On Home screen — only then allow app exit
+        window.Capacitor.Plugins.App.exitApp();
+      }
+    });
+  }
 
   // FIX #4: Back button in header — navigates directly instead of history.back()
   // to prevent accidental app exit if history stack is shallow.

@@ -57,6 +57,7 @@ export function attachAutocomplete(inputId, options = {}) {
 
   // ── Input handler ─────────────────────────────────────────────────────────
   input.addEventListener('input', () => {
+    input.classList.remove('is-verified-species');
     clearTimeout(_debounceTimer);
     _debounceTimer = setTimeout(async () => {
       const query = input.value.trim();
@@ -284,6 +285,8 @@ function _render(dropdown, results, activeIndex, onSelect) {
 async function _select(input, entry, dropdown, onSelect) {
   input.value = entry.scientific;
   _hide(dropdown);
+  
+  input.classList.add('is-verified-species');
   
   // Attempt to enrich with full taxonomy if online
   let enriched = { ...entry };

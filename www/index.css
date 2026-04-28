@@ -1344,3 +1344,9 @@ button,.btn,.nav-btn,.stat-card,.map-ctrl-btn,a,input,select,textarea{
   to { stroke-dashoffset: 0; }
 }
 
+/* =========== INLINE VALIDATION =========== */
+.is-verified-species {
+  box-shadow: 0 0 8px var(--emerald) !important;
+  border-color: var(--emerald) !important;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}

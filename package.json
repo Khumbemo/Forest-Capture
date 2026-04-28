@@ -10,7 +10,7 @@
     "cap:open": "cap open android",
     "test": "npm run test:unit && npm run test:e2e",
     "test:unit": "cross-env NODE_OPTIONS=--experimental-vm-modules jest tests/analytics.test.js",
-    "test:e2e": "jest --config=jest-e2e.config.js"
+    "test:e2e": "jest --runInBand --config=jest-e2e.config.js"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.0",

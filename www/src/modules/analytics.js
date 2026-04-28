@@ -221,100 +221,108 @@ export function refreshAnalytics(s) {
     return;
   }
 
-  const { S, H, D, E, margalef, fisherAlpha, chao1, totalN, totalBA, totalArea, iviData, dbhClasses, carbonHa, agbHa, qmd, sdi, regenCounts, transectCover, transectGap } = calculateIndicesPayload(s);
-
-  if ($('#analyticRichness')) $('#analyticRichness').textContent = S;
-  if ($('#analyticShannon')) $('#analyticShannon').textContent = totalN > 0 ? H.toFixed(3) : '0.000';
-  if ($('#analyticSimpson')) $('#analyticSimpson').textContent = D.toFixed(3);
-  if ($('#analyticSimpsonDiv')) $('#analyticSimpsonDiv').textContent = D > 0 ? (1 / D).toFixed(3) : '0.000';
-  if ($('#analyticEvenness')) $('#analyticEvenness').textContent = E.toFixed(3);
-  if ($('#analyticMargalef')) $('#analyticMargalef').textContent = margalef.toFixed(3);
-  if ($('#analyticFisher')) $('#analyticFisher').textContent = fisherAlpha.toFixed(3);
-  if ($('#analyticChao1')) $('#analyticChao1').textContent = chao1.toFixed(1);
-  if ($('#analyticTotalN')) $('#analyticTotalN').textContent = totalN;
-  if ($('#analyticBasalTotal')) $('#analyticBasalTotal').textContent = totalBA.toFixed(4) + ' m²';
-  if ($('#analyticBasalHa')) $('#analyticBasalHa').textContent = (totalArea > 0 ? (totalBA / totalArea).toFixed(3) : '—') + ' m²/ha';
-
-  if ($('#analyticCarbon')) $('#analyticCarbon').textContent = carbonHa > 0 ? carbonHa.toFixed(2) + ' t/ha' : '0.00 t/ha';
-  if ($('#analyticAGB')) $('#analyticAGB').textContent = agbHa > 0 ? agbHa.toFixed(2) + ' t/ha' : '0.00 t/ha';
-  if ($('#analyticQMD')) $('#analyticQMD').textContent = qmd > 0 ? qmd.toFixed(2) + ' cm' : '0.00 cm';
-  if ($('#analyticSDI')) $('#analyticSDI').textContent = sdi > 0 ? Math.round(sdi).toString() : '0';
-  
-  if ($('#analyticTransectCover')) $('#analyticTransectCover').textContent = transectCover > 0 ? transectCover.toFixed(1) + '%' : '0.0%';
-  if ($('#analyticTransectGap')) $('#analyticTransectGap').textContent = transectGap > 0 ? transectGap.toFixed(1) + '%' : '0.0%';
-
-  if ($('#regenChart')) {
-    const rMax = Math.max(regenCounts.seedling, regenCounts.sapling, regenCounts.tree, 1);
-    $('#regenChart').innerHTML = [
-       {k:t('Seedling'), v: regenCounts.seedling},
-       {k:t('Sapling'), v: regenCounts.sapling},
-       {k:t('Tree'), v: regenCounts.tree}
-    ].map(x => `<div class="bar-col">
-      <div class="bar-val">${x.v}</div>
-      <div class="bar-fill" style="height:${(x.v / rMax) * 140}px;background:var(--sky);"></div>
-      <div class="bar-label">${x.k}</div>
-    </div>`).join('');
-
-    let status = t('Poor');
-    if (regenCounts.seedling > regenCounts.sapling && regenCounts.sapling > regenCounts.tree) status = t('Good');
-    else if (regenCounts.seedling > regenCounts.tree || regenCounts.sapling > regenCounts.tree) status = t('Fair');
-    if (regenCounts.seedling === 0 && regenCounts.sapling === 0 && regenCounts.tree === 0) status = t('No Data');
-    if ($('#regenStatus')) $('#regenStatus').textContent = status;
+  if (!window.analyticsWorker) {
+    window.analyticsWorker = new Worker('./src/workers/analytics.worker.js');
   }
 
-  if ($('#iviTableBody')) {
-    $('#iviTableBody').innerHTML = iviData.map(x => `<tr>
-      <td class="species-name-cell">${esc(x.name)}</td>
-      <td>${x.density.toFixed(1)}</td>
-      <td>${x.relDensity.toFixed(1)}%</td>
-      <td>${(x.freq * 100).toFixed(1)}%</td>
-      <td>${x.relFreq.toFixed(1)}%</td>
-      <td>${x.basalArea.toFixed(4)}</td>
-      <td>${x.relDom.toFixed(1)}%</td>
-      <td class="ivi-species-highlight">${x.ivi.toFixed(1)}</td>
-    </tr>`).join('');
-  }
+  window.analyticsWorker.onmessage = function(e) {
+    const { S, H, D, E, margalef, fisherAlpha, chao1, totalN, totalBA, totalArea, iviData, dbhClasses, carbonHa, agbHa, qmd, sdi, regenCounts, transectCover, transectGap } = e.data;
 
-  const maxDBH = Math.max(...Object.values(dbhClasses), 1);
-  if ($('#dbhChart')) {
-    $('#dbhChart').innerHTML = Object.entries(dbhClasses).map(([k, v]) => `<div class="bar-col">
-      <div class="bar-val">${v}</div>
-      <div class="bar-fill" style="height:${(v / maxDBH) * 140}px;"></div>
-      <div class="bar-label">${k}</div>
-    </div>`).join('');
-  }
+    if ($('#analyticRichness')) $('#analyticRichness').textContent = S;
+    if ($('#analyticShannon')) $('#analyticShannon').textContent = totalN > 0 ? H.toFixed(3) : '0.000';
+    if ($('#analyticSimpson')) $('#analyticSimpson').textContent = D.toFixed(3);
+    if ($('#analyticSimpsonDiv')) $('#analyticSimpsonDiv').textContent = D > 0 ? (1 / D).toFixed(3) : '0.000';
+    if ($('#analyticEvenness')) $('#analyticEvenness').textContent = E.toFixed(3);
+    if ($('#analyticMargalef')) $('#analyticMargalef').textContent = margalef.toFixed(3);
+    if ($('#analyticFisher')) $('#analyticFisher').textContent = fisherAlpha.toFixed(3);
+    if ($('#analyticChao1')) $('#analyticChao1').textContent = chao1.toFixed(1);
+    if ($('#analyticTotalN')) $('#analyticTotalN').textContent = totalN;
+    if ($('#analyticBasalTotal')) $('#analyticBasalTotal').textContent = totalBA.toFixed(4) + ' m²';
+    if ($('#analyticBasalHa')) $('#analyticBasalHa').textContent = (totalArea > 0 ? (totalBA / totalArea).toFixed(3) : '—') + ' m²/ha';
 
-  if ($('#speciesAccumChart')) {
-    const numQuads = s.quadrats.length;
-    const rarefactionData = new Array(numQuads).fill(0);
-    const permutations = 100;
+    if ($('#analyticCarbon')) $('#analyticCarbon').textContent = carbonHa > 0 ? carbonHa.toFixed(2) + ' t/ha' : '0.00 t/ha';
+    if ($('#analyticAGB')) $('#analyticAGB').textContent = agbHa > 0 ? agbHa.toFixed(2) + ' t/ha' : '0.00 t/ha';
+    if ($('#analyticQMD')) $('#analyticQMD').textContent = qmd > 0 ? qmd.toFixed(2) + ' cm' : '0.00 cm';
+    if ($('#analyticSDI')) $('#analyticSDI').textContent = sdi > 0 ? Math.round(sdi).toString() : '0';
+    
+    if ($('#analyticTransectCover')) $('#analyticTransectCover').textContent = transectCover > 0 ? transectCover.toFixed(1) + '%' : '0.0%';
+    if ($('#analyticTransectGap')) $('#analyticTransectGap').textContent = transectGap > 0 ? transectGap.toFixed(1) + '%' : '0.0%';
 
-    for (let p = 0; p < permutations; p++) {
-      const indices = Array.from({ length: numQuads }, (_, i) => i);
-      for (let i = indices.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [indices[i], indices[j]] = [indices[j], indices[i]];
-      }
+    if ($('#regenChart')) {
+      const rMax = Math.max(regenCounts.seedling, regenCounts.sapling, regenCounts.tree, 1);
+      $('#regenChart').innerHTML = [
+         {k:t('Seedling'), v: regenCounts.seedling},
+         {k:t('Sapling'), v: regenCounts.sapling},
+         {k:t('Tree'), v: regenCounts.tree}
+      ].map(x => `<div class="bar-col">
+        <div class="bar-val">${x.v}</div>
+        <div class="bar-fill" style="height:${(x.v / rMax) * 140}px;background:var(--sky);"></div>
+        <div class="bar-label">${x.k}</div>
+      </div>`).join('');
 
-      const seenInPerm = new Set();
-      for (let k = 0; k < numQuads; k++) {
-        const qIdx = indices[k];
-        const q = s.quadrats[qIdx];
-        if (q.species) q.species.forEach(sp => { if (sp.name) seenInPerm.add(sp.name); });
-        rarefactionData[k] += seenInPerm.size;
-      }
+      let status = t('Poor');
+      if (regenCounts.seedling > regenCounts.sapling && regenCounts.sapling > regenCounts.tree) status = t('Good');
+      else if (regenCounts.seedling > regenCounts.tree || regenCounts.sapling > regenCounts.tree) status = t('Fair');
+      if (regenCounts.seedling === 0 && regenCounts.sapling === 0 && regenCounts.tree === 0) status = t('No Data');
+      if ($('#regenStatus')) $('#regenStatus').textContent = status;
     }
 
-    const points = rarefactionData.map((sum, i) => ({
-      x: i + 1,
-      y: sum / permutations
-    }));
+    if ($('#iviTableBody')) {
+      $('#iviTableBody').innerHTML = iviData.map(x => `<tr>
+        <td class="species-name-cell">${esc(x.name)}</td>
+        <td>${x.density.toFixed(1)}</td>
+        <td>${x.relDensity.toFixed(1)}%</td>
+        <td>${(x.freq * 100).toFixed(1)}%</td>
+        <td>${x.relFreq.toFixed(1)}%</td>
+        <td>${x.basalArea.toFixed(4)}</td>
+        <td>${x.relDom.toFixed(1)}%</td>
+        <td class="ivi-species-highlight">${x.ivi.toFixed(1)}</td>
+      </tr>`).join('');
+    }
 
-    const maxY = Math.max(...points.map(p => p.y), 1);
-    $('#speciesAccumChart').innerHTML = points.map(p => `<div class="bar-col">
-      <div class="bar-val">${p.y.toFixed(1)}</div>
-      <div class="bar-fill" style="height:${(p.y / maxY) * 140}px;background:linear-gradient(180deg,var(--cyan),var(--emerald));"></div>
-      <div class="bar-label">Q${p.x}</div>
-    </div>`).join('');
-  }
+    const maxDBH = Math.max(...Object.values(dbhClasses), 1);
+    if ($('#dbhChart')) {
+      $('#dbhChart').innerHTML = Object.entries(dbhClasses).map(([k, v]) => `<div class="bar-col">
+        <div class="bar-val">${v}</div>
+        <div class="bar-fill" style="height:${(v / maxDBH) * 140}px;"></div>
+        <div class="bar-label">${k}</div>
+      </div>`).join('');
+    }
+
+    if ($('#speciesAccumChart')) {
+      const numQuads = s.quadrats.length;
+      const rarefactionData = new Array(numQuads).fill(0);
+      const permutations = 100;
+
+      for (let p = 0; p < permutations; p++) {
+        const indices = Array.from({ length: numQuads }, (_, i) => i);
+        for (let i = indices.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [indices[i], indices[j]] = [indices[j], indices[i]];
+        }
+
+        const seenInPerm = new Set();
+        for (let k = 0; k < numQuads; k++) {
+          const qIdx = indices[k];
+          const q = s.quadrats[qIdx];
+          if (q.species) q.species.forEach(sp => { if (sp.name) seenInPerm.add(sp.name); });
+          rarefactionData[k] += seenInPerm.size;
+        }
+      }
+
+      const points = rarefactionData.map((sum, i) => ({
+        x: i + 1,
+        y: sum / permutations
+      }));
+
+      const maxY = Math.max(...points.map(p => p.y), 1);
+      $('#speciesAccumChart').innerHTML = points.map(p => `<div class="bar-col">
+        <div class="bar-val">${p.y.toFixed(1)}</div>
+        <div class="bar-fill" style="height:${(p.y / maxY) * 140}px;background:linear-gradient(180deg,var(--cyan),var(--emerald));"></div>
+        <div class="bar-label">Q${p.x}</div>
+      </div>`).join('');
+    }
+  };
+
+  window.analyticsWorker.postMessage(s);
 }

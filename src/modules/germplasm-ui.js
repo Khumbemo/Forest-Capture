@@ -1,0 +1,227 @@
+// src/modules/germplasm-ui.js
+
+// ─── DATA CONSTANTS ───────────────────────────────────────────────
+export const SEED_ZONES = ["Zone I – Tropical Wet Evergreen","Zone II – Tropical Semi-Evergreen","Zone III – Tropical Moist Deciduous","Zone IV – Littoral & Swamp","Zone V – Tropical Dry Deciduous","Zone VI – Tropical Thorn","Zone VII – Tropical Dry Evergreen","Zone VIII – Sub-Tropical Broad-Leaved Hill","Zone IX – Sub-Tropical Pine","Zone X – Sub-Tropical Dry Evergreen","Zone XI – Montane Wet Temperate","Zone XII – Himalayan Moist Temperate","Zone XIII – Himalayan Dry Temperate","Zone XIV – Sub-Alpine","Zone XV – Alpine","Zone XVI – Andaman & Nicobar"];
+export const ICFRE_CATEGORIES = [{ value: "source_identified", label: "Source-Identified", desc: "Seed from demarcated seed zones, approved by Designated Authority" },{ value: "selected", label: "Selected Reproductive Material", desc: "From stands/cultivars meeting minimum ICFRE standards" },{ value: "orchard_untested", label: "Seed Orchard – Untested", desc: "Single-species untested orchard, single region/provenance" },{ value: "orchard_tested", label: "Seed Orchard – Tested", desc: "Genetically tested seed orchards" },{ value: "parents_families", label: "Parents / Full-Sib Families", desc: "From known parental combinations in controlled crosses" },{ value: "clones", label: "Clones", desc: "Vegetatively propagated material from selected genotypes" }];
+export const STAND_TYPES = ["Natural Forest","Plantation","Agro-forestry","Seed Orchard","Avenue / Roadside","Sacred Grove","Degraded Land"];
+export const MATURITY_STAGES = ["Immature","Physiologically mature","Full ripe","Over-ripe / Shattering"];
+export const COLLECTION_METHODS = ["Hand picking from tree","Ground collection","Beating / Shaking","Climbing / Rope access","Ladder","Pole harvester"];
+export const NBPGR_BIO_STATUS = ["Landrace","Cultivar/Variety","Breeding Line","Genetic Stock","Wild","Weedy","Mutant","Other"];
+export const NBPGR_STORAGE_TYPES = ["Orthodox","Recalcitrant","Intermediate","Unknown"];
+export const NBPGR_STORAGE_CONDITIONS = [{ value: "base", label: "Base Collection – −18 to −20°C, 3–7% MC" },{ value: "active", label: "Active Collection – 4°C, ≤35% RH" },{ value: "cryobank", label: "Cryobank – Liquid Nitrogen (−196°C)" },{ value: "invitro", label: "In Vitro Conservation" }];
+export const NBPGR_ACQUISITION = ["Exploration/Collection","Donation","Exchange","Purchase","Other"];
+export const ISTA_CERT_TYPES = ["ISTA Orange Certificate","ISTA Blue Certificate (Reduced)","ISTA Green Certificate (Seed Lot)","OECD Forest Scheme – Source-Identified","OECD Forest Scheme – Selected","OECD Forest Scheme – Qualified","OECD Forest Scheme – Tested"];
+export const ISTA_GERM_SUBSTRATE = ["Top of paper (TP)","Between paper (BP)","Sand (S)","Rolled paper (RP)","Soil"];
+export const ISTA_DORMANCY = ["None","Physical dormancy","Physiological dormancy","Combined dormancy","Unknown"];
+
+export const emptyICFRE = ["speciesScientific","speciesCommon","family","localName","category","seedZone","collectionDate","collectionTime","collectorName","institution","permitNo","latitude","longitude","altitude","district","state","forestDivision","rangeNo","beatNo","compartmentNo","standType","treeAge","treeCount","motherTreeId","treeDiameter","treeHeight","collectionMethod","seedQuantityKg","seedQuantityUnits","maturityStage","phenologicalState","processingDate","packagingType","labelNo","remarks"];
+export const emptyNBPGR = ["speciesScientific","speciesCommon","family","icNumber","accessionNo","biologicalStatus","acquisitionMode","acquisitionDate","donorName","donorInstitution","collectionCountry","collectionState","collectionDistrict","latitude","longitude","altitude","pedigree","uniqueTrait","storageType","storageCondition","moistureContent","seedWeight1000","viabilityInitial","viabilityCheckDate","dryingMethod","dryingRH","dryingTemp","packagingType","containerType","healthStatus","quarantineStatus","pestReport","repatriationStatus","materialTransferAgreement","remarks"];
+export const emptyISTA = ["speciesScientific","speciesCommon","family","seedLotNo","certType","submittingLab","testingLab","samplingOfficer","samplingDate","lotSizeKg","sampleSizeG","originCountry","originState","originSeedZone","pureSeedPct","otherCropPct","weedSeedPct","inertMatterPct","germSubstrate","germTemp","germDuration","germNormalPct","germAbnormalPct","freshUngermPct","hardSeedPct","dormancyType","dormancyTreatment","moistureContent","moistureMethod","weight1000Seed","vigourTest","vigourResult","healthTests","pathogensFound","oecdCertNo","oecdRegion","oecdCategory","oecdApprovedStand","validityPeriod","remarks"];
+
+// ─── UI GENERATORS ────────────────────────────────────────────────
+function getSelectHtml(id, label, options, placeholder="Select...", full=false, tip="") {
+  const opts = options.map(o => typeof o === "string" ? `<option value="${o}">${o}</option>` : `<option value="${o.value}">${o.label}</option>`).join('');
+  return `
+    <div class="form-group ${full ? 'flex-full' : ''}">
+      <label for="${id}">${label}</label>
+      <select id="${id}"><option value="">${placeholder}</option>${opts}</select>
+      ${tip ? `<div class="form-hint">${tip}</div>` : ''}
+    </div>
+  `;
+}
+function getInputHtml(id, label, ph="", type="text", step="", full=false, tip="") {
+  return `
+    <div class="form-group ${full ? 'flex-full' : ''}">
+      <label for="${id}">${label}</label>
+      <input id="${id}" type="${type}" placeholder="${ph}" ${step ? `step="${step}"`:''} />
+      ${tip ? `<div class="form-hint">${tip}</div>` : ''}
+    </div>
+  `;
+}
+function getTextareaHtml(id, label, ph="", rows=2, full=true) {
+  return `
+    <div class="form-group ${full ? 'flex-full' : ''}">
+      <label for="${id}">${label}</label>
+      <textarea id="${id}" placeholder="${ph}" rows="${rows}"></textarea>
+    </div>
+  `;
+}
+function getSection(title, icon, children) {
+  return `
+    <div class="form-card">
+      <div class="section-title-row">
+        <h3 class="card-title">${icon ? icon + " " : ""}${title}</h3>
+      </div>
+      <div class="form-row">
+        ${children}
+      </div>
+    </div>
+  `;
+}
+
+export function renderICFRE() {
+  let h = getSection("Species Passport", "",
+    getInputHtml('germ_icfre_speciesScientific', 'Scientific Name *', 'e.g. Tectona grandis', 'text', '', true) +
+    getInputHtml('germ_icfre_speciesCommon', 'Common Name', 'e.g. Teak') +
+    getInputHtml('germ_icfre_localName', 'Local / Vernacular Name', 'e.g. Sagwan') +
+    getInputHtml('germ_icfre_family', 'Family', 'e.g. Lamiaceae')
+  );
+  h += getSection("Reproductive Material Category", "",
+    getSelectHtml('germ_icfre_category', 'Category', ICFRE_CATEGORIES, 'Select...', true) +
+    getSelectHtml('germ_icfre_seedZone', 'Seed Zone (ICFRE Zonation)', SEED_ZONES, 'Select...', true) +
+    getInputHtml('germ_icfre_permitNo', 'Collection Permit No.', 'Permit / Sanction No.') +
+    getInputHtml('germ_icfre_labelNo', 'Label No.', 'Seed lot label')
+  );
+  h += getSection("Collection Details", "",
+    getInputHtml('germ_icfre_collectionDate', 'Date', '', 'date') +
+    getInputHtml('germ_icfre_collectionTime', 'Time', '', 'time') +
+    getInputHtml('germ_icfre_collectorName', 'Collector Name', 'Full name') +
+    getInputHtml('germ_icfre_institution', 'Institution', 'e.g. FRI Dehradun') +
+    getSelectHtml('germ_icfre_collectionMethod', 'Collection Method', COLLECTION_METHODS, 'Select...', true)
+  );
+  h += getSection("Location", "",
+    getInputHtml('germ_icfre_state', 'State', 'State') +
+    getInputHtml('germ_icfre_district', 'District', 'District') +
+    getInputHtml('germ_icfre_forestDivision', 'Forest Division', 'Division') +
+    getInputHtml('germ_icfre_rangeNo', 'Range No.', 'e.g. R-3') +
+    getInputHtml('germ_icfre_beatNo', 'Beat No.', 'e.g. B-7') +
+    getInputHtml('germ_icfre_compartmentNo', 'Compartment No.', 'e.g. 12A') +
+    getInputHtml('germ_icfre_latitude', 'Latitude', 'e.g. 11.4102', 'number', '0.000001') +
+    getInputHtml('germ_icfre_longitude', 'Longitude', 'e.g. 76.6950', 'number', '0.000001') +
+    getInputHtml('germ_icfre_altitude', 'Altitude (m asl)', 'e.g. 1200', 'number') +
+    // FIX #3: Unique ID — distinct from NBPGR GPS button.
+    `<div class="form-group" style="flex:0 0 auto; align-self:flex-end;"><button type="button" class="btn btn-accent gps-fill-btn" id="btnGermICFREGPS">Auto GPS</button></div>`
+  );
+  h += getSection("Stand & Mother Tree", "",
+    getSelectHtml('germ_icfre_standType', 'Stand Type', STAND_TYPES) +
+    getInputHtml('germ_icfre_motherTreeId', 'Mother Tree ID', 'e.g. MT-042') +
+    getInputHtml('germ_icfre_treeCount', 'No. of Trees Sampled', 'e.g. 15', 'number') +
+    getInputHtml('germ_icfre_treeAge', 'Est. Tree Age (yrs)', 'e.g. 35', 'number') +
+    getInputHtml('germ_icfre_treeDiameter', 'DBH (cm)', 'Diameter at breast height', 'number') +
+    getInputHtml('germ_icfre_treeHeight', 'Tree Height (m)', 'e.g. 18', 'number')
+  );
+  h += getSection("Seed Details & Processing", "",
+    getSelectHtml('germ_icfre_maturityStage', 'Maturity Stage', MATURITY_STAGES) +
+    getInputHtml('germ_icfre_phenologicalState', 'Phenological State', 'e.g. Full flowering') +
+    getInputHtml('germ_icfre_seedQuantityKg', 'Quantity (kg)', 'e.g. 2.5', 'number', '0.01') +
+    getInputHtml('germ_icfre_seedQuantityUnits', 'Quantity (units/count)', 'e.g. 500 seeds') +
+    getInputHtml('germ_icfre_processingDate', 'Processing Date', '', 'date') +
+    getInputHtml('germ_icfre_packagingType', 'Packaging Type', 'e.g. Cloth bag')
+  );
+  h += getSection("Remarks", "", getTextareaHtml('germ_icfre_remarks', 'Field Notes / Observations', 'Habitat, associated species...', 3));
+  return h;
+}
+
+export function renderNBPGR() {
+  let h = getSection("Accession Passport Data", "",
+    getInputHtml('germ_nbpgr_speciesScientific', 'Scientific Name *', 'e.g. Shorea robusta', 'text', '', true) +
+    getInputHtml('germ_nbpgr_speciesCommon', 'Common Name', 'e.g. Sal') +
+    getInputHtml('germ_nbpgr_family', 'Family', 'e.g. Dipterocarpaceae') +
+    getInputHtml('germ_nbpgr_icNumber', 'IC Number', 'IC-XXXXXX', 'text', '', false, 'Indigenous Collection No.') +
+    getInputHtml('germ_nbpgr_accessionNo', 'Accession Number', 'Accession / Genebank No.') +
+    getSelectHtml('germ_nbpgr_biologicalStatus', 'Biological Status', NBPGR_BIO_STATUS) +
+    getInputHtml('germ_nbpgr_pedigree', 'Pedigree / Lineage', 'Parent lines', 'text', '', true) +
+    getInputHtml('germ_nbpgr_uniqueTrait', 'Unique Trait', 'e.g. drought tolerant', 'text', '', true)
+  );
+  h += getSection("Acquisition Details", "",
+    getSelectHtml('germ_nbpgr_acquisitionMode', 'Mode of Acquisition', NBPGR_ACQUISITION) +
+    getInputHtml('germ_nbpgr_acquisitionDate', 'Acquisition Date', '', 'date') +
+    getInputHtml('germ_nbpgr_donorName', 'Donor Name', 'Individual / Organisation') +
+    getInputHtml('germ_nbpgr_donorInstitution', 'Donor Institution', 'e.g. FRI, IFGTB') +
+    getSelectHtml('germ_nbpgr_materialTransferAgreement', 'Material Transfer Agreement', ["MTA in place","MTA not required","Pending","Exempt"], 'Select...', false, 'Required for exotic germplasm') +
+    getSelectHtml('germ_nbpgr_repatriationStatus', 'Repatriation Status', ["Not applicable","Pending","Completed","Under review"])
+  );
+  h += getSection("Collection Origin", "",
+    getInputHtml('germ_nbpgr_collectionCountry', 'Country of Origin', 'India') +
+    getInputHtml('germ_nbpgr_collectionState', 'State', 'e.g. Odisha') +
+    getInputHtml('germ_nbpgr_collectionDistrict', 'District', 'District') +
+    getInputHtml('germ_nbpgr_latitude', 'Latitude', 'e.g. 20.9374', 'number', '0.000001') +
+    getInputHtml('germ_nbpgr_longitude', 'Longitude', 'e.g. 85.0985', 'number', '0.000001') +
+    getInputHtml('germ_nbpgr_altitude', 'Altitude (m asl)', 'e.g. 450', 'number') + 
+    // FIX #3: Unique ID — distinct from ICFRE GPS button.
+    `<div class="form-group" style="flex:0 0 auto; align-self:flex-end;"><button type="button" class="btn btn-accent gps-fill-btn" id="btnGermNBPGRGPS">Auto GPS</button></div>`
+  );
+  h += getSection("Seed / Material Properties", "",
+    getSelectHtml('germ_nbpgr_storageType', 'Storage Behaviour', NBPGR_STORAGE_TYPES, 'Select...', false, 'Determines conservation strategy') +
+    getInputHtml('germ_nbpgr_seedWeight1000', '1000-Seed Weight (g)', 'e.g. 35.2', 'number', '0.01') +
+    getInputHtml('germ_nbpgr_viabilityInitial', 'Initial Viability (%)', 'e.g. 92', 'number') +
+    getInputHtml('germ_nbpgr_viabilityCheckDate', 'Viability Check Date', '', 'date')
+  );
+  h += getSection("Drying Protocol", "",
+    getInputHtml('germ_nbpgr_dryingMethod', 'Drying Method', 'e.g. Silica gel', 'text', '', true) +
+    getInputHtml('germ_nbpgr_dryingRH', 'Target RH (%)', '15', 'number', '', false, 'NBPGR std: 15%') +
+    getInputHtml('germ_nbpgr_dryingTemp', 'Drying Temp. (°C)', '15', 'number', '', false, 'NBPGR std: 15°C') +
+    getInputHtml('germ_nbpgr_moistureContent', 'Moisture Content (%)', 'e.g. 6.2', 'number', '0.1')
+  );
+  h += getSection("Storage Conditions", "",
+    getSelectHtml('germ_nbpgr_storageCondition', 'Storage Condition', NBPGR_STORAGE_CONDITIONS, 'Select...', true, 'Base: −18 to −20°C | Active: 4°C') +
+    getInputHtml('germ_nbpgr_containerType', 'Container Type', 'e.g. foil pouch') +
+    getInputHtml('germ_nbpgr_packagingType', 'Packaging Type', 'e.g. Vacuum-sealed')
+  );
+  h += getSection("Plant Quarantine & Seed Health", "",
+    getSelectHtml('germ_nbpgr_healthStatus', 'Health Status', ["Healthy – Passed quarantine","Minor surface contamination","Pathogen detected","Quarantine hold","Rejected"], 'Select...', true) +
+    getInputHtml('germ_nbpgr_quarantineStatus', 'Quarantine Clearance No.', 'Clearance cert') +
+    getTextareaHtml('germ_nbpgr_pestReport', 'Pest / Pathogen Report', 'Pathogens found...', 2, false)
+  );
+  h += getSection("Remarks", "", getTextareaHtml('germ_nbpgr_remarks', 'Additional Notes', 'Conservation priority...', 3));
+  return h;
+}
+
+export function renderISTA() {
+  let h = getSection("Seed Lot Identification", "",
+    getInputHtml('germ_ista_speciesScientific', 'Scientific Name *', 'e.g. Dalbergia sissoo', 'text', '', true) +
+    getInputHtml('germ_ista_speciesCommon', 'Common Name', 'e.g. Shisham') +
+    getInputHtml('germ_ista_family', 'Family', 'e.g. Fabaceae') +
+    getInputHtml('germ_ista_seedLotNo', 'Seed Lot No.', 'SL-YYYY-XXXX', 'text', '', false, 'Unique identifier') +
+    getInputHtml('germ_ista_lotSizeKg', 'Lot Size (kg)', 'e.g. 50', 'number', '0.01') +
+    getInputHtml('germ_ista_sampleSizeG', 'Working Sample Size (g)', 'e.g. 25', 'number', '0.1')
+  );
+  h += getSection("Certificate & Testing Lab", "",
+    getSelectHtml('germ_ista_certType', 'Certificate Type', ISTA_CERT_TYPES, 'Select...', true) +
+    getInputHtml('germ_ista_submittingLab', 'Submitting Laboratory', 'Lab name') +
+    getInputHtml('germ_ista_testingLab', 'Testing Laboratory', 'ISTA-accredited lab name') +
+    getInputHtml('germ_ista_samplingOfficer', 'Sampling Officer', 'Name & auth no.') +
+    getInputHtml('germ_ista_samplingDate', 'Sampling Date', '', 'date') +
+    getInputHtml('germ_ista_validityPeriod', 'Certificate Validity Period', 'e.g. 6 months')
+  );
+  h += getSection("Seed Origin (OECD)", "",
+    getInputHtml('germ_ista_originCountry', 'Country of Origin', 'India') +
+    getInputHtml('germ_ista_originState', 'State / Province', 'e.g. Karnataka') +
+    getInputHtml('germ_ista_originSeedZone', 'OECD Seed Zone', 'e.g. Southern Dry Deccan') +
+    getSelectHtml('germ_ista_oecdCategory', 'OECD Category', ["Source-Identified","Selected","Qualified","Tested"]) +
+    getInputHtml('germ_ista_oecdCertNo', 'OECD Certificate No.', 'OECD-IN-XXXX') +
+    getInputHtml('germ_ista_oecdApprovedStand', 'Approved Stand', 'Registered stand ID')
+  );
+  h += getSection("Purity Analysis", "",
+    getInputHtml('germ_ista_pureSeedPct', 'Pure Seed (%)', 'e.g. 95.2', 'number', '0.01', false, '% by weight') +
+    getInputHtml('germ_ista_inertMatterPct', 'Inert Matter (%)', 'e.g. 3.8', 'number', '0.01') +
+    getInputHtml('germ_ista_otherCropPct', 'Other Crop Seeds (%)', 'e.g. 0.5', 'number', '0.01') +
+    getInputHtml('germ_ista_weedSeedPct', 'Weed Seeds (%)', 'e.g. 0.5', 'number', '0.01')
+  );
+  h += getSection("Germination Test", "",
+    getSelectHtml('germ_ista_germSubstrate', 'Substrate', ISTA_GERM_SUBSTRATE) +
+    getInputHtml('germ_ista_germTemp', 'Temperature (°C)', 'e.g. 20/30 alt') +
+    getInputHtml('germ_ista_germDuration', 'Duration (days)', 'e.g. 28', 'number') +
+    getInputHtml('germ_ista_germNormalPct', 'Normal Germination (%)', 'e.g. 78', 'number', '0.1') +
+    getInputHtml('germ_ista_germAbnormalPct', 'Abnormal Seedlings (%)', 'e.g. 5', 'number', '0.1') +
+    getInputHtml('germ_ista_freshUngermPct', 'Fresh / Ungerminated (%)', 'e.g. 12', 'number', '0.1') +
+    getInputHtml('germ_ista_hardSeedPct', 'Hard Seeds (%)', 'e.g. 5', 'number', '0.1') +
+    getSelectHtml('germ_ista_dormancyType', 'Dormancy Type', ISTA_DORMANCY) +
+    getInputHtml('germ_ista_dormancyTreatment', 'Dormancy Treatment', 'e.g. Scarification', 'text', '', true)
+  );
+  h += getSection("Moisture Content", "",
+    getInputHtml('germ_ista_moistureContent', 'Moisture Content (%)', 'e.g. 8.4', 'number', '0.1') +
+    getSelectHtml('germ_ista_moistureMethod', 'Testing Method', ["Low-constant temp oven","High-constant temp oven","Karl Fischer titration","Capacitance meter"])
+  );
+  h += getSection("1000-Seed Weight & Vigour", "",
+    getInputHtml('germ_ista_weight1000Seed', '1000-Seed Weight (g)', 'e.g. 42.5', 'number', '0.01') +
+    getSelectHtml('germ_ista_vigourTest', 'Vigour Test Used', ["None","Accelerated Ageing","Controlled Deterioration","TZ (Tetrazolium)","Electrical Conductivity","Cold Test"]) +
+    getInputHtml('germ_ista_vigourResult', 'Vigour Result', 'e.g. TZ viability 85%', 'text', '', true)
+  );
+  h += getSection("Seed Health Testing", "",
+    getInputHtml('germ_ista_healthTests', 'Tests Conducted', 'e.g. Blotter, Agar plate', 'text', '', true) +
+    getTextareaHtml('germ_ista_pathogensFound', 'Pathogens / Organisms', 'Species name...', 2, true)
+  );
+  h += getSection("Remarks", "", getTextareaHtml('germ_ista_remarks', 'Additional Notes', 'Deviations...', 3));
+  return h;
+}

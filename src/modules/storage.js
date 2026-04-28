@@ -432,6 +432,7 @@ export const Store = {
     });
 
       console.log('Store.add: Survey written to local cache');
+      triggerAutoBackup();
       return true;
     } catch (e) {
       console.error('Store.add: Error saving survey:', e);
@@ -446,7 +447,10 @@ export const Store = {
     await _addSurveyToLocalCache(s);
     try {
       const userDocRef = await getUserRef();
-      await withRetry(() => setDoc(doc(collection(userDocRef, 'surveys'), s.id), s));
+      withRetry(() => setDoc(doc(collection(userDocRef, 'surveys'), s.id), s)).catch(e => {
+         console.warn('Store.update: Background sync failed', e.message);
+      });
+      triggerAutoBackup();
     } catch (e) {
       console.warn('Store.update: Firestore write failed after retries', e.message);
     }
@@ -709,5 +713,21 @@ export async function migrateInlineMedia() {
 
   if (migrated > 0) {
     console.log(`migrateInlineMedia: Migrated ${migrated} media items out of survey documents`);
+  }
+}
+
+/**
+ * triggerAutoBackup()
+ * Creates a local snapshot of all survey data and saves it to IndexedDB.
+ * Fired automatically during add/update operations to prevent data loss.
+ */
+export async function triggerAutoBackup() {
+  try {
+    const backupData = await Store.getBackupData();
+    backupData.timestamp = Date.now();
+    await idb.set('fc_auto_backup', JSON.stringify(backupData));
+    console.log('Automated backup completed.');
+  } catch (e) {
+    console.warn('Automated backup failed', e);
   }
 }
