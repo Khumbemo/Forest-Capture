@@ -20,6 +20,7 @@ import { refreshPreview, exportSurveyCSV, exportSurveyJSON, exportAllSurveysCSV,
 import { initCompareScreen, init as initCompare } from './modules/analytics-compare.js';
 import { initHerbarium, init as initHerbariumListeners } from './modules/herbarium.js';
 import { init as initGermplasm, onScreenEnter as germplasmEnter } from './modules/germplasm.js';
+import { initBackgrounds } from './modules/backgrounds.js';
 import { ensureAuth, EmailLogin, EmailSignup, AppSignOut, AppDeleteAccount } from './modules/firebase.js';
 
 // ===== INIT =====
@@ -27,6 +28,7 @@ import { ensureAuth, EmailLogin, EmailSignup, AppSignOut, AppDeleteAccount } fro
 async function initApp() {
   // Always set up listeners first — MUST work even if auth is slow
   setupEventListeners();
+  initBackgrounds();
 
   try {
     // Request persistent storage to block Safari 7-day wipe
