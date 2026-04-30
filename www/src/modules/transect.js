@@ -183,4 +183,38 @@ export function init() {
   $('#btnSaveTransect')?.addEventListener('click', async () => {
     await saveTransect();
   });
+
+  // CWD mode: adapt intercept labels when "Coarse Woody Debris" is selected
+  $('#transectType')?.addEventListener('change', (e) => {
+    const isCWD = e.target.value === 'cwd';
+    const list = $('#interceptList');
+    if (!list) return;
+    // Update existing intercept entries
+    list.querySelectorAll('.species-entry').forEach(entry => {
+      _applyCWDLabels(entry, isCWD);
+    });
+  });
+}
+
+/**
+ * Swap intercept labels between standard and CWD mode
+ */
+function _applyCWDLabels(entry, isCWD) {
+  try {
+    const labels = entry.querySelectorAll('label');
+    labels.forEach(l => {
+      const txt = l.textContent.trim();
+      if (isCWD) {
+        if (txt.startsWith('Species')) l.textContent = 'Feature / Log ID';
+        if (txt.startsWith('Life Form')) l.textContent = 'Wood Type';
+        if (txt.startsWith('Cover')) l.textContent = 'Decay Class (1-5)';
+        if (txt.startsWith('Height')) l.textContent = 'Log Diameter (cm)';
+      } else {
+        if (txt.startsWith('Feature')) l.textContent = 'Species / Feature';
+        if (txt.startsWith('Wood Type')) l.textContent = 'Life Form';
+        if (txt.startsWith('Decay Class')) l.textContent = 'Cover %';
+        if (txt.startsWith('Log Diameter')) l.textContent = 'Height (m)';
+      }
+    });
+  } catch (_) { /* safety net */ }
 }

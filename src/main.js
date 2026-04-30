@@ -24,6 +24,29 @@ import { addPrismTally, refreshPrismTable, init as initPrism } from './modules/p
 import { initBackgrounds } from './modules/backgrounds.js';
 import { ensureAuth, EmailLogin, EmailSignup, AppSignOut, AppDeleteAccount } from './modules/firebase.js';
 
+// ===== GLOBAL CRASH PROTECTION =====
+// Prevents the app from ever showing a white screen due to unhandled errors.
+window.onerror = function(msg, src, line, col, err) {
+  console.error('[FC CrashGuard] Uncaught error:', msg, 'at', src, line, col);
+  try {
+    const toast = document.querySelector('.toast');
+    if (!toast) {
+      const t = document.createElement('div');
+      t.className = 'toast';
+      t.textContent = 'An error occurred. Your data is safe.';
+      t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(239,68,68,0.9);color:#fff;padding:12px 20px;border-radius:8px;z-index:99999;font-size:0.85rem;';
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 5000);
+    }
+  } catch(_) { /* last resort — don't let the handler itself crash */ }
+  return true; // Prevents the browser default error overlay
+};
+
+window.addEventListener('unhandledrejection', function(e) {
+  console.error('[FC CrashGuard] Unhandled promise rejection:', e.reason);
+  e.preventDefault(); // Suppress the default browser error for async crashes
+});
+
 // ===== INIT =====
 
 async function initApp() {
