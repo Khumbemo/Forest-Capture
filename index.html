@@ -453,6 +453,21 @@
           <div class="stat-label">Germplasm</div>
         </div>
       </div>
+
+        <div class="stat-card" role="button" tabindex="0" data-screen="screenPrism">
+          <div class="stat-icon">
+            <svg class="anim-tool-svg" viewBox="0 0 100 100" fill="none" stroke="currentColor"
+              stroke-width="3" stroke-linejoin="round">
+              <polygon points="50,15 20,80 80,80" fill="rgba(245,158,11,0.15)" stroke="var(--amber)" />
+              <circle cx="50" cy="55" r="10" fill="rgba(16,185,129,0.25)" stroke="var(--emerald)" />
+              <line x1="50" y1="55" x2="25" y2="35" stroke="var(--emerald)" stroke-dasharray="4" />
+              <line x1="50" y1="55" x2="75" y2="35" stroke="var(--emerald)" stroke-dasharray="4" />
+              <line x1="50" y1="55" x2="50" y2="25" stroke="var(--emerald)" stroke-dasharray="4" />
+            </svg>
+          </div>
+          <div class="stat-label">Prism Sweep</div>
+        </div>
+      </div>
     </section>
     <!-- ===== MAP ===== -->
     <section class="screen" id="screenMap" style="padding:0;position:relative;">
@@ -649,6 +664,7 @@
               <option value="belt">Belt Transect</option>
               <option value="line-intercept">Line Intercept (Canfield)</option>
               <option value="point-intercept">Point Intercept</option>
+              <option value="cwd">Coarse Woody Debris (CWD)</option>
             </select></div>
           <div class="form-group"><label for="transectNumber">Transect #</label><input type="number" id="transectNumber"
               min="1" placeholder="e.g., 1" /></div>
@@ -1704,6 +1720,62 @@
     <!-- ===== GERMPLASM ===== -->
     <section class="screen" id="screenGermplasm">
       <div id="germplasmMount"></div>
+    </section>
+
+    <!-- ===== PRISM SWEEP ===== -->
+    <section class="screen" id="screenPrism">
+      <div class="screen-header">
+        <h2>Prism Sweep (Point Sampling)</h2>
+      </div>
+      <div class="active-survey-bar"><span class="active-label">Active:</span><span class="active-name"
+          id="prismSurveyName">No survey</span></div>
+      <div class="form-card">
+        <h3 class="card-title">Sweep Configuration</h3>
+        <div class="form-row">
+          <div class="form-group"><label for="prismBAF">Basal Area Factor (BAF)</label><input type="number"
+              id="prismBAF" min="1" step="0.5" value="4" placeholder="e.g., 4" title="Standard BAF for wedge prism" /></div>
+          <div class="form-group"><label for="prismPointNumber">Point #</label><input type="number"
+              id="prismPointNumber" min="1" placeholder="e.g., 1" /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label for="prismDate">Measurement Date</label><input type="date"
+              id="prismDate" /></div>
+          <div class="form-group"><label for="prismObserver">Observer / Team ID</label><input type="text"
+              id="prismObserver" placeholder="e.g., Team C" /></div>
+        </div>
+        <div class="form-group"><label for="prismGPS">GPS (Point Location)</label>
+          <div class="flex-gap-xs"><input type="text" id="prismGPS" placeholder="Lat, Long" class="flex-1" /><button
+              class="btn btn-accent btn-sm" id="btnPrismGPS">⊕</button></div>
+        </div>
+      </div>
+      <div class="form-card">
+        <div class="section-title-row">
+          <h3 class="card-title">Tally "In" Trees</h3><button class="btn btn-accent btn-sm" id="btnAddPrismTally">＋ Add Tree</button>
+        </div>
+        <div id="prismTallyList"></div>
+      </div>
+      <button class="btn btn-primary btn-block" id="btnSavePrism">Save Prism Point</button>
+      <div class="form-card mt-lg">
+        <h3 class="card-title">Saved Prism Points</h3>
+        <div class="table-scroll">
+          <table class="quadrat-table">
+            <thead>
+              <tr>
+                <th>Pt#</th>
+                <th>BAF</th>
+                <th>Trees</th>
+                <th>BA/ha</th>
+                <th>⌀</th>
+              </tr>
+            </thead>
+            <tbody id="prismTableBody">
+              <tr>
+                <td colspan="5" class="table-empty">No prism data</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </section>
   </main>
 

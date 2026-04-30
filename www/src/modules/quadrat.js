@@ -6,13 +6,18 @@ import { attachAutocomplete } from './species-autocomplete.js';
 
 let spCount = 0;
 
+let morphoCount = 0;
+
 export function addSpeciesEntry() {
   spCount++;
   const d = document.createElement('div');
   d.className = 'species-entry';
   const inputId = `quadrat-spname-${spCount}`;
+  const photoInputId = `quadrat-photo-${spCount}`;
   d.innerHTML = `<div class="species-entry-header"><span class="species-entry-num">Species #${spCount}</span><button class="species-remove" type="button">✕</button></div>
 <div class="form-group"><label>Species Name</label><input type="text" class="sp-name" id="${inputId}" placeholder="e.g., Shorea robusta" /></div>
+<div class="form-row" style="align-items:center;"><div class="form-group" style="flex:1;"><label class="morpho-label" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" class="sp-morpho" style="width:16px;height:16px;" /> Unknown (Morphospecies)</label></div><div style="flex:0 0 auto;"><label class="btn btn-ghost btn-sm sp-photo-btn" for="${photoInputId}" style="font-size:0.75rem;padding:4px 10px;border:1px solid var(--border);cursor:pointer;">📷 Photo</label><input type="file" id="${photoInputId}" class="sp-photo-input hidden-input" accept="image/*" capture="environment" style="display:none;" /></div></div>
+<div class="sp-photo-preview" style="display:none;margin-bottom:8px;text-align:center;"><img class="sp-photo-img" src="" style="max-width:100%;max-height:120px;border-radius:6px;border:1px solid var(--border);" /><div class="sp-photo-ref" style="font-size:0.65rem;color:var(--text-muted);margin-top:2px;"></div></div>
 <div class="form-row"><div class="form-group"><label>Life Stage</label><select class="sp-stage"><option value="tree">Tree</option><option value="sapling">Sapling</option><option value="seedling">Seedling</option><option value="climber">Climber</option><option value="shrub">Shrub</option><option value="herb">Herb</option></select></div><div class="form-group"><label>Tree Status</label><select class="sp-status"><option value="live">Live</option><option value="dead-standing">Dead Standing</option><option value="dead-fallen">Dead Fallen</option><option value="stump">Stump</option></select></div></div>
 <div class="form-row"><div class="form-group"><label>Stratum / Layer</label><select class="sp-stratum"><option value="">—</option><option value="emergent">Emergent</option><option value="canopy">Canopy</option><option value="understory">Understory (Shrub)</option><option value="ground">Ground (Herbaceous)</option></select></div><div class="form-group"><label>Cover (%)</label><input type="number" class="sp-cover" min="0" max="100" placeholder="0-100" /></div></div>
 <div class="form-row"><div class="form-group"><label>Abundance</label><input type="number" class="sp-abundance" min="0" placeholder="Count" /></div><div class="form-group"><label>Stem Count</label><input type="number" class="sp-stems" min="1" placeholder="Stems" title="Number of stems per individual (multi-stemmed trees)" /></div></div>
@@ -24,6 +29,82 @@ export function addSpeciesEntry() {
 <div class="form-row"><div class="form-group"><label>Bark Condition</label><select class="sp-bark"><option value="">—</option><option value="intact">Intact</option><option value="partially-missing">Partially Missing</option><option value="mostly-missing">Mostly Missing</option><option value="absent">Absent</option></select></div><div class="form-group"><label>Decay Class (Dead only)</label><select class="sp-decay"><option value="">—</option><option value="1">1 — Recently Dead</option><option value="2">2 — Loose Bark</option><option value="3">3 — Soft Sapwood</option><option value="4">4 — Heartwood Decay</option><option value="5">5 — Fully Decomposed</option></select></div></div>`;
   d.querySelector('.species-remove').addEventListener('click', () => d.remove());
   $('#speciesList').appendChild(d);
+
+  // Fix #1: DBH > 0 locks Abundance to 1
+  const dbhInput = d.querySelector('.sp-dbh');
+  const abundanceInput = d.querySelector('.sp-abundance');
+  dbhInput.addEventListener('input', () => {
+    const v = parseFloat(dbhInput.value);
+    if (v > 0) {
+      abundanceInput.value = 1;
+      abundanceInput.readOnly = true;
+      abundanceInput.title = 'Locked to 1 (individual tree with measured DBH)';
+      abundanceInput.style.opacity = '0.6';
+    } else {
+      abundanceInput.readOnly = false;
+      abundanceInput.title = '';
+      abundanceInput.style.opacity = '1';
+    }
+  });
+
+  // Morphospecies checkbox: auto-generate ID and highlight photo button
+  const morphoCb = d.querySelector('.sp-morpho');
+  const nameInput = d.querySelector('.sp-name');
+  const photoBtn = d.querySelector('.sp-photo-btn');
+  morphoCb.addEventListener('change', () => {
+    if (morphoCb.checked) {
+      morphoCount++;
+      nameInput.value = `Morpho-${String(morphoCount).padStart(2, '0')}`;
+      nameInput.readOnly = true;
+      nameInput.style.fontStyle = 'italic';
+      nameInput.style.color = 'var(--amber)';
+      photoBtn.style.background = 'rgba(239,68,68,0.15)';
+      photoBtn.style.borderColor = 'var(--red)';
+      photoBtn.style.color = 'var(--red)';
+    } else {
+      nameInput.value = '';
+      nameInput.readOnly = false;
+      nameInput.style.fontStyle = '';
+      nameInput.style.color = '';
+      photoBtn.style.background = '';
+      photoBtn.style.borderColor = '';
+      photoBtn.style.color = '';
+    }
+  });
+
+  // Contextual photo capture
+  const photoInput = d.querySelector('.sp-photo-input');
+  const photoPreview = d.querySelector('.sp-photo-preview');
+  const photoImg = d.querySelector('.sp-photo-img');
+  const photoRefLabel = d.querySelector('.sp-photo-ref');
+  photoInput.addEventListener('change', (ev) => {
+    const file = ev.target.files[0];
+    if (!file) return;
+    const qNum = $('#quadratNumber')?.value || '0';
+    const refId = `IMG_Q${qNum}_Sp${spCount}_${Date.now()}.jpg`;
+    d.dataset.photoRef = refId;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      // Compress to canvas
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX = 800;
+        let w = img.width, h = img.height;
+        const scale = Math.min(MAX / w, MAX / h, 1);
+        w = Math.round(w * scale); h = Math.round(h * scale);
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+        photoImg.src = dataUrl;
+        photoPreview.style.display = 'block';
+        photoRefLabel.textContent = refId;
+        d.dataset.photoData = dataUrl;
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
 
   attachAutocomplete(inputId);
 }
@@ -70,7 +151,10 @@ export async function saveQuadrat() {
       bark: e.querySelector('.sp-bark')?.value || '',
       decayClass: parseInt(e.querySelector('.sp-decay')?.value) || 0,
       stratum: e.querySelector('.sp-stratum')?.value || '',
-      cover: parseFloat(e.querySelector('.sp-cover')?.value) || 0
+      cover: parseFloat(e.querySelector('.sp-cover')?.value) || 0,
+      isMorpho: e.querySelector('.sp-morpho')?.checked || false,
+      photoRef: e.dataset?.photoRef || '',
+      photoData: e.dataset?.photoData || ''
     }))
   };
 

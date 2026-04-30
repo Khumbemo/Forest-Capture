@@ -41,10 +41,10 @@ export async function exportSurveyCSV() {
   if (!s) { toast(t('No active survey'), true); return; }
   
   if (window.XLSX) {
-    const rows = [['Survey', 'Date', 'Location', 'Investigator', 'Q#', 'Size', 'MeasDate', 'Observer', 'Species', 'Stage', 'Status', 'Phenology', 'Abundance', 'Stems', 'DBH', 'DBH_MeasHt', 'GBH', 'Height', 'CrownClass', 'CrownDiam', 'Distance', 'Azimuth', 'Health', 'Bark', 'DecayClass', 'GPS', 'Cover%', 'Stratum']];
+    const rows = [['Survey', 'Date', 'Location', 'Investigator', 'Q#', 'Size', 'MeasDate', 'Observer', 'Species', 'Stage', 'Status', 'Phenology', 'Abundance', 'Stems', 'DBH', 'DBH_MeasHt', 'GBH', 'Height', 'CrownClass', 'CrownDiam', 'Distance', 'Azimuth', 'Health', 'Bark', 'DecayClass', 'GPS', 'Cover%', 'Stratum', 'Morpho', 'Photo_Ref']];
     if (s.quadrats) s.quadrats.forEach(q => {
       if (q.species) q.species.forEach(sp => {
-        rows.push([s.name, s.date, s.location, s.investigator || '', q.number, q.size, q.measDate || '', q.observer || '', sp.name, sp.stage, sp.status || 'live', sp.phenology || '', sp.abundance, sp.stems || 1, sp.dbh, sp.dbhMeasHeight || 1.3, sp.gbh || 0, sp.height, sp.crownClass || '', sp.crownDiameter || 0, sp.distance || 0, sp.azimuth || 0, sp.health || '', sp.bark || '', sp.decayClass || 0, q.gps || '', sp.cover || 0, sp.stratum || '']);
+        rows.push([s.name, s.date, s.location, s.investigator || '', q.number, q.size, q.measDate || '', q.observer || '', sp.name, sp.stage, sp.status || 'live', sp.phenology || '', sp.abundance, sp.stems || 1, sp.dbh, sp.dbhMeasHeight || 1.3, sp.gbh || 0, sp.height, sp.crownClass || '', sp.crownDiameter || 0, sp.distance || 0, sp.azimuth || 0, sp.health || '', sp.bark || '', sp.decayClass || 0, q.gps || '', sp.cover || 0, sp.stratum || '', sp.isMorpho ? 'Yes' : '', sp.photoRef || '']);
       });
     });
 
@@ -61,6 +61,17 @@ export async function exportSurveyCSV() {
       });
       const wsTransect = window.XLSX.utils.aoa_to_sheet(tRows);
       window.XLSX.utils.book_append_sheet(wb, wsTransect, "Transects");
+    }
+
+    if (s.prismPoints && s.prismPoints.length) {
+      const pRows = [['Survey', 'Pt#', 'BAF', 'MeasDate', 'Observer', 'GPS', 'Species', 'DBH', 'Status', 'TreeCount', 'BA_per_ha']];
+      s.prismPoints.forEach(p => {
+        p.tallies.forEach((t, ti) => {
+          pRows.push([s.name, p.number, p.baf, p.measDate || '', p.observer || '', p.gps || '', t.species, t.dbh || '', t.status || 'live', ti === 0 ? p.treeCount : '', ti === 0 ? p.basalAreaPerHa : '']);
+        });
+      });
+      const wsPrism = window.XLSX.utils.aoa_to_sheet(pRows);
+      window.XLSX.utils.book_append_sheet(wb, wsPrism, "Prism_Sweeps");
     }
 
     const wbout = window.XLSX.write(wb, { bookType: 'xlsx', type: 'array' });

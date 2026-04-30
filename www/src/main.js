@@ -20,6 +20,7 @@ import { refreshPreview, exportSurveyCSV, exportSurveyJSON, exportAllSurveysCSV,
 import { initCompareScreen, init as initCompare } from './modules/analytics-compare.js';
 import { initHerbarium, init as initHerbariumListeners } from './modules/herbarium.js';
 import { init as initGermplasm, onScreenEnter as germplasmEnter } from './modules/germplasm.js';
+import { addPrismTally, refreshPrismTable, init as initPrism } from './modules/prism.js';
 import { initBackgrounds } from './modules/backgrounds.js';
 import { ensureAuth, EmailLogin, EmailSignup, AppSignOut, AppDeleteAccount } from './modules/firebase.js';
 
@@ -109,6 +110,7 @@ async function initApp() {
   // Initial species/intercept entry
   addSpeciesEntry();
   addIntercept();
+  addPrismTally();
 }
 
 if (document.readyState === 'loading') {
@@ -292,6 +294,7 @@ const screenCallbacks = {
   },
   screenHerbarium: initHerbarium,
   screenGermplasm: germplasmEnter,
+  screenPrism: refreshPrismTable,
   screenExport: refreshPreview
 };
 
@@ -299,7 +302,7 @@ async function updateBars() {
   try {
     const s = await Store.getActive();
     const n = s ? s.name : 'No survey';
-    ['mapSurveyName', 'quadratSurveyName', 'envSurveyName', 'distSurveyName', 'photoSurveyName', 'exportSurveyName', 'analyticsSurveyName', 'transectSurveyName', 'herbSurveyName', 'germSurveyName'].forEach(id => {
+    ['mapSurveyName', 'quadratSurveyName', 'envSurveyName', 'distSurveyName', 'photoSurveyName', 'exportSurveyName', 'analyticsSurveyName', 'transectSurveyName', 'herbSurveyName', 'germSurveyName', 'prismSurveyName'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.textContent = n;
     });
@@ -691,6 +694,9 @@ function setupEventListeners() {
 
   // Analytics Compare
   initCompare();
+
+  // Prism
+  initPrism();
 
   // Export
   $('#btnExportCSV')?.addEventListener('click', exportSurveyCSV);
