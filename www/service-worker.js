@@ -1,5 +1,5 @@
 // Forest Capture — Service Worker v10
-const CACHE_NAME = 'forest-capture-v26';
+const CACHE_NAME = 'forest-capture-v27';
 const ASSETS = [
   './index.html',
   './index.css',
@@ -71,6 +71,10 @@ async function tileStrategy(request) {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
+
+  // Never intercept blob URLs — these are file downloads (CSV, GPX, JSON, etc.)
+  if (url.protocol === 'blob:') return;
+
   if (url.hostname === 'api.open-meteo.com') return;
 
   // Tile server requests — cache first

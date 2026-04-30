@@ -345,7 +345,7 @@ input,select,textarea,button{font-family:'Roboto',-apple-system,BlinkMacSystemFo
 
 /* =========== MAP =========== */
 .map-container{position:relative;margin-bottom:var(--sp-lg);}
-.map-view{width:100%;height:350px;border-radius:var(--radius-lg);border:1px solid var(--border);overflow:hidden;background:#0a1a0d;}
+.map-view{width:100%;height:65vh;min-height:350px;border-radius:var(--radius-lg);border:1px solid var(--border);overflow:hidden;background:#0a1a0d;}
 .map-controls{position:absolute;top:var(--sp-sm);right:var(--sp-sm);display:flex;flex-direction:column;gap:4px;z-index:600;}
 .map-ctrl-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--bg-card-solid);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:1rem;transition:all var(--transition);box-shadow:var(--shadow);}
 .map-ctrl-btn:hover{border-color:var(--emerald);background:var(--bg-hover);}
@@ -541,7 +541,7 @@ button,.btn,.nav-btn,.stat-card,.map-ctrl-btn,a,input,select,textarea{
   .stats-grid{grid-template-columns:repeat(3,1fr);gap:var(--sp-lg);}
   .telemetry-grid{grid-template-columns:repeat(4,1fr);gap:var(--sp-md);}
   .form-card{padding:var(--sp-xl);}
-  .map-view{height:460px;}
+  .map-view{height:70vh;min-height:460px;}
   .settings-panel{width:400px;max-width:35vw;}
   .nav-btn{min-width:80px;}
   .nav-label{font-size:.65rem;}
@@ -578,7 +578,7 @@ button,.btn,.nav-btn,.stat-card,.map-ctrl-btn,a,input,select,textarea{
   .form-card{padding:14px;}
   .card-title{font-size:.88rem;}
   .btn{padding:10px 16px;font-size:.82rem;}
-  .map-view{height:280px;}
+  .map-view{height:50vh;min-height:300px;}
   .settings-panel{width:85vw;max-width:320px;}
 }
 

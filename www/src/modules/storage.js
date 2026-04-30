@@ -520,6 +520,15 @@ async function _loadWpsFromLocal() {
 }
 
 export async function getWps() {
+  // Offline-first: return cached waypoints immediately, sync Firestore in background
+  const cached = await _loadWpsFromLocal();
+  if (cached && cached.length > 0) {
+    // Sync from Firestore in the background without blocking the UI
+    _syncWpsFromFirestore();
+    return cached;
+  }
+
+  // No local cache — try Firestore
   try {
     const userDocRef = await getUserRef();
     const docSnap = await withTimeout(getDoc(doc(collection(userDocRef, 'waypoints'), 'data')), 5000, { exists: () => false });
@@ -531,7 +540,21 @@ export async function getWps() {
   } catch (e) {
     console.warn('getWps: Firestore failed, using cache', e.message);
   }
-  return await _loadWpsFromLocal();
+  return [];
+}
+
+/** Background sync: pull waypoints from Firestore and update local cache */
+async function _syncWpsFromFirestore() {
+  try {
+    const userDocRef = await getUserRef();
+    const docSnap = await withTimeout(getDoc(doc(collection(userDocRef, 'waypoints'), 'data')), 5000, { exists: () => false });
+    if (docSnap.exists()) {
+      const wps = docSnap.data().wps || [];
+      if (wps.length > 0) await _cacheWpsToLocal(wps);
+    }
+  } catch (e) {
+    console.debug('_syncWpsFromFirestore: background sync failed (offline?)', e.message);
+  }
 }
 
 export async function saveWps(wps) {

@@ -14,6 +14,7 @@ export function addSpeciesEntry() {
   d.innerHTML = `<div class="species-entry-header"><span class="species-entry-num">Species #${spCount}</span><button class="species-remove" type="button">✕</button></div>
 <div class="form-group"><label>Species Name</label><input type="text" class="sp-name" id="${inputId}" placeholder="e.g., Shorea robusta" /></div>
 <div class="form-row"><div class="form-group"><label>Life Stage</label><select class="sp-stage"><option value="tree">Tree</option><option value="sapling">Sapling</option><option value="seedling">Seedling</option><option value="climber">Climber</option><option value="shrub">Shrub</option><option value="herb">Herb</option></select></div><div class="form-group"><label>Tree Status</label><select class="sp-status"><option value="live">Live</option><option value="dead-standing">Dead Standing</option><option value="dead-fallen">Dead Fallen</option><option value="stump">Stump</option></select></div></div>
+<div class="form-row"><div class="form-group"><label>Stratum / Layer</label><select class="sp-stratum"><option value="">—</option><option value="emergent">Emergent</option><option value="canopy">Canopy</option><option value="understory">Understory (Shrub)</option><option value="ground">Ground (Herbaceous)</option></select></div><div class="form-group"><label>Cover (%)</label><input type="number" class="sp-cover" min="0" max="100" placeholder="0-100" /></div></div>
 <div class="form-row"><div class="form-group"><label>Abundance</label><input type="number" class="sp-abundance" min="0" placeholder="Count" /></div><div class="form-group"><label>Stem Count</label><input type="number" class="sp-stems" min="1" placeholder="Stems" title="Number of stems per individual (multi-stemmed trees)" /></div></div>
 <div class="form-row"><div class="form-group"><label>DBH (<span class="unit-diam">cm</span>)</label><input type="number" class="sp-dbh" min="0" step="0.1" placeholder="Diameter" /></div><div class="form-group"><label>GBH (<span class="unit-diam">cm</span>)</label><input type="number" class="sp-gbh" min="0" step="0.1" placeholder="Girth" /></div></div>
 <div class="form-row"><div class="form-group"><label>DBH Meas. Height (<span class="unit-dist">m</span>)</label><input type="number" class="sp-dbh-height" min="0" step="0.1" value="1.3" title="Standard: 1.3m. Adjust for buttressed trees." /></div><div class="form-group"><label>Crown Diameter (<span class="unit-dist">m</span>)</label><input type="number" class="sp-crown-diam" min="0" step="0.1" placeholder="Avg. of 2 axes" /></div></div>
@@ -67,7 +68,9 @@ export async function saveQuadrat() {
       phenology: e.querySelector('.sp-phenology').value,
       health: e.querySelector('.sp-health').value,
       bark: e.querySelector('.sp-bark')?.value || '',
-      decayClass: parseInt(e.querySelector('.sp-decay')?.value) || 0
+      decayClass: parseInt(e.querySelector('.sp-decay')?.value) || 0,
+      stratum: e.querySelector('.sp-stratum')?.value || '',
+      cover: parseFloat(e.querySelector('.sp-cover')?.value) || 0
     }))
   };
 
@@ -78,6 +81,9 @@ export async function saveQuadrat() {
     }
     if (sp.height > 0 && (sp.height < 0.1 || sp.height > 150)) {
       if (!await fcConfirm(`Warning: Species '${sp.name || 'Unknown'}' has an outlier height (${sp.height}m). Scale: 0.1-150m. Proceed?`)) return;
+    }
+    if (sp.cover > 0 && sp.cover > 100) {
+      if (!await fcConfirm(`Warning: Species '${sp.name || 'Unknown'}' has invalid cover (${sp.cover}%). Must be <= 100. Proceed?`)) return;
     }
   }
 
@@ -157,6 +163,8 @@ export async function refreshQuadratTable() {
               last.querySelector('.sp-name').value = sp.name;
               last.querySelector('.sp-stage').value = sp.stage;
               if (last.querySelector('.sp-status')) last.querySelector('.sp-status').value = sp.status || 'live';
+              if (last.querySelector('.sp-stratum')) last.querySelector('.sp-stratum').value = sp.stratum || '';
+              if (last.querySelector('.sp-cover')) last.querySelector('.sp-cover').value = sp.cover || 0;
               last.querySelector('.sp-abundance').value = sp.abundance;
               if (last.querySelector('.sp-stems')) last.querySelector('.sp-stems').value = sp.stems || 1;
               last.querySelector('.sp-dbh').value = isImperial ? toImperial(sp.dbh, 'diam') : sp.dbh;

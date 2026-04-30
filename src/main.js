@@ -299,7 +299,7 @@ async function updateBars() {
   try {
     const s = await Store.getActive();
     const n = s ? s.name : 'No survey';
-    ['quadratSurveyName', 'envSurveyName', 'distSurveyName', 'photoSurveyName', 'exportSurveyName', 'analyticsSurveyName', 'transectSurveyName', 'herbSurveyName', 'germSurveyName'].forEach(id => {
+    ['mapSurveyName', 'quadratSurveyName', 'envSurveyName', 'distSurveyName', 'photoSurveyName', 'exportSurveyName', 'analyticsSurveyName', 'transectSurveyName', 'herbSurveyName', 'germSurveyName'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.textContent = n;
     });

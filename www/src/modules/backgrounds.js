@@ -72,13 +72,13 @@ export function initBackgrounds() {
       for (let i=0;i<p.pts.length;i++) { if(!i) ctx.moveTo(p.pts[i].x,p.pts[i].y); else ctx.lineTo(p.pts[i].x,p.pts[i].y); }
       ctx.closePath();
       if (p.type==='panel') {
-        ctx.fillStyle=`rgba(${CYAN.join(',')},0.12)`; ctx.strokeStyle=`rgba(${CYAN.join(',')},0.6)`;
+        ctx.fillStyle=`rgba(${CYAN.join(',')},0.06)`; ctx.strokeStyle=`rgba(${CYAN.join(',')},0.3)`;
       } else if (p.type==='dish') {
-        ctx.fillStyle=`rgba(${AMBER.join(',')},0.1)`; ctx.strokeStyle=`rgba(${AMBER.join(',')},0.5)`;
+        ctx.fillStyle=`rgba(${AMBER.join(',')},0.05)`; ctx.strokeStyle=`rgba(${AMBER.join(',')},0.25)`;
       } else {
-        ctx.fillStyle=`rgba(${EMERALD.join(',')},0.08)`; ctx.strokeStyle=`rgba(${EMERALD.join(',')},0.7)`;
+        ctx.fillStyle=`rgba(${EMERALD.join(',')},0.04)`; ctx.strokeStyle=`rgba(${EMERALD.join(',')},0.35)`;
       }
-      ctx.lineWidth=1.5; ctx.fill(); ctx.stroke();
+      ctx.lineWidth=1; ctx.fill(); ctx.stroke();
     }
     for (let ring=0;ring<2;ring++) {
       ctx.beginPath();
@@ -87,11 +87,11 @@ export function initBackgrounds() {
         const px=Math.cos(a+time*0.003)*rR+w2, py=Math.sin(a+time*0.003)*rR*rT+vy;
         if(!a) ctx.moveTo(px,py); else ctx.lineTo(px,py);
       }
-      ctx.strokeStyle=`rgba(${EMERALD.join(',')},${0.08+ring*0.04})`; ctx.lineWidth=0.5; ctx.stroke();
+      ctx.strokeStyle=`rgba(${EMERALD.join(',')},${0.04+ring*0.02})`; ctx.lineWidth=0.5; ctx.stroke();
     }
     const scanY=(time*1.5)%height;
     ctx.beginPath(); ctx.moveTo(0,scanY); ctx.lineTo(width,scanY);
-    ctx.strokeStyle=`rgba(${EMERALD.join(',')},0.08)`; ctx.lineWidth=1; ctx.stroke();
+    ctx.strokeStyle=`rgba(${EMERALD.join(',')},0.04)`; ctx.lineWidth=0.5; ctx.stroke();
   }
 
   // ═══════════════════════════════════════════
@@ -106,7 +106,7 @@ export function initBackgrounds() {
   function render() {
     time += 1;
     ctx.clearRect(0,0,width,height);
-    ctx.globalAlpha=1.0;
+    ctx.globalAlpha=0.45;
     ctx.lineJoin='round';
 
     drawSatellite();

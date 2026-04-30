@@ -456,7 +456,10 @@
     </section>
     <!-- ===== MAP ===== -->
     <section class="screen" id="screenMap" style="padding:0;position:relative;">
-      <div class="map-container">
+      <div class="active-survey-bar" style="margin: 0; border-radius: 0; position: absolute; top: 0; left: 0; width: 100%; z-index: 600; background: rgba(10, 26, 13, 0.85); backdrop-filter: blur(4px);">
+        <span class="active-label">Active:</span><span class="active-name" id="mapSurveyName">No survey</span>
+      </div>
+      <div class="map-container" style="padding-top: 40px;">
         <div id="mapView" class="map-view"></div>
         <div class="map-controls">
           <button class="map-ctrl-btn" id="btnLocateMe" title="My Location"><svg viewBox="0 0 24 24" width="18"
@@ -491,54 +494,17 @@
             </svg></button>
         </div>
       </div>
-      <div class="form-card" style="margin-top:0;">
-        <div class="section-title-row" style="margin-bottom:var(--sp-sm);">
-          <h3 class="card-title">GPS Coordinates</h3>
-          <div id="gpsOptionStatus" class="gps-status-custom">SEARCHING...</div>
-        </div>
-        <div class="gps-grid-custom">
-          <div>
-            <div class="gps-label-xs">Coordinates</div>
-            <div id="gpsOptionCoords" class="gps-value-mono">—</div>
-          </div>
-          <div>
-            <div class="gps-label-xs">Accuracy</div>
-            <div id="gpsOptionAcc" class="gps-value-mono">±--- m</div>
-          </div>
-          <div>
-            <div class="gps-label-xs">Altitude</div>
-            <div id="gpsOptionAlt" class="gps-value-mono">--- m</div>
-          </div>
-          <div>
-            <div class="gps-label-xs">UTM</div>
-            <div id="gpsOptionUTM" class="gps-value-mono">—</div>
-          </div>
-        </div>
-        <div id="gpsOfflineManualInput"
-          style="display:none; margin-top:var(--sp-md); padding-top:var(--sp-sm); border-top:1px dashed var(--border);">
-          <div class="gps-label-xs" style="color:var(--amber); margin-bottom:8px;">MANUAL GPS OVERRIDE (OFFLINE MODE)
-          </div>
-          <div class="form-row">
-            <div class="form-group"><input type="number" id="gpsManualLat" placeholder="Latitude (e.g. 25.6120)"
-                step="any" /></div>
-            <div class="form-group"><input type="number" id="gpsManualLng" placeholder="Longitude (e.g. 93.7320)"
-                step="any" /></div>
-            <div class="form-group" style="flex:0 0 auto; align-self:flex-end;"><button class="btn btn-primary btn-sm"
-                id="btnSaveManualGPS">Set</button></div>
-          </div>
-        </div>
-      </div>
       <div class="form-card">
         <div class="section-title-row">
           <h3 class="card-title">⊙ GPS Waypoints</h3><button class="btn btn-accent btn-sm ml-auto"
-            id="btnSurveyTimer">⏱️ Timer</button><button class="btn btn-accent btn-sm" id="btnAddWaypointManual">+
-            Add</button>
+            id="btnSurveyTimer">⏱️ Timer</button>
         </div>
         <div class="form-row">
           <div class="form-group"><label for="waypointName">Name</label><input type="text" id="waypointName"
               placeholder="e.g., Plot A Center" /></div>
           <div class="form-group"><label for="waypointType">Type</label><select id="waypointType">
               <option value="plot">Plot Center</option>
+              <option value="boundary">Boundary Node</option>
               <option value="sample">Sample Point</option>
               <option value="landmark">Landmark</option>
               <option value="trail">Trail Marker</option>
@@ -1673,7 +1639,7 @@
         <div class="export-options">
           <button class="export-btn" id="btnExportCSV">
             <div class="export-icon">Σ</div>
-            <div class="export-info"><strong>CSV</strong><span>Excel, R, SPSS</span></div>
+            <div class="export-info"><strong>Excel (XLSX)</strong><span>Native Excel, R, SPSS</span></div>
           </button>
           <button class="export-btn" id="btnExportJSON">
             <div class="export-icon">{ }</div>
@@ -1681,7 +1647,7 @@
           </button>
           <button class="export-btn" id="btnExportAllCSV">
             <div class="export-icon">≡</div>
-            <div class="export-info"><strong>All Surveys CSV</strong><span>Batch</span></div>
+            <div class="export-info"><strong>All Surveys XLSX</strong><span>Batch Excel Export</span></div>
           </button>
           <button class="export-btn" id="btnExportGPX">
             <div class="export-icon">⌖</div>
@@ -2052,6 +2018,7 @@
   <div class="brightness-overlay" id="brightnessOverlay"></div>
   <script src="./vendor/leaflet/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <script type="module" src="./src/main.js"></script>
   <script>
     if ('serviceWorker' in navigator) {

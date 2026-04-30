@@ -5,7 +5,7 @@ import { curPos } from './gps.js';
 import { getWps, saveWps, loadSettings } from './storage.js';
 import { initOfflineMapUI } from './map-offline.js';
 
-let map = null, userMarker = null, wpMarkers = [], satLayer, terLayer, hybLayer;
+let map = null, userMarker = null, wpMarkers = [], satLayer, terLayer, hybLayer, boundaryPolygon = null;
 
 export async function initMap() {
   if (typeof L === 'undefined') return;
@@ -36,12 +36,33 @@ export async function refreshMapWps() {
   if (!map || typeof L === 'undefined') return;
   wpMarkers.forEach(m => { try { map.removeLayer(m); } catch { } });
   wpMarkers = [];
+  if (boundaryPolygon) {
+    try { map.removeLayer(boundaryPolygon); } catch { }
+    boundaryPolygon = null;
+  }
+  
   const wps = await getWps();
+  const boundaryCoords = [];
+
   wps.forEach(wp => {
     if (!wp || !Number.isFinite(wp.lat) || !Number.isFinite(wp.lng)) return;
     const m = L.marker([wp.lat, wp.lng]).addTo(map).bindPopup(`<b>${esc(wp.name || 'WP')}</b><br>${esc(wp.type || '')}`);
     wpMarkers.push(m);
+
+    if (wp.type === 'boundary') {
+      boundaryCoords.push([wp.lat, wp.lng]);
+    }
   });
+
+  if (boundaryCoords.length >= 3) {
+    boundaryPolygon = L.polygon(boundaryCoords, {
+      color: '#5ee5a0',
+      fillColor: '#5ee5a0',
+      fillOpacity: 0.2,
+      weight: 2,
+      dashArray: '4'
+    }).addTo(map);
+  }
 }
 
 export function locateMe() {

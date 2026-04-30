@@ -60,13 +60,67 @@ export function compress(file, MX, cb) {
   r.readAsDataURL(file);
 }
 
-export function dl(c, fn, m) {
-  const b = new Blob([c], { type: m });
+export async function dl(c, fn, m) {
+  // On Capacitor (Android/iOS), <a download> with blob URLs is silently ignored.
+  // Use Filesystem + Share plugins when available.
+  if (window.Capacitor && window.Capacitor.Plugins) {
+    try {
+      const { Filesystem, Directory } = await import('@capacitor/filesystem').catch(() => ({}));
+      const { Share } = await import('@capacitor/share').catch(() => ({}));
+
+      if (Filesystem && Directory) {
+        // Convert content to base64 for Filesystem.writeFile
+        const blob = new Blob([c], { type: m });
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+
+        const result = await Filesystem.writeFile({
+          path: fn,
+          data: base64,
+          directory: Directory.Documents,
+          recursive: true
+        });
+
+        // Try to share the file so the user can save/send it
+        if (Share) {
+          try {
+            await Share.share({
+              title: fn,
+              url: result.uri,
+              dialogTitle: 'Export: ' + fn
+            });
+          } catch (shareErr) {
+            // Share was cancelled or unavailable — file is still saved
+            console.log('Share dismissed or unavailable', shareErr);
+          }
+        }
+        return; // Success via Capacitor
+      }
+    } catch (capErr) {
+      console.warn('Capacitor file save failed, falling back to blob URL', capErr);
+    }
+  }
+
+  // Fallback: standard browser download using data URI
+  // Data URIs bypass the service worker entirely (no fetch event),
+  // so the download attribute is always respected for the filename.
+  const blob = new Blob([c], { type: m });
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(b);
+  a.href = dataUrl;
   a.download = fn;
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(a.href);
+  setTimeout(() => document.body.removeChild(a), 100);
 }
 
 // Global Metric <-> Imperial Converters
