@@ -109,8 +109,13 @@ export function addSpeciesEntry() {
   attachAutocomplete(inputId);
 }
 
+let isSavingQuadrat = false;
+
 export async function saveQuadrat() {
-  const s = await Store.getActive();
+  if (isSavingQuadrat) return;
+  isSavingQuadrat = true;
+  try {
+    const s = await Store.getActive();
   if (!s) { toast('Select survey', true); return; }
   const entries = $$('#speciesList .species-entry');
   if (!entries.length) { toast('Add species', true); return; }
@@ -191,6 +196,9 @@ export async function saveQuadrat() {
   window.fcIsDirty = false; // Reset dirty flag after successful save
   addSpeciesEntry();
   refreshQuadratTable();
+  } finally {
+    isSavingQuadrat = false;
+  }
 }
 
 export async function refreshQuadratTable() {

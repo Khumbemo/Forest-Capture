@@ -28,8 +28,13 @@ export function addIntercept() {
   attachAutocomplete(inputId);
 }
 
+let isSavingTransect = false;
+
 export async function saveTransect() {
-  const s = await Store.getActive();
+  if (isSavingTransect) return;
+  isSavingTransect = true;
+  try {
+    const s = await Store.getActive();
   if (!s) { toast('Select survey', true); return; }
   const sysSettings = await loadSettings();
   const isImperial = sysSettings.settingUnitSystem === 'imperial';
@@ -101,6 +106,9 @@ export async function saveTransect() {
   window.fcIsDirty = false; // Reset dirty flag after successful save
   addIntercept();
   refreshTransectTable();
+  } finally {
+    isSavingTransect = false;
+  }
 }
 
 export async function refreshTransectTable() {

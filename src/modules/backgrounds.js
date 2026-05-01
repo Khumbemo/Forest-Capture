@@ -10,6 +10,10 @@ export function initBackgrounds() {
   const ctx = canvas.getContext('2d');
 
   let width = 0, height = 0, w2 = 0, h2 = 0, time = 0;
+  
+  // Track animation state to prevent battery drain
+  window.fcBgAnimId = null;
+  window.fcBgPaused = false;
 
   const EMERALD = [16, 185, 129];
   const CYAN    = [34, 211, 238];
@@ -104,6 +108,8 @@ export function initBackgrounds() {
   }
 
   function render() {
+    if (window.fcBgPaused) return; // Battery saving
+
     time += 1;
     ctx.clearRect(0,0,width,height);
     ctx.globalAlpha=0.45;
@@ -116,11 +122,36 @@ export function initBackgrounds() {
     vig.addColorStop(0,'rgba(0,0,0,0)'); vig.addColorStop(1,'rgba(0,0,0,0.3)');
     ctx.fillStyle=vig; ctx.fillRect(0,0,width,height);
 
-    requestAnimationFrame(render);
+    window.fcBgAnimId = requestAnimationFrame(render);
   }
 
   window.addEventListener('resize', resize);
+  window.addEventListener('fc-resume-bg', () => {
+    if (!window.fcBgPaused && !window.fcBgAnimId) {
+      render();
+    }
+  });
+  
   resize();
   generateSatellite();
   render();
+}
+
+// Global hooks for the UI router to manage battery life
+export function pauseBackgrounds() {
+  window.fcBgPaused = true;
+  if (window.fcBgAnimId) {
+    cancelAnimationFrame(window.fcBgAnimId);
+    window.fcBgAnimId = null;
+  }
+}
+
+export function resumeBackgrounds() {
+  if (window.fcBgPaused) {
+    window.fcBgPaused = false;
+    // Just trigger a resize to jumpstart if needed, though the loop will restart 
+    // if we call requestAnimationFrame here. But since `render` is inside `initBackgrounds`,
+    // the easiest way is to let the router toggle `window.fcBgPaused` and we just dispatch an event.
+    window.dispatchEvent(new Event('fc-resume-bg'));
+  }
 }

@@ -1,5 +1,6 @@
 // src/modules/ui.js
 import { t, walkDOMAndTranslate } from './i18n.js';
+import { pauseBackgrounds, resumeBackgrounds } from './backgrounds.js';
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 
@@ -156,6 +157,12 @@ export async function switchScreen(id, callbacks = {}, updateHistory = true) {
   const isRoot = ROOT_SCREENS.includes(id);
   if (backBtn) {
     backBtn.style.display = isRoot ? 'none' : 'inline-flex';
+  }
+
+  if (id === 'screenDashboard') {
+    resumeBackgrounds();
+  } else {
+    pauseBackgrounds();
   }
 
   const isSmall = /Mobi|Android/i.test(navigator.userAgent);

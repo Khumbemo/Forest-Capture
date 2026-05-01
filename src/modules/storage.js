@@ -855,8 +855,30 @@ export async function triggerAutoBackup() {
     const backupData = await Store.getBackupData();
     backupData.timestamp = Date.now();
     await idb.set('fc_auto_backup', JSON.stringify(backupData));
+    await checkStorageQuota();
     console.log('Automated backup completed.');
   } catch (e) {
     console.warn('Automated backup failed', e);
   }
+}
+
+/**
+ * checkStorageQuota()
+ * Checks browser storage limits. Throws an alert if storage is >90% full.
+ */
+export async function checkStorageQuota() {
+  if (navigator.storage && navigator.storage.estimate) {
+    try {
+      const estimate = await navigator.storage.estimate();
+      if (!estimate.quota) return null;
+      const percentUsed = (estimate.usage / estimate.quota) * 100;
+      if (percentUsed > 90) {
+        toast(`⚠️ Storage ${Math.round(percentUsed)}% full. Sync or export your data immediately to prevent data loss.`, true);
+      }
+      return { usage: estimate.usage, quota: estimate.quota, percent: percentUsed };
+    } catch (e) {
+      console.warn('Storage estimation failed', e);
+    }
+  }
+  return null;
 }

@@ -21,8 +21,13 @@ export function addPrismTally() {
   attachAutocomplete(inputId);
 }
 
+let isSavingPrism = false;
+
 export async function savePrismPoint() {
-  const s = await Store.getActive();
+  if (isSavingPrism) return;
+  isSavingPrism = true;
+  try {
+    const s = await Store.getActive();
   if (!s) { toast('Select survey', true); return; }
   const entries = $$('#prismTallyList .species-entry');
   if (!entries.length) { toast('Add at least one tree tally', true); return; }
@@ -66,6 +71,9 @@ export async function savePrismPoint() {
   window.fcIsDirty = false; // Reset dirty flag after successful save
   addPrismTally();
   refreshPrismTable();
+  } finally {
+    isSavingPrism = false;
+  }
 }
 
 export async function refreshPrismTable() {

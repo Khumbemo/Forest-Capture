@@ -5,6 +5,7 @@ import { Store, MediaStore } from './storage.js';
 import { storage, ensureAuth } from './firebase.js';
 import { ref, uploadBytes, uploadString, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js';
 import { compress } from './utils.js';
+import { curPos } from './gps.js';
 
 // Capacitor is not imported via ES modules to maintain browser compatibility without a bundler.
 // Android WebView injects Capacitor onto the window object globally.
@@ -108,7 +109,8 @@ export async function handlePhotoInput(file) {
         path: finalPath,
         localUri: convertUrl,
         quadrat: parseInt($('#photoQuadratRef').value) || null,
-        time: new Date().toISOString()
+        time: new Date().toISOString(),
+        gps: curPos.lat ? { lat: curPos.lat, lng: curPos.lng, acc: curPos.acc } : null
       });
 
       await Store.update(s);
@@ -141,7 +143,8 @@ export async function handlePhotoInput(file) {
             url: finalUrl, // Firebase download URL (online)
             path: finalPath,
             quadrat: parseInt($('#photoQuadratRef').value) || null,
-            time: new Date().toISOString()
+            time: new Date().toISOString(),
+            gps: curPos.lat ? { lat: curPos.lat, lng: curPos.lng, acc: curPos.acc } : null
           });
 
           await Store.update(s);
