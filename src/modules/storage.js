@@ -135,6 +135,11 @@ export const idb = {
 const MEDIA_PREFIX = 'media_';
 
 export const MediaStore = {
+  // ─── Object URL lifecycle tracking ───
+  // Every URL.createObjectURL() allocates memory that persists until explicitly
+  // revoked. Without tracking, a long gallery session leaks memory continuously.
+  _activeObjectUrls: new Set(),
+
   /** Save a media blob to IndexedDB. Handles both Blobs and Data URLs. */
   async save(data) {
     const id = MEDIA_PREFIX + Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
@@ -170,6 +175,7 @@ export const MediaStore = {
   /** 
    * Resolve a photo/audio entry to a displayable src URL.
    * Priority: Firebase URL > Capacitor localUri > IndexedDB blob (mediaId) > legacy inline data
+   * Object URLs created here are tracked and must be released via revokeAll().
    */
   async resolveUrl(entry) {
     if (!entry) return '';
@@ -179,7 +185,9 @@ export const MediaStore = {
     if (entry.mediaId) {
       const blob = await this.get(entry.mediaId);
       if (blob instanceof Blob) {
-        return URL.createObjectURL(blob);
+        const objUrl = URL.createObjectURL(blob);
+        this._activeObjectUrls.add(objUrl);
+        return objUrl;
       }
       return blob || ''; // Fallback for legacy strings in media store
     }
@@ -187,6 +195,29 @@ export const MediaStore = {
     // Legacy: inline base64 (kept for backwards compat)
     if (entry.data) return entry.data;
     return '';
+  },
+
+  /**
+   * Revoke a single Object URL and remove it from tracking.
+   * Safe to call with non-object URLs (Firebase URLs, data URIs) — they are ignored.
+   */
+  revokeUrl(url) {
+    if (url && this._activeObjectUrls.has(url)) {
+      URL.revokeObjectURL(url);
+      this._activeObjectUrls.delete(url);
+    }
+  },
+
+  /**
+   * Revoke ALL active Object URLs at once.
+   * Call this before re-rendering a gallery or navigating away from media views
+   * to free the memory held by previously resolved blobs.
+   */
+  revokeAll() {
+    for (const url of this._activeObjectUrls) {
+      URL.revokeObjectURL(url);
+    }
+    this._activeObjectUrls.clear();
   },
 
   /** Helper to convert Data URL (base64) to Blob for more efficient storage */
@@ -202,6 +233,44 @@ export const MediaStore = {
     return new Blob([u8arr], { type: mime });
   }
 };
+
+/**
+ * _cleanupSurveyMedia(survey)
+ *
+ * Deletes all media blobs associated with a survey from IndexedDB.
+ * Covers photos, audio notes, and herbarium voucher images.
+ * Must be called BEFORE removing the survey from the cache,
+ * otherwise the mediaId references are lost and blobs become orphans.
+ */
+async function _cleanupSurveyMedia(survey) {
+  if (!survey) return;
+  let cleaned = 0;
+
+  // Photos
+  if (survey.photos) {
+    for (const p of survey.photos) {
+      if (p.mediaId) { await MediaStore.del(p.mediaId); cleaned++; }
+    }
+  }
+
+  // Audio notes
+  if (survey.audioNotes) {
+    for (const a of survey.audioNotes) {
+      if (a.mediaId) { await MediaStore.del(a.mediaId); cleaned++; }
+    }
+  }
+
+  // Herbarium voucher photos
+  if (survey.herbariums) {
+    for (const h of survey.herbariums) {
+      if (h.mediaId) { await MediaStore.del(h.mediaId); cleaned++; }
+    }
+  }
+
+  if (cleaned > 0) {
+    console.log(`_cleanupSurveyMedia: Removed ${cleaned} orphaned media blobs for survey "${survey.name || survey.id}"`);
+  }
+}
 
 // ─── IndexedDB survey cache helpers ───
 
@@ -479,7 +548,15 @@ export const Store = {
   },
 
   async del(id) {
-    // Remove from idb cache immediately
+    // Clean up associated media BEFORE removing the survey from the cache,
+    // so we still have access to the mediaId references.
+    const cached = await _loadSurveysFromLocal();
+    const survey = cached.find(s => s.id === id);
+    if (survey) {
+      await _cleanupSurveyMedia(survey);
+    }
+
+    // Remove from idb cache
     await _removeSurveyFromLocalCache(id);
     
     try {
@@ -503,7 +580,14 @@ export const Store = {
     // Retrieve surveys before clearing the cache
     const surveys = await this.getSurveys();
 
-    // Clear idb caches immediately
+    // Purge all associated media blobs BEFORE clearing survey cache
+    for (const s of surveys) {
+      await _cleanupSurveyMedia(s);
+    }
+    // Revoke any active Object URLs to free browser memory
+    MediaStore.revokeAll();
+
+    // Clear idb caches
     await clearUserCache();
 
     try {

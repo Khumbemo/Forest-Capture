@@ -20,6 +20,9 @@ export async function refreshPhotos() {
     return;
   }
 
+  // Free memory from previously rendered Object URLs before creating new ones
+  MediaStore.revokeAll();
+
   // Resolve all media URLs (from Firebase, local URI, or IndexedDB)
   const resolved = await Promise.all(s.photos.map(p => MediaStore.resolveUrl(p)));
 
@@ -293,6 +296,10 @@ export async function refreshAudio() {
     list.innerHTML = '<div class="empty-state small"><p>No voice notes</p></div>';
     return;
   }
+
+  // Free memory from previously rendered Object URLs before creating new ones
+  // (revokeAll covers both photo and audio URLs from the shared pool)
+  MediaStore.revokeAll();
 
   // Resolve all media URLs
   const resolved = await Promise.all(s.audioNotes.map(a => MediaStore.resolveUrl(a)));
