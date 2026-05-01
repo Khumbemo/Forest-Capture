@@ -94,30 +94,36 @@ export async function exportAllSurveysCSV() {
   const sv = await Store.getSurveys();
   if (!sv.length) { toast(t('No surveys to export'), true); return; }
   
+  toast(t('Preparing export...'), false);
+
   if (window.XLSX) {
     const rows = [['Survey', 'Date', 'Location', 'Investigator', 'Q#', 'Size', 'MeasDate', 'Observer', 'Species', 'Stage', 'Status', 'Phenology', 'Abundance', 'Stems', 'DBH', 'DBH_MeasHt', 'GBH', 'Height', 'CrownClass', 'CrownDiam', 'Distance', 'Azimuth', 'Health', 'Bark', 'DecayClass', 'GPS', 'Cover%', 'Stratum']];
-    sv.forEach(s => {
+    const tRows = [['Survey', 'T#', 'Method', 'Length', 'Width', 'Bearing', 'Slope', 'MeasDate', 'Observer', 'Species', 'LifeForm', 'IntType', 'StartDist', 'EndDist', 'Distance', 'Cover%', 'Height', 'DBH', 'Abundance', 'Stratum', 'Substrate', 'PerpDist', 'Notes']];
+
+    // Chunked processing for Excel rows
+    for (let i = 0; i < sv.length; i++) {
+      const s = sv[i];
+      if (i % 5 === 0) toast(`Processing: ${i}/${sv.length}`, false);
+      
       if (s.quadrats) s.quadrats.forEach(q => {
         if (q.species) q.species.forEach(sp => {
           rows.push([s.name, s.date, s.location, s.investigator || '', q.number, q.size, q.measDate || '', q.observer || '', sp.name, sp.stage, sp.status || 'live', sp.phenology || '', sp.abundance, sp.stems || 1, sp.dbh, sp.dbhMeasHeight || 1.3, sp.gbh || 0, sp.height, sp.crownClass || '', sp.crownDiameter || 0, sp.distance || 0, sp.azimuth || 0, sp.health || '', sp.bark || '', sp.decayClass || 0, q.gps || '', sp.cover || 0, sp.stratum || '']);
         });
       });
-    });
+
+      if (s.transects) s.transects.forEach(t => {
+        if (t.intercepts) t.intercepts.forEach(int => {
+          tRows.push([s.name, t.number, t.type || 'belt', t.length, t.width, t.bearing, t.slope || 0, t.measDate || '', t.observer || '', int.name, int.lifeForm || '', int.interceptType || '', int.startDist || 0, int.endDist || 0, int.distance, int.cover, int.height || 0, int.dbh || 0, int.abundance || 0, int.stratum || '', int.substrate || '', int.perpDistance || 0, int.notes || '']);
+        });
+      });
+      // Yield to UI thread
+      if (i % 10 === 0) await new Promise(r => setTimeout(r, 0));
+    }
 
     const wb = window.XLSX.utils.book_new();
     const wsQuadrat = window.XLSX.utils.aoa_to_sheet(rows);
     window.XLSX.utils.book_append_sheet(wb, wsQuadrat, "All_Quadrats");
 
-    const tRows = [['Survey', 'T#', 'Method', 'Length', 'Width', 'Bearing', 'Slope', 'MeasDate', 'Observer', 'Species', 'LifeForm', 'IntType', 'StartDist', 'EndDist', 'Distance', 'Cover%', 'Height', 'DBH', 'Abundance', 'Stratum', 'Substrate', 'PerpDist', 'Notes']];
-    sv.forEach(s => {
-      if (s.transects && s.transects.length) {
-        s.transects.forEach(t => {
-          if (t.intercepts) t.intercepts.forEach(int => {
-            tRows.push([s.name, t.number, t.type || 'belt', t.length, t.width, t.bearing, t.slope || 0, t.measDate || '', t.observer || '', int.name, int.lifeForm || '', int.interceptType || '', int.startDist || 0, int.endDist || 0, int.distance, int.cover, int.height || 0, int.dbh || 0, int.abundance || 0, int.stratum || '', int.substrate || '', int.perpDistance || 0, int.notes || '']);
-          });
-        });
-      }
-    });
     if (tRows.length > 1) {
       const wsTransect = window.XLSX.utils.aoa_to_sheet(tRows);
       window.XLSX.utils.book_append_sheet(wb, wsTransect, "All_Transects");
@@ -127,20 +133,29 @@ export async function exportAllSurveysCSV() {
     await dl(wbout, 'all_surveys.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     toast(t('Exporting All Surveys Excel (XLSX)...'));
   } else {
+    // Standard CSV Chunked Export
     const header = ['Survey', 'Date', 'Location', 'Investigator', 'Q#', 'Size', 'MeasDate', 'Observer', 'Species', 'Stage', 'Status', 'Phenology', 'Abundance', 'Stems', 'DBH', 'DBH_MeasHt', 'GBH', 'Height', 'CrownClass', 'CrownDiam', 'Distance', 'Azimuth', 'Health', 'Bark', 'DecayClass', 'GPS', 'Cover%', 'Stratum']
       .map(c => `"${c}"`).join(',');
-    const dataRows = sv.flatMap(s => {
-      const rows = [];
+    
+    let csvContent = header + '\n';
+    
+    for (let i = 0; i < sv.length; i++) {
+      const s = sv[i];
+      if (i % 5 === 0) toast(`Processing: ${i}/${sv.length}`, false);
+      
       if (s.quadrats) s.quadrats.forEach(q => {
         if (q.species) q.species.forEach(sp => {
-          rows.push([s.name, s.date, s.location, s.investigator || '', q.number, q.size, q.measDate || '', q.observer || '', sp.name, sp.stage, sp.status || 'live', sp.phenology || '', sp.abundance, sp.stems || 1, sp.dbh, sp.dbhMeasHeight || 1.3, sp.gbh || 0, sp.height, sp.crownClass || '', sp.crownDiameter || 0, sp.distance || 0, sp.azimuth || 0, sp.health || '', sp.bark || '', sp.decayClass || 0, q.gps || '', sp.cover || 0, sp.stratum || '']
-            .map(c => `"${String(c).replace(/"/g, '""')}"`).join(','));
+          const row = [s.name, s.date, s.location, s.investigator || '', q.number, q.size, q.measDate || '', q.observer || '', sp.name, sp.stage, sp.status || 'live', sp.phenology || '', sp.abundance, sp.stems || 1, sp.dbh, sp.dbhMeasHeight || 1.3, sp.gbh || 0, sp.height, sp.crownClass || '', sp.crownDiameter || 0, sp.distance || 0, sp.azimuth || 0, sp.health || '', sp.bark || '', sp.decayClass || 0, q.gps || '', sp.cover || 0, sp.stratum || '']
+            .map(c => `"${String(c).replace(/"/g, '""')}"`).join(',');
+          csvContent += row + '\n';
         });
       });
-      return rows;
-    });
+      // Yield to UI thread
+      if (i % 10 === 0) await new Promise(r => setTimeout(r, 0));
+    }
+    
     const bom = '\uFEFF';
-    await dl(bom + header + '\n' + dataRows.join('\n'), 'all_surveys.csv', 'text/csv;charset=utf-8');
+    await dl(bom + csvContent, 'all_surveys.csv', 'text/csv;charset=utf-8');
     toast(t('Exporting All Surveys CSV...'));
   }
 }

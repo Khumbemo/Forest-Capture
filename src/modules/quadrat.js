@@ -188,6 +188,7 @@ export async function saveQuadrat() {
   await Store.update(s);
   $('#speciesList').innerHTML = '';
   spCount = 0;
+  window.fcIsDirty = false; // Reset dirty flag after successful save
   addSpeciesEntry();
   refreshQuadratTable();
 }
@@ -285,9 +286,16 @@ export async function refreshQuadratTable() {
 }
 
 export function init() {
-  $('#btnAddSpecies')?.addEventListener('click', addSpeciesEntry);
-  $('#btnQuadratGPS')?.addEventListener('click', () => fillGPSField('#quadratGPS'));
+  $('#btnAddSpecies')?.addEventListener('click', () => { addSpeciesEntry(); window.fcIsDirty = true; });
+  $('#btnQuadratGPS')?.addEventListener('click', () => { fillGPSField('#quadratGPS'); window.fcIsDirty = true; });
   $('#btnSaveQuadrat')?.addEventListener('click', async () => {
     await saveQuadrat();
   });
+  
+  // Track changes to mark form as dirty
+  const screen = $('#screenQuadrat');
+  if (screen) {
+    screen.addEventListener('input', () => { window.fcIsDirty = true; });
+    screen.addEventListener('change', () => { window.fcIsDirty = true; });
+  }
 }

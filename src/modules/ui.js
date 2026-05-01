@@ -104,16 +104,26 @@ export function updateClock() {
   if (cd) cd.textContent = n.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+// Global dirty flag to prevent accidental data loss
+window.fcIsDirty = false;
+
 // FIX #4: Root screens — the 3 main bottom-nav targets.
 const ROOT_SCREENS = ['screenDashboard', 'screenToolbar', 'screenData'];
 
-export function switchScreen(id, callbacks = {}, updateHistory = true) {
+export async function switchScreen(id, callbacks = {}, updateHistory = true) {
   const curScreen = document.querySelector('.screen.active');
   const curId = curScreen ? curScreen.id : null;
 
   if (curId === id) {
     if (callbacks[id]) callbacks[id]();
     return;
+  }
+
+  // Intercept if form is dirty
+  if (window.fcIsDirty) {
+    const proceed = await fcConfirm('You have unsaved changes. Discard and leave?');
+    if (!proceed) return;
+    window.fcIsDirty = false; // Reset if they choose to leave
   }
 
   if (updateHistory) {

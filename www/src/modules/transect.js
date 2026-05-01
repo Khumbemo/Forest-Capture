@@ -98,6 +98,7 @@ export async function saveTransect() {
   await Store.update(s);
   $('#interceptList').innerHTML = '';
   intCount = 0;
+  window.fcIsDirty = false; // Reset dirty flag after successful save
   addIntercept();
   refreshTransectTable();
 }
@@ -177,12 +178,19 @@ export async function refreshTransectTable() {
 }
 
 export function init() {
-  $('#btnAddIntercept')?.addEventListener('click', addIntercept);
-  $('#btnTransectStartGPS')?.addEventListener('click', () => fillGPSField('#transectStartGPS'));
-  $('#btnTransectEndGPS')?.addEventListener('click', () => fillGPSField('#transectEndGPS'));
+  $('#btnAddIntercept')?.addEventListener('click', () => { addIntercept(); window.fcIsDirty = true; });
+  $('#btnTransectStartGPS')?.addEventListener('click', () => { fillGPSField('#transectStartGPS'); window.fcIsDirty = true; });
+  $('#btnTransectEndGPS')?.addEventListener('click', () => { fillGPSField('#transectEndGPS'); window.fcIsDirty = true; });
   $('#btnSaveTransect')?.addEventListener('click', async () => {
     await saveTransect();
   });
+
+  // Track changes to mark form as dirty
+  const screen = $('#screenTransect');
+  if (screen) {
+    screen.addEventListener('input', () => { window.fcIsDirty = true; });
+    screen.addEventListener('change', () => { window.fcIsDirty = true; });
+  }
 
   // CWD mode: adapt intercept labels when "Coarse Woody Debris" is selected
   $('#transectType')?.addEventListener('change', (e) => {

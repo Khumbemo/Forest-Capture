@@ -195,7 +195,16 @@ function applyBrightness(v) {
 function onGPSUpdate(pos) {
   const fmt = fmtCoords(pos.lat, pos.lng, $('#settingCoordFormat')?.value || 'dd');
   if ($('#teleCoords')) $('#teleCoords').textContent = fmt;
-  if ($('#teleLocation')) $('#teleLocation').textContent = `${SYMBOLS.precision}${Math.round(pos.acc)}${SYMBOLS.elevation} Precision`;
+  if ($('#teleLocation')) {
+    const teleLoc = $('#teleLocation');
+    teleLoc.textContent = `${SYMBOLS.precision}${Math.round(pos.acc)}${SYMBOLS.elevation} Precision`;
+    if (pos.acc > 15) {
+      teleLoc.style.color = 'var(--amber)';
+      teleLoc.textContent += ' ⚠️ (Low)';
+    } else {
+      teleLoc.style.color = '';
+    }
+  }
   if ($('#teleAlt') && pos.alt !== null) $('#teleAlt').textContent = `${Math.round(pos.alt)} ${SYMBOLS.elevation}`;
   if ($('#gpsOptionCoords')) $('#gpsOptionCoords').textContent = fmt;
   if ($('#gpsOptionAcc')) $('#gpsOptionAcc').textContent = pos.acc ? `${SYMBOLS.precision}${Math.round(pos.acc)} m` : `${SYMBOLS.precision}--- m`;
@@ -212,14 +221,14 @@ function onGPSUpdate(pos) {
 
   // ─── AUTO-FILL GPS FIELDS WHEN SIGNAL IS AVAILABLE ───
   // Auto-fill coordinate inputs across all forms if they are empty or were auto-filled previously
-  autoFillGPSField('#quadratGPS', fmt);
-  autoFillGPSField('#transectStartGPS', fmt);
+  autoFillGPSField('#quadratGPS', fmt, pos.acc);
+  autoFillGPSField('#transectStartGPS', fmt, pos.acc);
   autoFillGPSField('#herbGPS', pos.alt !== null
     ? fmt + ` (${Math.round(pos.alt)}m)`
-    : fmt);
+    : fmt, pos.acc);
   // Auto-fill waypoint lat/lng fields
-  autoFillGPSField('#waypointLat', pos.lat.toFixed(6));
-  autoFillGPSField('#waypointLng', pos.lng.toFixed(6));
+  autoFillGPSField('#waypointLat', pos.lat.toFixed(6), pos.acc);
+  autoFillGPSField('#waypointLng', pos.lng.toFixed(6), pos.acc);
   // Auto-fill survey location input if it's empty
   if ($('#surveyLocation') && !$('#surveyLocation').value.trim()) {
     $('#surveyLocation').dataset.autoFilled = 'true';
@@ -247,13 +256,20 @@ function onGPSUpdate(pos) {
  * auto-filled (tracked via data-auto-filled attribute). This allows manual overrides
  * to be preserved.
  */
-function autoFillGPSField(selector, value) {
+function autoFillGPSField(selector, value, acc = 0) {
   const el = $(selector);
   if (!el) return;
   // Only auto-fill if field is empty OR was auto-filled before (not manually edited)
   if (!el.value.trim() || el.dataset.autoFilled === 'true') {
     el.value = value;
     el.dataset.autoFilled = 'true';
+    if (acc > 15) {
+      el.style.borderColor = 'var(--amber)';
+      el.title = 'Warning: Low GPS precision (>15m)';
+    } else {
+      el.style.borderColor = '';
+      el.title = '';
+    }
   }
 }
 
@@ -865,7 +881,7 @@ function setupEventListeners() {
     }
   }));
 
-  ['settingsGPSContinuous', 'settingLanguage', 'settingUnitSystem', 'settingMapTileUrl', 'settingGBIFEnabled', 'settingItalicSpecies', 'settingAutoSave', 'settingExportGPS', 'settingCoordFormat'].forEach(id => {
+  ['settingsGPSContinuous', 'settingLanguage', 'settingUnitSystem', 'settingMapTileUrl', 'settingGBIFEnabled', 'settingItalicSpecies', 'settingAutoSave', 'settingExportGPS', 'settingCoordFormat', 'settingsTaxonomyPack'].forEach(id => {
     const el = $('#' + id);
     if (!el) return;
     el.addEventListener('change', async () => {
@@ -888,6 +904,39 @@ function setupEventListeners() {
       }
     });
   });
+
+  // Taxonomy Pack Download
+  $('#btnDownloadTaxonomyPack')?.addEventListener('click', async () => {
+    const sel = $('#settingsTaxonomyPack');
+    const packId = sel.value;
+    if (!packId) {
+      toast('Please select a taxonomy pack first.', true);
+      return;
+    }
+    const btn = $('#btnDownloadTaxonomyPack');
+    const status = $('#taxPackStatus');
+    btn.textContent = 'Downloading...';
+    btn.disabled = true;
+    status.textContent = `Fetching taxonomy pack: ${packId}...`;
+    try {
+      const res = await fetch(`./data/taxonomy/${packId}.json`);
+      if (!res.ok) throw new Error('Pack not found on server.');
+      const data = await res.json();
+      
+      const { idb } = await import('./modules/storage.js');
+      await idb.set(`taxpack_${packId}`, JSON.stringify(data));
+      
+      status.textContent = `Successfully downloaded ${data.length} species for offline use.`;
+      toast('Taxonomy pack ready for offline use.');
+    } catch (e) {
+      status.textContent = `Download failed: ${e.message}`;
+      toast('Failed to download taxonomy pack.', true);
+    } finally {
+      btn.textContent = 'Download';
+      btn.disabled = false;
+    }
+  });
+
   // Taxonomy Pack Upload
   $('#customTaxonomyUpload')?.addEventListener('change', async e => {
     const file = e.target.files[0];

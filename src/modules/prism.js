@@ -63,6 +63,7 @@ export async function savePrismPoint() {
   await Store.update(s);
   $('#prismTallyList').innerHTML = '';
   tallyCount = 0;
+  window.fcIsDirty = false; // Reset dirty flag after successful save
   addPrismTally();
   refreshPrismTable();
 }
@@ -121,9 +122,16 @@ export async function refreshPrismTable() {
 }
 
 export function init() {
-  $('#btnAddPrismTally')?.addEventListener('click', addPrismTally);
-  $('#btnPrismGPS')?.addEventListener('click', () => fillGPSField('#prismGPS'));
+  $('#btnAddPrismTally')?.addEventListener('click', () => { addPrismTally(); window.fcIsDirty = true; });
+  $('#btnPrismGPS')?.addEventListener('click', () => { fillGPSField('#prismGPS'); window.fcIsDirty = true; });
   $('#btnSavePrism')?.addEventListener('click', async () => {
     await savePrismPoint();
   });
+
+  // Track changes to mark form as dirty
+  const screen = $('#screenPrism');
+  if (screen) {
+    screen.addEventListener('input', () => { window.fcIsDirty = true; });
+    screen.addEventListener('change', () => { window.fcIsDirty = true; });
+  }
 }

@@ -120,8 +120,20 @@ document.addEventListener('click', (e) => {
 async function _getActiveTaxonomyPackResults(query, max) {
   try {
      const active = await Store.getActive();
-     if (active && active.taxonomyPack) {
-         const packDataStr = await idb.get(`taxpack_${active.taxonomyPack}`);
+     let packToUse = active && active.taxonomyPack ? active.taxonomyPack : null;
+     
+     if (!packToUse) {
+       const settingsRaw = await idb.get('fc_app_settings');
+       if (settingsRaw) {
+         const settings = JSON.parse(settingsRaw);
+         if (settings.settingsTaxonomyPack) {
+           packToUse = settings.settingsTaxonomyPack;
+         }
+       }
+     }
+
+     if (packToUse) {
+         const packDataStr = await idb.get(`taxpack_${packToUse}`);
          if (packDataStr) {
              const packData = JSON.parse(packDataStr);
              const q = query.toLowerCase().trim();

@@ -35,6 +35,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 
 const goToTools = async page => {
   await page.evaluate(() => {
+    window.fcIsDirty = false; // Bypass dirty flag for automated testing navigation
     const b = document.querySelector('button[data-screen="screenToolbar"]');
     if (b) b.click();
   });
@@ -43,6 +44,7 @@ const goToTools = async page => {
 
 const clickTool = async (page, screenId) => {
   await page.evaluate(id => {
+    window.fcIsDirty = false;
     const c = document.querySelector(`.stat-card[data-screen="${id}"]`);
     if (c) c.click();
   }, screenId);

@@ -1860,6 +1860,21 @@
           <div class="toggle-row"><label>Enable Global GBIF Dictionary (Requires Internet)</label><label
               class="switch"><input type="checkbox" id="settingGBIFEnabled" checked /><span
                 class="slider"></span></label></div>
+          
+          <div class="form-group" style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border);">
+            <label for="settingsTaxonomyPack">Regional Taxonomy Pack (Offline Autocomplete)</label>
+            <div style="display:flex; gap:8px;">
+               <select id="settingsTaxonomyPack" style="flex:1;">
+                 <option value="">None (Rely on GBIF & History)</option>
+                 <option value="boreal-canada">North American Boreal</option>
+                 <option value="india-nagaland">India - Nagaland</option>
+                 <option value="tropics-amazon">Tropics - Amazon</option>
+               </select>
+               <button class="btn btn-accent btn-sm" id="btnDownloadTaxonomyPack">Download</button>
+            </div>
+            <div id="taxPackStatus" style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Downloads ~2-5MB JSON to device for deep-field offline use.</div>
+          </div>
+
           <div class="form-group" style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border);">
             <label for="customTaxonomyUpload">Upload Custom Taxonomy (CSV/JSON)</label>
             <input type="file" id="customTaxonomyUpload" accept=".csv,.json" class="hidden-input"
