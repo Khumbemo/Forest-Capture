@@ -61,7 +61,7 @@ const fieldCount = (page, selector) =>
   console.log('╚══════════════════════════════════════════════════╝\n');
 
   const browser = await puppeteer.launch({
-    headless: false,
+    headless: true,
     args: ['--window-size=390,844'],
     defaultViewport: { width: 390, height: 844 }
   });

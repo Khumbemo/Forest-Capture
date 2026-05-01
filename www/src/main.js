@@ -519,7 +519,7 @@ function setupEventListeners() {
 
   $('#btnSignIn')?.addEventListener('click', async () => {
     if (!_checkAuthRateLimit()) return;
-    const email = $('#loginEmail')?.value.trim();
+    const email = $('#loginEmail')?.value?.trim();
     const pwd   = $('#loginPassword')?.value;
     if (!email || !pwd) { setLoginError('Please enter your email and password.'); return; }
     if (!$('#gdprConsent')?.checked) { setLoginError('You must agree to the Privacy Policy to continue.'); return; }
@@ -586,8 +586,8 @@ function setupEventListeners() {
 
   // Manual GP Override
   $('#btnSaveManualGPS')?.addEventListener('click', () => {
-    const lat = parseFloat($('#gpsManualLat').value);
-    const lng = parseFloat($('#gpsManualLng').value);
+    const lat = parseFloat($('#gpsManualLat')?.value);
+    const lng = parseFloat($('#gpsManualLng')?.value);
     if (isNaN(lat) || isNaN(lng)) return toast('Please enter valid coordinates');
     curPos.lat = lat;
     curPos.lng = lng;
@@ -599,11 +599,11 @@ function setupEventListeners() {
 
   // Survey
   $('#btnNewSurvey')?.addEventListener('click', () => {
-    $('#surveyDate').value = new Date().toISOString().split('T')[0];
-    $('#modalNewSurvey').classList.add('show');
-    $('#surveyName').focus();
+    if ($('#surveyDate')) $('#surveyDate').value = new Date().toISOString().split('T')[0];
+    if ($('#modalNewSurvey')) $('#modalNewSurvey').classList.add('show');
+    if ($('#surveyName')) $('#surveyName').focus();
   });
-  $('#btnCancelSurvey')?.addEventListener('click', () => $('#modalNewSurvey').classList.remove('show'));
+  $('#btnCancelSurvey')?.addEventListener('click', () => $('#modalNewSurvey')?.classList.remove('show'));
   $('#btnSaveSurvey')?.addEventListener('click', async (e) => {
       const btn = e.currentTarget;
       if (btn.disabled) return;
@@ -661,14 +661,15 @@ function setupEventListeners() {
   });
   // Save Waypoint button (explicit form submit button)
   $('#btnSaveWaypointManual')?.addEventListener('click', async () => {
-      const n = $('#waypointName').value.trim();
+      const n = $('#waypointName')?.value?.trim();
       if(!n) { toast('Enter waypoint name', true); return; }
       const manualLat = parseFloat($('#waypointLat')?.value);
       const manualLng = parseFloat($('#waypointLng')?.value);
       const lat = !isNaN(manualLat) ? manualLat : null;
       const lng = !isNaN(manualLng) ? manualLng : null;
-      await addWaypoint(n, $('#waypointType').value, $('#waypointNotes').value.trim(), lat, lng);
-      $('#waypointName').value = ''; $('#waypointNotes').value = '';
+      await addWaypoint(n, $('#waypointType')?.value || 'plot', $('#waypointNotes')?.value?.trim() || '', lat, lng);
+      if ($('#waypointName')) $('#waypointName').value = ''; 
+      if ($('#waypointNotes')) $('#waypointNotes').value = '';
       if ($('#waypointLat')) $('#waypointLat').value = '';
       if ($('#waypointLng')) $('#waypointLng').value = '';
       await refreshWpList();

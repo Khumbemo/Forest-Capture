@@ -135,10 +135,14 @@ export const idb = {
 const MEDIA_PREFIX = 'media_';
 
 export const MediaStore = {
-  /** Save a media blob (base64 data URL) to IndexedDB. Returns the media ID. */
+  /** Save a media blob to IndexedDB. Handles both Blobs and Data URLs. */
   async save(data) {
     const id = MEDIA_PREFIX + Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
-    await idb.set(id, data);
+    // Convert base64 strings to Blobs for native performance and reduced overhead
+    const blob = (typeof data === 'string' && data.startsWith('data:')) 
+      ? this._dataURLtoBlob(data) 
+      : data;
+    await idb.set(id, blob);
     return id;
   },
 
@@ -163,7 +167,7 @@ export const MediaStore = {
     }
   },
 
-  /**
+  /** 
    * Resolve a photo/audio entry to a displayable src URL.
    * Priority: Firebase URL > Capacitor localUri > IndexedDB blob (mediaId) > legacy inline data
    */
@@ -171,13 +175,31 @@ export const MediaStore = {
     if (!entry) return '';
     if (entry.url) return entry.url;
     if (entry.localUri) return entry.localUri;
+    
     if (entry.mediaId) {
       const blob = await this.get(entry.mediaId);
-      return blob || '';
+      if (blob instanceof Blob) {
+        return URL.createObjectURL(blob);
+      }
+      return blob || ''; // Fallback for legacy strings in media store
     }
+    
     // Legacy: inline base64 (kept for backwards compat)
     if (entry.data) return entry.data;
     return '';
+  },
+
+  /** Helper to convert Data URL (base64) to Blob for more efficient storage */
+  _dataURLtoBlob(dataurl) {
+    if (typeof dataurl !== 'string' || !dataurl.startsWith('data:')) return dataurl;
+    const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
   }
 };
 
