@@ -2,7 +2,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebas
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, deleteUser } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
 import { initializeFirestore, persistentLocalCache, persistentSingleTabManager, getFirestore } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 import { getStorage } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js';
-import { } from './ui.js';
+
 
 
 // Web configuration synthesized from Android google-services.json

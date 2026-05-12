@@ -23,6 +23,7 @@ import { init as initGermplasm, onScreenEnter as germplasmEnter } from './module
 import { addPrismTally, refreshPrismTable, init as initPrism } from './modules/prism.js';
 import { initBackgrounds } from './modules/backgrounds.js';
 import { ensureAuth, EmailLogin, EmailSignup, AppSignOut, AppDeleteAccount } from './modules/firebase.js';
+import { initAI } from './modules/ai.js';
 
 // ===== GLOBAL CRASH PROTECTION =====
 // Prevents the app from ever showing a white screen due to unhandled errors.
@@ -334,14 +335,17 @@ const screenCallbacks = {
   screenHerbarium: initHerbarium,
   screenGermplasm: germplasmEnter,
   screenPrism: refreshPrismTable,
-  screenExport: refreshPreview
+  screenExport: refreshPreview,
+  screenChat: () => { updateBars(); }
 };
+// Expose for cross-module navigation (e.g., survey.js data record clicks)
+window._fcScreenCallbacks = screenCallbacks;
 
 async function updateBars() {
   try {
     const s = await Store.getActive();
     const n = s ? s.name : 'No survey';
-    ['mapSurveyName', 'quadratSurveyName', 'envSurveyName', 'distSurveyName', 'photoSurveyName', 'exportSurveyName', 'analyticsSurveyName', 'transectSurveyName', 'herbSurveyName', 'germSurveyName', 'prismSurveyName'].forEach(id => {
+    ['mapSurveyName', 'quadratSurveyName', 'envSurveyName', 'distSurveyName', 'photoSurveyName', 'exportSurveyName', 'analyticsSurveyName', 'transectSurveyName', 'herbSurveyName', 'germSurveyName', 'prismSurveyName', 'chatSurveyName'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.textContent = n;
     });
@@ -390,7 +394,7 @@ function setupEventListeners() {
       }
 
       const curScreen = document.querySelector('.screen.active');
-      const ROOT_SCREENS = ['screenDashboard', 'screenToolbar', 'screenData'];
+    const ROOT_SCREENS = ['screenDashboard', 'screenToolbar', 'screenData', 'screenChat'];
 
       if (curScreen && !ROOT_SCREENS.includes(curScreen.id)) {
         // Inside a tool screen → go back to Tools menu (NOT history.back())
@@ -412,7 +416,7 @@ function setupEventListeners() {
   // to prevent accidental app exit if history stack is shallow.
   $('#btnHeaderBack')?.addEventListener('click', () => {
     const curScreen = document.querySelector('.screen.active');
-    const ROOT_SCREENS = ['screenDashboard', 'screenToolbar', 'screenData'];
+    const ROOT_SCREENS = ['screenDashboard', 'screenToolbar', 'screenData', 'screenChat'];
     if (curScreen && !ROOT_SCREENS.includes(curScreen.id)) {
       // Inside a tool → go back to Tools menu
       switchScreen('screenToolbar', screenCallbacks);
@@ -444,7 +448,7 @@ function setupEventListeners() {
     const swipeDist = touchEndX - touchStartX;
     if (Math.abs(swipeDist) < 60) return; // Threshold of 60px
 
-    const FC_FLOW = ['screenDashboard', 'screenToolbar', 'screenData'];
+    const FC_FLOW = ['screenDashboard', 'screenToolbar', 'screenData', 'screenChat'];
     const curScreen = document.querySelector('.screen.active');
     // Only allow swipe if we are in one of the main flow screens
     if (!curScreen || !FC_FLOW.includes(curScreen.id)) return;
@@ -475,7 +479,7 @@ function setupEventListeners() {
     if (card) {
       const screenId = card.getAttribute('data-screen');
       // Only handle tool screens (not root nav screens)
-      const ROOT = ['screenDashboard', 'screenToolbar', 'screenData'];
+      const ROOT = ['screenDashboard', 'screenToolbar', 'screenData', 'screenChat'];
       if (screenId && !ROOT.includes(screenId)) switchScreen(screenId, screenCallbacks);
     }
   });
@@ -487,7 +491,7 @@ function setupEventListeners() {
   document.getElementById('teleCardHumidity')?.addEventListener('click', () => switchScreen('screenEnvironment', screenCallbacks));
 
   $('#btnToolOfflineMap')?.addEventListener('click', () => {
-    switchScreen('screenMap');
+     switchScreen('screenMap', screenCallbacks);
     // Give it a tiny delay to allow the map screen and panel to initialize if it's the first time
     setTimeout(() => {
       const panelBody = $('#offlinePanelBody');
@@ -734,6 +738,9 @@ function setupEventListeners() {
 
   // Analytics Compare
   initCompare();
+
+  // AI Agent (SylvX)
+  initAI();
 
   // Prism
   initPrism();

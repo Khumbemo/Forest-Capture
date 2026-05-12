@@ -1,5 +1,5 @@
 // Forest Capture — Service Worker v10
-const CACHE_NAME = 'forest-capture-v27';
+const CACHE_NAME = 'forest-capture-v28';
 const ASSETS = [
   './index.html',
   './index.css',
@@ -29,8 +29,12 @@ const ASSETS = [
   './src/modules/export.js',
   './src/modules/herbarium.js',
   './src/modules/germplasm.js',
+  './src/modules/germplasm-ui.js',
+  './src/modules/backgrounds.js',
+  './src/modules/prism.js',
   './src/modules/species-autocomplete.js',
-  './src/modules/utils.js'
+  './src/modules/utils.js',
+  './src/workers/analytics.worker.js'
 ];
 
 self.addEventListener('install', event => {

@@ -175,7 +175,7 @@ function _renderPagedRecords(isReset = false) {
         else if (r.type === 'herbarium') tgt = 'screenHerbarium';
         else if (r.type === 'germplasm') tgt = 'screenGermplasm';
         
-        if (tgt && typeof switchScreen === 'function') switchScreen(tgt);
+        if (tgt && typeof switchScreen === 'function') switchScreen(tgt, window._fcScreenCallbacks || {});
       });
       groupDiv.appendChild(card);
     });

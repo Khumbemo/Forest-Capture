@@ -27,9 +27,9 @@ export function toCSV(s) {
     rows.push([]);
     rows.push(['--- TRANSECT DATA ---']);
     rows.push(['Survey', 'T#', 'Method', 'Length', 'Width', 'Bearing', 'Slope', 'MeasDate', 'Observer', 'Species', 'LifeForm', 'IntType', 'StartDist', 'EndDist', 'Distance', 'Cover%', 'Height', 'DBH', 'Abundance', 'Stratum', 'Substrate', 'PerpDist', 'Notes']);
-    s.transects.forEach(t => {
-      if (t.intercepts) t.intercepts.forEach(int => {
-        rows.push([s.name, t.number, t.type || 'belt', t.length, t.width, t.bearing, t.slope || 0, t.measDate || '', t.observer || '', int.name, int.lifeForm || '', int.interceptType || '', int.startDist || 0, int.endDist || 0, int.distance, int.cover, int.height || 0, int.dbh || 0, int.abundance || 0, int.stratum || '', int.substrate || '', int.perpDistance || 0, int.notes || '']);
+    s.transects.forEach(tr => {
+      if (tr.intercepts) tr.intercepts.forEach(int => {
+        rows.push([s.name, tr.number, tr.type || 'belt', tr.length, tr.width, tr.bearing, tr.slope || 0, tr.measDate || '', tr.observer || '', int.name, int.lifeForm || '', int.interceptType || '', int.startDist || 0, int.endDist || 0, int.distance, int.cover, int.height || 0, int.dbh || 0, int.abundance || 0, int.stratum || '', int.substrate || '', int.perpDistance || 0, int.notes || '']);
       });
     });
   }
@@ -54,9 +54,9 @@ export async function exportSurveyCSV() {
 
     if (s.transects && s.transects.length) {
       const tRows = [['Survey', 'T#', 'Method', 'Length', 'Width', 'Bearing', 'Slope', 'MeasDate', 'Observer', 'Species', 'LifeForm', 'IntType', 'StartDist', 'EndDist', 'Distance', 'Cover%', 'Height', 'DBH', 'Abundance', 'Stratum', 'Substrate', 'PerpDist', 'Notes']];
-      s.transects.forEach(t => {
-        if (t.intercepts) t.intercepts.forEach(int => {
-          tRows.push([s.name, t.number, t.type || 'belt', t.length, t.width, t.bearing, t.slope || 0, t.measDate || '', t.observer || '', int.name, int.lifeForm || '', int.interceptType || '', int.startDist || 0, int.endDist || 0, int.distance, int.cover, int.height || 0, int.dbh || 0, int.abundance || 0, int.stratum || '', int.substrate || '', int.perpDistance || 0, int.notes || '']);
+      s.transects.forEach(tr => {
+        if (tr.intercepts) tr.intercepts.forEach(int => {
+          tRows.push([s.name, tr.number, tr.type || 'belt', tr.length, tr.width, tr.bearing, tr.slope || 0, tr.measDate || '', tr.observer || '', int.name, int.lifeForm || '', int.interceptType || '', int.startDist || 0, int.endDist || 0, int.distance, int.cover, int.height || 0, int.dbh || 0, int.abundance || 0, int.stratum || '', int.substrate || '', int.perpDistance || 0, int.notes || '']);
         });
       });
       const wsTransect = window.XLSX.utils.aoa_to_sheet(tRows);
@@ -66,8 +66,8 @@ export async function exportSurveyCSV() {
     if (s.prismPoints && s.prismPoints.length) {
       const pRows = [['Survey', 'Pt#', 'BAF', 'MeasDate', 'Observer', 'GPS', 'Species', 'DBH', 'Status', 'TreeCount', 'BA_per_ha']];
       s.prismPoints.forEach(p => {
-        p.tallies.forEach((t, ti) => {
-          pRows.push([s.name, p.number, p.baf, p.measDate || '', p.observer || '', p.gps || '', t.species, t.dbh || '', t.status || 'live', ti === 0 ? p.treeCount : '', ti === 0 ? p.basalAreaPerHa : '']);
+        p.tallies.forEach((tally, ti) => {
+          pRows.push([s.name, p.number, p.baf, p.measDate || '', p.observer || '', p.gps || '', tally.species, tally.dbh || '', tally.status || 'live', ti === 0 ? p.treeCount : '', ti === 0 ? p.basalAreaPerHa : '']);
         });
       });
       const wsPrism = window.XLSX.utils.aoa_to_sheet(pRows);
@@ -111,9 +111,9 @@ export async function exportAllSurveysCSV() {
         });
       });
 
-      if (s.transects) s.transects.forEach(t => {
-        if (t.intercepts) t.intercepts.forEach(int => {
-          tRows.push([s.name, t.number, t.type || 'belt', t.length, t.width, t.bearing, t.slope || 0, t.measDate || '', t.observer || '', int.name, int.lifeForm || '', int.interceptType || '', int.startDist || 0, int.endDist || 0, int.distance, int.cover, int.height || 0, int.dbh || 0, int.abundance || 0, int.stratum || '', int.substrate || '', int.perpDistance || 0, int.notes || '']);
+      if (s.transects) s.transects.forEach(tr => {
+        if (tr.intercepts) tr.intercepts.forEach(int => {
+          tRows.push([s.name, tr.number, tr.type || 'belt', tr.length, tr.width, tr.bearing, tr.slope || 0, tr.measDate || '', tr.observer || '', int.name, int.lifeForm || '', int.interceptType || '', int.startDist || 0, int.endDist || 0, int.distance, int.cover, int.height || 0, int.dbh || 0, int.abundance || 0, int.stratum || '', int.substrate || '', int.perpDistance || 0, int.notes || '']);
         });
       });
       // Yield to UI thread
@@ -241,11 +241,11 @@ export async function generateReport() {
 
   if (s.transects && s.transects.length) {
     html += `<h2>Transect Data</h2>`;
-    s.transects.forEach(t => {
-      html += `<h3 style="color:#166534;margin-top:20px;">Transect #${t.number} — ${esc(t.type || 'belt').replace(/-/g,' ')} (${t.length}m × ${t.width}m, ${t.bearing}°)</h3>`;
-      if (t.observer) html += `<p style="color:#64748b;font-size:13px;">Observer: ${esc(t.observer)} | Date: ${t.measDate || ''} | Slope: ${t.slope || 0}°</p>`;
+    s.transects.forEach(tr => {
+      html += `<h3 style="color:#166534;margin-top:20px;">Transect #${tr.number} — ${esc(tr.type || 'belt').replace(/-/g,' ')} (${tr.length}m × ${tr.width}m, ${tr.bearing}°)</h3>`;
+      if (tr.observer) html += `<p style="color:#64748b;font-size:13px;">Observer: ${esc(tr.observer)} | Date: ${tr.measDate || ''} | Slope: ${tr.slope || 0}°</p>`;
       html += `<table><tr><th>Species</th><th>Life Form</th><th>Start (m)</th><th>End (m)</th><th>Dist (m)</th><th>Cover %</th><th>Height</th><th>DBH</th><th>Count</th><th>Stratum</th></tr>`;
-      if (t.intercepts) t.intercepts.forEach(int => {
+      if (tr.intercepts) tr.intercepts.forEach(int => {
         html += `<tr><td class="species">${esc(int.name)}</td><td>${int.lifeForm || ''}</td><td>${int.startDist || '—'}</td><td>${int.endDist || '—'}</td><td>${int.distance || '—'}</td><td>${int.cover}</td><td>${int.height || '—'}</td><td>${int.dbh || '—'}</td><td>${int.abundance || '—'}</td><td>${int.stratum || ''}</td></tr>`;
       });
       html += `</table>`;
@@ -306,7 +306,7 @@ export async function generateReport() {
   }
 
   const fmtDate = new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'short' }).format(new Date());
-  html += `<div class="footer">Generated by Forest Capture v3.0 — ${fmtDate}</div></body></html>`;
+  html += `<div class="footer">Generated by Forest Capture v3.1 — ${fmtDate}</div></body></html>`;
   await dl(html, s.name.replace(/\W/g, '_') + '_report.html', 'text/html');
   toast(t('Exporting HTML Report...'));
 }

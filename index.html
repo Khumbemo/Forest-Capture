@@ -54,9 +54,8 @@
         setTimeout(function () { if (s && s.parentNode) s.parentNode.removeChild(s); }, 850);
       }
       setTimeout(hideSplash, 2800);
-      document.addEventListener('click', function onC() {
+      document.addEventListener('click', function () {
         hideSplash();
-        document.removeEventListener('click', onC);
       }, { once: true });
     })();
   </script>
@@ -141,6 +140,12 @@
           <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
           <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
         </svg></span><span class="nav-label nav-label-sm">Data</span></button>
+    <button class="nav-btn nav-btn-flex" aria-label="Chat" data-screen="screenChat"><span class="nav-icon"><svg
+          viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none">
+          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.8h.4" />
+          <path d="M22 2L11 13" />
+          <path d="M22 2l-7 20-4-9-9-4 20-7z" />
+        </svg></span><span class="nav-label nav-label-sm">AI Chat</span></button>
   </nav>
 
   <!-- HEADER -->
@@ -165,11 +170,6 @@
         </svg></button>
     </div>
   </header>
-  <!-- FIX #5: Connectivity banner — static so it's always in DOM; ui.js populates text/class -->
-  <div id="connectivityBanner" class="connectivity-banner online" aria-live="polite">
-    <span class="conn-dot online"></span> Connecting…
-  </div>
-
   <!-- MAIN -->
   <main class="app-main" id="appMain">
 
@@ -241,6 +241,35 @@
           <div class="tele-label tele-label-custom">RH HUMIDITY</div>
           <div class="tele-value tele-value-xl" id="teleHumidity">---%</div>
           <div class="tele-sub tele-sub-sm" id="teleWind">Wind: --- km/h</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== AI CHATBOT ===== -->
+    <section class="screen" id="screenChat">
+      <div class="form-card chat-container-ui" style="height: calc(100vh - 100px); display: flex; flex-direction: column; padding: 12px; margin-bottom: 0;">
+        <div id="chatHistory" style="flex: 1; overflow-y: auto; margin-bottom: 16px; padding-right: 8px;">
+        </div>
+        <div id="chatPhotoPreviewContainer" style="display: none; position: relative; margin-bottom: 8px;">
+          <img id="chatPhotoPreview" src="" style="max-height: 100px; border-radius: var(--radius-sm); border: 1px solid var(--border);" />
+          <button id="btnRemoveChatPhoto" class="btn btn-danger btn-sm" style="position: absolute; top: -8px; left: -8px; border-radius: 50%; padding: 4px; width: 24px; height: 24px; line-height: 1;">✕</button>
+        </div>
+        <div class="flex-gap-xs" style="background: var(--bg-input); padding: 8px; border-radius: var(--radius-md); border: 1px solid var(--border);">
+          <label class="btn btn-ghost" for="chatPhotoUpload" style="padding: 0 12px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer;" title="Attach Photo">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </label>
+          <input type="file" id="chatPhotoUpload" accept="image/*" class="hidden-input" style="display:none;" />
+          <input type="text" id="chatInput" placeholder="Ask about your survey data..." style="border: none; background: transparent; padding: 10px; flex: 1;" />
+          <button class="btn btn-primary" id="btnSendChat" style="padding: 0 12px;">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </button>
         </div>
       </div>
     </section>
@@ -452,7 +481,6 @@
           </div>
           <div class="stat-label">Germplasm</div>
         </div>
-      </div>
 
         <div class="stat-card" role="button" tabindex="0" data-screen="screenPrism">
           <div class="stat-icon">
@@ -1809,6 +1837,15 @@
             style="border:1px dashed var(--red); color:var(--red); font-size:0.75rem; margin-top:8px;">
             Delete Cloud Account & All Data
           </button>
+        </div>
+        <!-- AI Settings -->
+        <div class="settings-section">
+          <div class="settings-section-title">AI Assistant (SylvX)</div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="settingsGeminiApiKey" style="font-size:0.75rem;">Gemini API Key</label>
+            <input type="password" id="settingsGeminiApiKey" placeholder="Enter API Key to enable AI" style="font-size:0.85rem; padding:8px;" />
+            <p style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">Used locally in your browser. Not sent to our servers.</p>
+          </div>
         </div>
         <div class="settings-section">
           <div class="settings-section-title">Display</div>

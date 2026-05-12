@@ -73,7 +73,7 @@ export function updateOnlineDot() {
   updateConnectivityBanner();
 }
 
-export function updateConnectivityBanner() {
+export function updateConnectivityBanner() { return;
   const online = navigator.onLine;
   let banner = $('#connectivityBanner');
   if (!banner) {
@@ -108,8 +108,8 @@ export function updateClock() {
 // Global dirty flag to prevent accidental data loss
 window.fcIsDirty = false;
 
-// FIX #4: Root screens — the 3 main bottom-nav targets.
-const ROOT_SCREENS = ['screenDashboard', 'screenToolbar', 'screenData'];
+// FIX #4: Root screens — the bottom-nav targets (including Chat).
+const ROOT_SCREENS = ['screenDashboard', 'screenToolbar', 'screenData', 'screenChat'];
 
 export async function switchScreen(id, callbacks = {}, updateHistory = true) {
   const curScreen = document.querySelector('.screen.active');
@@ -268,7 +268,13 @@ export function fcConfirm(message) {
 
     requestAnimationFrame(() => { overlay.classList.add('show'); okBtn.focus(); });
 
+    const keyHandler = function(e) {
+      if (e.key === 'Escape') cleanup(false);
+    };
+    document.addEventListener('keydown', keyHandler);
+
     const cleanup = (result) => {
+      document.removeEventListener('keydown', keyHandler);
       overlay.classList.remove('show');
       setTimeout(() => overlay.remove(), 200);
       resolve(result);
@@ -277,9 +283,6 @@ export function fcConfirm(message) {
     cancelBtn.onclick = () => cleanup(false);
     okBtn.onclick = () => cleanup(true);
     overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(false); });
-    document.addEventListener('keydown', function handler(e) {
-      if (e.key === 'Escape') { cleanup(false); document.removeEventListener('keydown', handler); }
-    });
   });
 }
 
