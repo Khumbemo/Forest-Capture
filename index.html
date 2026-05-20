@@ -276,6 +276,22 @@
 
     <!-- ===== DATA ===== -->
     <section class="screen" id="screenData">
+      <div style="margin-bottom: 24px;">
+        <h3 style="margin-bottom: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem;">Data Management</h3>
+        <div class="telemetry-grid">
+          <div class="stat-card" role="button" tabindex="0" data-screen="screenExport">
+            <div class="stat-icon">
+              <svg viewBox="0 0 100 100" width="48" height="48" fill="none" stroke-linejoin="round" stroke-linecap="round">
+                <path d="M15 50 L15 85 L85 85 L85 50" stroke="var(--emerald)" stroke-width="4"/>
+                <polygon points="15,65 50,80 85,65 50,50" fill="rgba(16,185,129,0.15)" stroke="var(--emerald)" stroke-width="4"/>
+                <polyline points="35,35 50,15 65,35" stroke="var(--amber)" stroke-width="5"/>
+                <line x1="50" y1="15" x2="50" y2="65" stroke="var(--amber)" stroke-width="5"/>
+              </svg>
+            </div>
+            <div class="stat-label">Export Data</div>
+          </div>
+        </div>
+      </div>
       <div class="data-records-header data-header-flex">
         <h2 class="data-title-lg">Recorded Data</h2>
         <div class="flex-gap-sm">
@@ -349,11 +365,11 @@
         <!-- NOTE: All tool cards use data-screen so main.js can use a single unified selector -->
         <div class="stat-card" role="button" tabindex="0" data-screen="screenMap">
           <div class="stat-icon">
-            <svg class="anim-tool-svg anim-tool-map" viewBox="0 0 100 100" fill="none" stroke="currentColor"
-              stroke-width="4" stroke-linejoin="round">
-              <polygon points="20,60 50,45 80,60 50,75" fill="rgba(16,185,129,0.1)" stroke="var(--emerald)" />
-              <polygon points="20,40 50,25 80,40 50,55" fill="rgba(16,185,129,0.2)" stroke="var(--emerald)" />
-              <path class="map-pin" d="M50 35 L50 15 A 8 8 0 1 0 35 15 Z" fill="var(--amber)" stroke="none" />
+            <svg viewBox="0 0 100 100" width="48" height="48" fill="none" stroke-linejoin="round" stroke-linecap="round">
+              <polygon points="25,20 50,10 75,20 75,80 50,90 25,80" fill="rgba(16,185,129,0.15)" stroke="var(--emerald)" stroke-width="4"/>
+              <polyline points="50,10 50,90" stroke="var(--emerald)" stroke-width="4" stroke-dasharray="4,4"/>
+              <path d="M50 45 C 50 45, 65 30, 65 20 C 65 10, 35 10, 35 20 C 35 30, 50 45, 50 45 Z" fill="var(--amber)" stroke="var(--amber)" stroke-width="2"/>
+              <circle cx="50" cy="20" r="4" fill="var(--bg-card)" />
             </svg>
           </div>
           <div class="stat-label">Map &amp; GPS</div>
@@ -361,12 +377,11 @@
 
         <div class="stat-card" role="button" tabindex="0" data-screen="screenQuadrat">
           <div class="stat-icon">
-            <svg class="anim-tool-svg anim-tool-quadrat" viewBox="0 0 100 100" fill="none" stroke="currentColor"
-              stroke-width="3" stroke-linejoin="round">
-              <polygon points="10,50 50,30 90,50 50,70" fill="rgba(16,185,129,0.1)" stroke="var(--emerald)" />
-              <line x1="30" y1="40" x2="70" y2="60" stroke="rgba(16,185,129,0.5)" />
-              <line x1="70" y1="40" x2="30" y2="60" stroke="rgba(16,185,129,0.5)" />
-              <polygon class="quad-cube" points="50,20 60,15 50,10 40,15" fill="var(--emerald)" />
+            <svg viewBox="0 0 100 100" width="48" height="48" fill="none" stroke-linejoin="round" stroke-linecap="round">
+              <polygon points="15,60 50,40 85,60 50,80" fill="rgba(16,185,129,0.1)" stroke="var(--emerald)" stroke-width="4"/>
+              <polygon points="15,50 50,30 85,50 50,70" fill="rgba(16,185,129,0.15)" stroke="var(--emerald)" stroke-width="4"/>
+              <polygon points="15,40 50,20 85,40 50,60" fill="rgba(16,185,129,0.2)" stroke="var(--emerald)" stroke-width="4"/>
+              <path d="M45 45 Q 60 30 70 30 Q 60 45 45 45 Z" fill="var(--amber)" stroke="var(--amber)" stroke-width="2"/>
             </svg>
           </div>
           <div class="stat-label">Quadrat</div>
@@ -374,14 +389,15 @@
 
         <div class="stat-card" role="button" tabindex="0" data-screen="screenTransect">
           <div class="stat-icon">
-            <svg class="anim-tool-svg anim-tool-transect" viewBox="0 0 100 100" fill="none" stroke="currentColor"
-              stroke-width="4" stroke-linecap="round">
-              <path d="M20,70 L20,40" stroke="var(--text-muted)" />
-              <circle cx="20" cy="35" r="10" fill="rgba(16,185,129,0.2)" stroke="var(--emerald)" />
-              <path d="M80,60 L80,30" stroke="var(--text-muted)" />
-              <circle cx="80" cy="25" r="13" fill="rgba(16,185,129,0.2)" stroke="var(--emerald)" />
-              <line class="transect-line" x1="10" y1="80" x2="90" y2="40" stroke="var(--amber)" stroke-width="4"
-                stroke-dasharray="8" />
+            <svg viewBox="0 0 100 100" width="48" height="48" fill="none" stroke-linejoin="round" stroke-linecap="round">
+              <path d="M20,80 C 10,80 10,60 20,60 L80,60 C 90,60 90,80 80,80 Z" fill="rgba(16,185,129,0.15)" stroke="var(--emerald)" stroke-width="4"/>
+              <circle cx="25" cy="70" r="5" fill="var(--amber)"/>
+              <circle cx="75" cy="70" r="5" fill="var(--emerald)"/>
+              <path d="M25,60 L25,30" stroke="var(--emerald)" stroke-width="4" stroke-dasharray="6,4"/>
+              <path d="M20,30 L80,30" stroke="var(--amber)" stroke-width="6"/>
+              <line x1="30" y1="30" x2="30" y2="20" stroke="var(--emerald)" stroke-width="3"/>
+              <line x1="50" y1="30" x2="50" y2="15" stroke="var(--emerald)" stroke-width="3"/>
+              <line x1="70" y1="30" x2="70" y2="20" stroke="var(--emerald)" stroke-width="3"/>
             </svg>
           </div>
           <div class="stat-label">Transect</div>
@@ -389,14 +405,11 @@
 
         <div class="stat-card" role="button" tabindex="0" data-screen="screenEnvironment">
           <div class="stat-icon">
-            <svg class="anim-tool-svg anim-tool-env" viewBox="0 0 100 100" fill="none" stroke="currentColor"
-              stroke-width="3" stroke-linecap="round">
-              <circle cx="65" cy="35" r="12" fill="rgba(245,158,11,0.2)" stroke="var(--amber)" />
-              <path class="sun-rays"
-                d="M65,15 L65,8 M65,55 L65,62 M40,35 L33,35 M90,35 L97,35 M47,17 L42,12 M83,53 L88,58 M47,53 L42,58 M83,17 L88,12"
-                stroke="var(--amber)" />
-              <path class="env-cloud" d="M25,70 A 15,15 0 0,1 40,50 A 20,20 0 0,1 70,55 A 15,15 0 0,1 65,80 Z"
-                fill="rgba(16,185,129,0.2)" stroke="var(--emerald)" />
+            <svg viewBox="0 0 100 100" width="48" height="48" fill="none" stroke-linejoin="round" stroke-linecap="round">
+              <circle cx="70" cy="35" r="16" fill="rgba(245,158,11,0.2)" stroke="var(--amber)" stroke-width="4"/>
+              <path d="M70 10 L70 15 M70 55 L70 60 M95 35 L90 35 M45 35 L50 35 M88 17 L84 21 M52 49 L56 45 M88 53 L84 49 M52 21 L56 25" stroke="var(--amber)" stroke-width="3" stroke-linecap="round"/>
+              <path d="M30 45 A 15 15 0 0 1 50 30 A 20 20 0 0 1 80 40 A 15 15 0 0 1 75 70 L25 70 A 15 15 0 0 1 30 45 Z" fill="rgba(16,185,129,0.9)" stroke="var(--emerald)" stroke-width="4"/>
+              <polyline points="45,75 35,90 45,90 35,105" stroke="var(--amber)" stroke-width="4"/>
             </svg>
           </div>
           <div class="stat-label">Environment</div>
@@ -404,12 +417,10 @@
 
         <div class="stat-card" role="button" tabindex="0" data-screen="screenDisturbCBI">
           <div class="stat-icon">
-            <svg class="anim-tool-svg anim-tool-cbi" viewBox="0 0 100 100" fill="none" stroke="currentColor"
-              stroke-width="4" stroke-linejoin="round">
-              <path class="cbi-flame" d="M50 15 C 30 45 25 75 50 85 C 75 75 70 45 50 15 Z" fill="rgba(239,68,68,0.2)"
-                stroke="var(--red)" />
-              <path class="cbi-flame-inner" d="M50 40 C 40 60 40 75 50 75 C 60 75 60 60 50 40 Z"
-                fill="rgba(245,158,11,0.5)" stroke="none" />
+            <svg viewBox="0 0 100 100" width="48" height="48" fill="none" stroke-linejoin="round" stroke-linecap="round">
+              <path d="M50 10 C 20 40 15 70 50 90 C 85 70 80 40 50 10 Z" fill="rgba(239,68,68,0.2)" stroke="var(--red)" stroke-width="4"/>
+              <path d="M50 40 C 35 60 35 80 50 85 C 65 80 65 60 50 40 Z" fill="rgba(245,158,11,0.6)" stroke="var(--amber)" stroke-width="3"/>
+              <path d="M50 60 C 45 70 45 80 50 80 C 55 80 55 70 50 60 Z" fill="var(--bg-input)" stroke="none"/>
             </svg>
           </div>
           <div class="stat-label">Disturb &amp; CBI</div>
@@ -417,12 +428,12 @@
 
         <div class="stat-card" role="button" tabindex="0" data-screen="screenPhotos">
           <div class="stat-icon">
-            <svg class="anim-tool-svg anim-tool-media" viewBox="0 0 100 100" fill="none" stroke="currentColor"
-              stroke-width="3" stroke-linejoin="round">
-              <path d="M20 40 L30 25 L70 25 L80 40 L80 80 L20 80 Z" fill="rgba(16,185,129,0.1)"
-                stroke="var(--emerald)" />
-              <circle cx="50" cy="55" r="15" fill="var(--bg-input)" stroke="var(--emerald)" />
-              <circle class="camera-flash" cx="65" cy="35" r="4" fill="var(--amber)" stroke="none" />
+            <svg viewBox="0 0 100 100" width="48" height="48" fill="none" stroke-linejoin="round" stroke-linecap="round">
+              <rect x="15" y="30" width="70" height="55" rx="8" fill="rgba(16,185,129,0.15)" stroke="var(--emerald)" stroke-width="4"/>
+              <path d="M30 30 L35 15 L65 15 L70 30 Z" fill="rgba(16,185,129,0.3)" stroke="var(--emerald)" stroke-width="4"/>
+              <circle cx="50" cy="55" r="20" fill="var(--bg-card)" stroke="var(--emerald)" stroke-width="4"/>
+              <circle cx="50" cy="55" r="10" fill="rgba(245,158,11,0.3)" stroke="var(--amber)" stroke-width="2"/>
+              <circle cx="75" cy="40" r="4" fill="var(--red)"/>
             </svg>
           </div>
           <div class="stat-label">Media</div>
@@ -430,41 +441,42 @@
 
         <div class="stat-card" role="button" tabindex="0" data-screen="screenAnalytics">
           <div class="stat-icon">
-            <svg class="anim-tool-svg anim-tool-analytics" viewBox="0 0 100 100" fill="none" stroke="currentColor"
-              stroke-width="3" stroke-linejoin="round">
-              <polyline points="15,20 15,80 85,80" stroke="var(--text-muted)" />
-              <path class="bar-1" d="M25 80 L25 55 L40 55 L40 80 Z" fill="rgba(16,185,129,0.2)"
-                stroke="var(--emerald)" />
-              <path class="bar-2" d="M45 80 L45 40 L60 40 L60 80 Z" fill="rgba(16,185,129,0.5)"
-                stroke="var(--emerald)" />
-              <path class="bar-3" d="M65 80 L65 20 L80 20 L80 80 Z" fill="var(--emerald)" stroke="var(--emerald)" />
+            <svg viewBox="0 0 100 100" width="48" height="48" fill="none" stroke-linejoin="round" stroke-linecap="round">
+              <polyline points="10,10 10,90 90,90" stroke="var(--emerald)" stroke-width="4"/>
+              <rect x="20" y="60" width="15" height="30" fill="rgba(16,185,129,0.3)" stroke="var(--emerald)" stroke-width="3"/>
+              <rect x="45" y="40" width="15" height="50" fill="rgba(16,185,129,0.6)" stroke="var(--emerald)" stroke-width="3"/>
+              <rect x="70" y="20" width="15" height="70" fill="var(--emerald)" stroke="var(--emerald)" stroke-width="3"/>
+              <polyline points="27,50 52,30 77,10" stroke="var(--amber)" stroke-width="4" stroke-dasharray="4,4"/>
+              <circle cx="27" cy="50" r="4" fill="var(--amber)"/>
+              <circle cx="52" cy="30" r="4" fill="var(--amber)"/>
+              <circle cx="77" cy="10" r="4" fill="var(--amber)"/>
             </svg>
           </div>
           <div class="stat-label">Analytics</div>
         </div>
 
-        <div class="stat-card" role="button" tabindex="0" data-screen="screenExport">
+        <div class="stat-card" role="button" tabindex="0" data-screen="screenCalculation">
           <div class="stat-icon">
-            <svg class="anim-tool-svg anim-tool-export" viewBox="0 0 100 100" fill="none" stroke="currentColor"
-              stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
-              <path d="M20 45 L50 60 L80 45 L50 30 Z" fill="rgba(16,185,129,0.1)" stroke="var(--emerald)" />
-              <path d="M20 60 L50 75 L80 60" stroke="var(--emerald)" />
-              <path d="M20 75 L50 90 L80 75" stroke="var(--emerald)" />
-              <path class="export-arrow" d="M50 50 L50 10 M35 25 L50 10 L65 25" stroke="var(--amber)" />
+            <svg viewBox="0 0 100 100" width="48" height="48" fill="none" stroke-linejoin="round" stroke-linecap="round">
+              <rect x="20" y="10" width="60" height="80" rx="8" fill="rgba(16,185,129,0.15)" stroke="var(--emerald)" stroke-width="4"/>
+              <rect x="30" y="20" width="40" height="20" rx="4" fill="var(--bg-card)" stroke="var(--emerald)" stroke-width="3"/>
+              <circle cx="35" cy="55" r="4" fill="var(--amber)"/>
+              <circle cx="50" cy="55" r="4" fill="var(--emerald)"/>
+              <circle cx="65" cy="55" r="4" fill="var(--emerald)"/>
+              <circle cx="35" cy="70" r="4" fill="var(--emerald)"/>
+              <circle cx="50" cy="70" r="4" fill="var(--amber)"/>
+              <circle cx="65" cy="70" r="4" fill="var(--emerald)"/>
             </svg>
           </div>
-          <div class="stat-label">Export</div>
+          <div class="stat-label">Calculation</div>
         </div>
 
         <div class="stat-card" role="button" tabindex="0" data-screen="screenHerbarium">
           <div class="stat-icon">
-            <svg class="anim-tool-svg anim-tool-herb" viewBox="0 0 100 100" fill="none" stroke="currentColor"
-              stroke-width="3" stroke-linejoin="round">
-              <path class="herb-stem" d="M15 85 Q 50 85 85 15" stroke="var(--emerald)" />
-              <path class="herb-leaf l1" d="M50 50 Q 80 50 85 15 Q 50 20 50 50 Z" fill="rgba(16,185,129,0.3)"
-                stroke="var(--emerald)" />
-              <path class="herb-leaf l2" d="M30 70 Q 60 70 65 35 Q 30 40 30 70 Z" fill="rgba(16,185,129,0.1)"
-                stroke="var(--emerald)" />
+            <svg viewBox="0 0 100 100" width="48" height="48" fill="none" stroke-linejoin="round" stroke-linecap="round">
+              <path d="M20 90 C 20 90, 10 50, 50 10 C 90 50, 80 90, 20 90 Z" fill="rgba(16,185,129,0.2)" stroke="var(--emerald)" stroke-width="4"/>
+              <path d="M20 90 C 40 70, 45 40, 50 10" stroke="var(--emerald)" stroke-width="4"/>
+              <path d="M35 75 L50 65 M38 55 L48 48 M55 50 L65 40 M55 30 L70 20 M42 35 L48 25" stroke="var(--emerald)" stroke-width="3"/>
             </svg>
           </div>
           <div class="stat-label">E-Herbarium</div>
@@ -472,11 +484,11 @@
 
         <div class="stat-card" role="button" tabindex="0" data-screen="screenGermplasm">
           <div class="stat-icon">
-            <svg class="anim-tool-svg anim-tool-germplasm" viewBox="0 0 100 100" fill="none" stroke="currentColor"
-              stroke-width="3" stroke-linejoin="round">
-              <path d="M30,70 Q50,40 50,20 Q50,40 70,70" stroke="var(--amber)" stroke-width="4" />
-              <circle cx="50" cy="20" r="8" fill="rgba(245,158,11,0.2)" stroke="var(--amber)" />
-              <path d="M40,80 L60,80" stroke="var(--emerald)" stroke-width="6" />
+            <svg viewBox="0 0 100 100" width="48" height="48" fill="none" stroke-linejoin="round" stroke-linecap="round">
+              <path d="M20 80 Q 50 50 80 80" fill="rgba(245,158,11,0.2)" stroke="var(--amber)" stroke-width="4"/>
+              <circle cx="50" cy="50" r="10" fill="var(--amber)" stroke="var(--amber)" stroke-width="2"/>
+              <path d="M50 50 C 30 50, 30 20, 50 20" stroke="var(--emerald)" stroke-width="4"/>
+              <path d="M50 20 C 70 20, 70 50, 50 50" fill="rgba(16,185,129,0.4)" stroke="var(--emerald)" stroke-width="4"/>
             </svg>
           </div>
           <div class="stat-label">Germplasm</div>
@@ -484,13 +496,12 @@
 
         <div class="stat-card" role="button" tabindex="0" data-screen="screenPrism">
           <div class="stat-icon">
-            <svg class="anim-tool-svg" viewBox="0 0 100 100" fill="none" stroke="currentColor"
-              stroke-width="3" stroke-linejoin="round">
-              <polygon points="50,15 20,80 80,80" fill="rgba(245,158,11,0.15)" stroke="var(--amber)" />
-              <circle cx="50" cy="55" r="10" fill="rgba(16,185,129,0.25)" stroke="var(--emerald)" />
-              <line x1="50" y1="55" x2="25" y2="35" stroke="var(--emerald)" stroke-dasharray="4" />
-              <line x1="50" y1="55" x2="75" y2="35" stroke="var(--emerald)" stroke-dasharray="4" />
-              <line x1="50" y1="55" x2="50" y2="25" stroke="var(--emerald)" stroke-dasharray="4" />
+            <svg viewBox="0 0 100 100" width="48" height="48" fill="none" stroke-linejoin="round" stroke-linecap="round">
+              <polygon points="50,15 15,85 85,85" fill="rgba(16,185,129,0.15)" stroke="var(--emerald)" stroke-width="4"/>
+              <line x1="50" y1="15" x2="50" y2="85" stroke="var(--emerald)" stroke-width="4"/>
+              <path d="M5 60 L35 50" stroke="var(--amber)" stroke-width="4"/>
+              <path d="M65 50 L95 40" stroke="var(--amber)" stroke-width="4" stroke-dasharray="6,4"/>
+              <circle cx="50" cy="50" r="8" fill="rgba(245,158,11,0.5)" stroke="var(--amber)" stroke-width="2"/>
             </svg>
           </div>
           <div class="stat-label">Prism Sweep</div>
@@ -1671,6 +1682,55 @@
       </div>
     </section>
 
+    <!-- ===== CALCULATION ===== -->
+    <section class="screen" id="screenCalculation">
+      <header class="section-header">
+        <h2 class="section-title">Calculation</h2>
+      </header>
+      <div class="form-card">
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">
+          Automatically compute ecological indices based on active survey data (Quadrat & Transect).
+        </p>
+        <button class="btn btn-primary btn-block" id="btnRunCalculations" style="margin-bottom: 16px;">Run Calculations</button>
+        
+        <div id="calcResults" style="display: none;">
+          <h3 style="margin-bottom: 8px;">Quadrat Indices</h3>
+          <div class="grid-2" style="margin-bottom: 16px;">
+            <div class="stat-card">
+              <div class="stat-label">Simpson's Diversity (D)</div>
+              <div class="stat-value" id="calcSimpson">--</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Shannon-Wiener (H')</div>
+              <div class="stat-value" id="calcShannon">--</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Species Richness (S)</div>
+              <div class="stat-value" id="calcRichness">--</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Avg. Quadrat Cover</div>
+              <div class="stat-value" id="calcAvgCover">--</div>
+            </div>
+          </div>
+
+          <h3 style="margin-bottom: 8px;">Transect Summary</h3>
+          <div class="grid-2" style="margin-bottom: 16px;">
+            <div class="stat-card">
+              <div class="stat-label">Total Intercepts</div>
+              <div class="stat-value" id="calcIntercepts">--</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Total Transect Length</div>
+              <div class="stat-value" id="calcTransectLength">--</div>
+            </div>
+          </div>
+          
+          <button class="btn btn-secondary btn-block" id="btnExportCalculations">Export Calculations (CSV)</button>
+        </div>
+      </div>
+    </section>
+
     <!-- ===== EXPORT ===== -->
     <section class="screen" id="screenExport">
       <div class="screen-header">
@@ -1708,6 +1768,37 @@
                 <polyline points="10 9 9 9 8 9" />
               </svg></div>
             <div class="export-info"><strong>Summary Report</strong><span>Complete HTML report</span></div>
+          </button>
+        </div>
+      </div>
+      <div class="form-card">
+        <h3 class="card-title">Advanced Export</h3>
+        <p class="card-desc">Generate professional reports in PDF, Word, or enhanced GPX formats with full survey data.</p>
+        <div class="export-options">
+          <button class="export-btn" id="btnExportPDF">
+            <div class="export-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <path d="M9 15v-2h2a1.5 1.5 0 0 1 0 3H9z"/>
+            </svg></div>
+            <div class="export-info"><strong>PDF Report</strong><span>Formatted A4 document with tables</span></div>
+          </button>
+          <button class="export-btn" id="btnExportWord">
+            <div class="export-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <line x1="10" y1="9" x2="8" y2="9"/>
+            </svg></div>
+            <div class="export-info"><strong>Word Document</strong><span>Editable .doc for MS Word / Google Docs</span></div>
+          </button>
+          <button class="export-btn" id="btnExportEnhancedGPX">
+            <div class="export-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="10" r="3"/>
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+            </svg></div>
+            <div class="export-info"><strong>Enhanced GPX</strong><span>Waypoints + track from all survey GPS data</span></div>
           </button>
         </div>
       </div>
@@ -2143,6 +2234,7 @@
   <script src="./vendor/leaflet/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script type="module" src="./src/main.js"></script>
   <script>
     if ('serviceWorker' in navigator) {

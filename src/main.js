@@ -22,6 +22,8 @@ import { initHerbarium, init as initHerbariumListeners } from './modules/herbari
 import { init as initGermplasm, onScreenEnter as germplasmEnter } from './modules/germplasm.js';
 import { addPrismTally, refreshPrismTable, init as initPrism } from './modules/prism.js';
 import { initBackgrounds } from './modules/backgrounds.js';
+import { init as initCalculation } from './modules/calculation.js';
+import { init as initForestExport } from './modules/forest-capture-export.js';
 import { ensureAuth, EmailLogin, EmailSignup, AppSignOut, AppDeleteAccount } from './modules/firebase.js';
 import { initAI } from './modules/ai.js';
 
@@ -744,6 +746,8 @@ function setupEventListeners() {
 
   // Prism
   initPrism();
+  initCalculation();
+  initForestExport();
 
   // Export
   $('#btnExportCSV')?.addEventListener('click', exportSurveyCSV);

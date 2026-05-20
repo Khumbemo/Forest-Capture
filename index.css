@@ -254,7 +254,7 @@ input,select,textarea,button{font-family:'Roboto',-apple-system,BlinkMacSystemFo
 /* =========== TELEMETRY GRID =========== */
 .telemetry-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-sm);margin-bottom:var(--sp-xl);}
 .tele-card{
-  background:rgba(10,10,10,.45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   border:1px solid rgba(16,185,129,.2);border-radius:var(--radius-md);
   padding:20px;position:relative;overflow:hidden;
   box-shadow: 0 0 20px rgba(16,185,129,.06), inset 0 1px 0 rgba(255,255,255,.03);
@@ -985,6 +985,7 @@ button,.btn,.nav-btn,.stat-card,.map-ctrl-btn,a,input,select,textarea{
   perspective: 400px;
 }
 .tele-label, .tele-value, .tele-sub { position: relative; z-index: 2; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+[data-theme="day"] .tele-label, [data-theme="day"] .tele-value, [data-theme="day"] .tele-sub { text-shadow: none !important; }
 
 /* Satellite */
 .anim-satellite {
