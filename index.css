@@ -263,6 +263,8 @@ input,select,textarea,button{font-family:'Roboto',-apple-system,BlinkMacSystemFo
 .tele-label{font-size:.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
 .tele-value{font-size:1.6rem;font-weight:900;color:var(--emerald);}
 .tele-sub{font-size:.7rem;color:var(--text-secondary);margin-top:2px;}
+#teleCardAspect{grid-column:span 2;}
+
 
 /* =========== STATS GRID =========== */
 .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-md);margin-bottom:var(--sp-xl);perspective:1000px;transform-style:preserve-3d;}

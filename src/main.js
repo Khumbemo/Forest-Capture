@@ -27,6 +27,8 @@ import { init as initCalculation } from './modules/calculation.js';
 import { init as initForestExport } from './modules/forest-capture-export.js';
 import { ensureAuth, EmailLogin, EmailSignup, AppSignOut, AppDeleteAccount } from './modules/firebase.js';
 import { initAI } from './modules/ai.js';
+import { start as startCompass, stop as stopCompass } from './modules/compass.js';
+
 
 // ===== GLOBAL CRASH PROTECTION =====
 // Prevents the app from ever showing a white screen due to unhandled errors.
@@ -99,7 +101,9 @@ async function initApp() {
   dismissSplash();
 
   startGPS(onGPSUpdate, onGPSError);
+  startCompass();
   setInterval(updateClock, 1000);
+
   updateClock();
   window.addEventListener('online', () => {
     updateOnlineDot();
@@ -322,25 +326,26 @@ function _updateWelcomeStatus() {
 }
 
 const screenCallbacks = {
-  screenDashboard: () => { updateBars(); },
-  screenToolbar: () => { updateBars(); }, // Added callback for Toolbar to refresh data
-  screenData: refreshDataRecords,
-  screenMap: () => { setTimeout(initMap, 100); refreshWpList(); },
-  screenQuadrat: refreshQuadratTable,
-  screenTransect: refreshTransectTable,
-  screenEnvironment: loadEnvData,
-  screenDisturbCBI: () => { loadDistData(); loadCBIData(); },
-  screenPhotos: () => { refreshPhotos(); refreshNotes(); refreshAudio(); },
+  screenDashboard: () => { updateBars(); startCompass(); },
+  screenToolbar: () => { updateBars(); stopCompass(); }, // Added callback for Toolbar to refresh data
+  screenData: () => { refreshDataRecords(); stopCompass(); },
+  screenMap: () => { setTimeout(initMap, 100); refreshWpList(); stopCompass(); },
+  screenQuadrat: () => { refreshQuadratTable(); stopCompass(); },
+  screenTransect: () => { refreshTransectTable(); stopCompass(); },
+  screenEnvironment: () => { loadEnvData(); stopCompass(); },
+  screenDisturbCBI: () => { loadDistData(); loadCBIData(); stopCompass(); },
+  screenPhotos: () => { refreshPhotos(); refreshNotes(); refreshAudio(); stopCompass(); },
   screenAnalytics: () => {
     Store.getActive().then(s => refreshAnalytics(s));
     initCompareScreen();
+    stopCompass();
   },
-  screenHerbarium: initHerbarium,
-  screenGermplasm: germplasmEnter,
-  screenPrism: refreshPrismTable,
-  screenClinometer: clinometerEnter,
-  screenExport: refreshPreview,
-  screenChat: () => { updateBars(); }
+  screenHerbarium: () => { initHerbarium(); stopCompass(); },
+  screenGermplasm: () => { germplasmEnter(); stopCompass(); },
+  screenPrism: () => { refreshPrismTable(); stopCompass(); },
+  screenClinometer: () => { clinometerEnter(); stopCompass(); },
+  screenExport: () => { refreshPreview(); stopCompass(); },
+  screenChat: () => { updateBars(); stopCompass(); }
 };
 // Expose for cross-module navigation (e.g., survey.js data record clicks)
 window._fcScreenCallbacks = screenCallbacks;
@@ -493,6 +498,13 @@ function setupEventListeners() {
   document.getElementById('teleCardAlt')?.addEventListener('click', () => switchScreen('screenMap', screenCallbacks));
   document.getElementById('teleCardTemp')?.addEventListener('click', () => switchScreen('screenEnvironment', screenCallbacks));
   document.getElementById('teleCardHumidity')?.addEventListener('click', () => switchScreen('screenEnvironment', screenCallbacks));
+  document.getElementById('teleCardAspect')?.addEventListener('click', () => {
+    // If it's a non-touch screen (desktop), we let the manual click simulation run in compass.js
+    if ('ontouchstart' in window) {
+      switchScreen('screenClinometer', screenCallbacks);
+    }
+  });
+
 
   $('#btnToolOfflineMap')?.addEventListener('click', () => {
      switchScreen('screenMap', screenCallbacks);

@@ -242,6 +242,21 @@
           <div class="tele-value tele-value-xl" id="teleHumidity">---%</div>
           <div class="tele-sub tele-sub-sm" id="teleWind">Wind: --- km/h</div>
         </div>
+        <div class="tele-card tele-card-padded" role="button" tabindex="0" id="teleCardAspect"
+          title="Open Clinometer" style="cursor:pointer;">
+          <div class="tele-3d-bg">
+            <svg id="teleCompassSvg" class="anim-compass" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.15s ease-out; transform-origin: 50% 50%; width: 48px; height: 48px;">
+              <circle cx="50" cy="50" r="35" fill="rgba(16,185,129,0.1)" stroke="var(--emerald)" />
+              <polygon points="50,20 55,48 45,48" fill="var(--amber)" stroke="var(--amber)" />
+              <polygon points="50,80 55,52 45,52" fill="var(--text-muted)" stroke="var(--text-muted)" />
+              <circle cx="50" cy="50" r="4" fill="var(--bg-input)" stroke="var(--emerald)" stroke-width="2" />
+            </svg>
+          </div>
+          <div class="tele-label tele-label-custom">🧭 ASPECT & SLOPE</div>
+          <div class="tele-value tele-value-xl" id="teleAspect">---°</div>
+          <div class="tele-sub tele-sub-sm" id="teleSlope">Slope: ---°</div>
+        </div>
       </div>
     </section>
 
