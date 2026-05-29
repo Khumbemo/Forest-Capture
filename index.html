@@ -506,6 +506,21 @@
           </div>
           <div class="stat-label">Prism Sweep</div>
         </div>
+
+        <div class="stat-card" role="button" tabindex="0" data-screen="screenClinometer">
+          <div class="stat-icon">
+            <svg viewBox="0 0 100 100" width="48" height="48" fill="none" stroke-linejoin="round" stroke-linecap="round">
+              <circle cx="50" cy="50" r="35" fill="rgba(16,185,129,0.1)" stroke="var(--emerald)" stroke-width="4"/>
+              <line x1="50" y1="15" x2="50" y2="85" stroke="var(--emerald)" stroke-width="2" stroke-dasharray="4,4"/>
+              <line x1="15" y1="50" x2="85" y2="50" stroke="var(--emerald)" stroke-width="2" stroke-dasharray="4,4"/>
+              <line x1="50" y1="50" x2="80" y2="25" stroke="var(--amber)" stroke-width="4"/>
+              <circle cx="50" cy="50" r="6" fill="var(--amber)" stroke="var(--amber)" stroke-width="2"/>
+              <path d="M62 50 A 12 12 0 0 0 65 38" stroke="var(--amber)" stroke-width="3" fill="none"/>
+              <text x="70" y="42" fill="var(--amber)" font-size="12" font-weight="bold">α</text>
+            </svg>
+          </div>
+          <div class="stat-label">Clinometer</div>
+        </div>
       </div>
     </section>
     <!-- ===== MAP ===== -->
@@ -649,6 +664,47 @@
                 placeholder="Lat, Lng" /></div>
             <div class="form-group"><label for="quadratSW">SW</label><input type="text" id="quadratSW"
                 placeholder="Lat, Lng" /></div>
+          </div>
+        </div>
+      </div>
+      <!-- Nested Sub-plot Configuration -->
+      <div class="form-card" id="quadratNestedCard">
+        <div class="section-title-row">
+          <h3 class="card-title">Nested Sub-plots</h3>
+          <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="quadratNestedToggle" style="width:18px;height:18px;accent-color:var(--emerald);" />
+            <span style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Enable</span>
+          </label>
+        </div>
+        <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:12px;">Standard multi-stratum sampling: define sub-plot sizes for different vegetation layers. Species entries can then be assigned to specific tiers.</p>
+        <div id="quadratNestedPanel" style="display:none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="quadratNestedOverstory" style="color:var(--emerald);">🌲 Overstory (<span class="unit-area">m²</span>)</label>
+              <input type="number" id="quadratNestedOverstory" min="1" placeholder="e.g., 400 (20×20)" />
+            </div>
+            <div class="form-group">
+              <label for="quadratNestedUnderstory" style="color:var(--amber);">🌿 Understory (<span class="unit-area">m²</span>)</label>
+              <input type="number" id="quadratNestedUnderstory" min="1" placeholder="e.g., 25 (5×5)" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="quadratNestedGroundCover" style="color:var(--teal, var(--emerald));">🌱 Ground Cover (<span class="unit-area">m²</span>)</label>
+              <input type="number" id="quadratNestedGroundCover" min="1" placeholder="e.g., 1 (1×1)" />
+            </div>
+            <div class="form-group"></div>
+          </div>
+          <div class="nested-visual" style="display:flex;justify-content:center;padding:12px 0;">
+            <div style="position:relative;width:120px;height:120px;border:2px solid var(--emerald);border-radius:4px;background:rgba(16,185,129,0.05);">
+              <span style="position:absolute;top:2px;left:4px;font-size:0.55rem;color:var(--emerald);font-weight:700;">OVERSTORY</span>
+              <div style="position:absolute;top:30px;left:30px;width:60px;height:60px;border:2px dashed var(--amber);border-radius:3px;background:rgba(245,158,11,0.08);">
+                <span style="position:absolute;top:2px;left:3px;font-size:0.45rem;color:var(--amber);font-weight:700;">UNDERSTORY</span>
+                <div style="position:absolute;bottom:4px;right:4px;width:20px;height:20px;border:2px dotted var(--emerald);border-radius:2px;background:rgba(16,185,129,0.12);">
+                  <span style="position:absolute;top:-1px;left:1px;font-size:0.3rem;color:var(--emerald);font-weight:700;">GC</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1800,6 +1856,14 @@
             </svg></div>
             <div class="export-info"><strong>Enhanced GPX</strong><span>Waypoints + track from all survey GPS data</span></div>
           </button>
+          <button class="export-btn" id="btnExportDwC">
+            <div class="export-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg></div>
+            <div class="export-info"><strong>Darwin Core (DwC)</strong><span>GBIF-standard biodiversity CSV</span></div>
+          </button>
         </div>
       </div>
       <div class="form-card">
@@ -1894,6 +1958,98 @@
             </tbody>
           </table>
         </div>
+      </div>
+    </section>
+
+    <!-- ===== CLINOMETER & RELASCOPE ===== -->
+    <section class="screen" id="screenClinometer">
+      <div class="screen-header">
+        <h2>Clinometer &amp; Relascope</h2>
+      </div>
+      <div class="active-survey-bar"><span class="active-label">Active:</span><span class="active-name"
+          id="clinoSurveyName">No survey</span></div>
+
+      <!-- Gauge Display -->
+      <div class="form-card clino-gauge-card">
+        <div class="clino-gauge-container">
+          <div class="clino-gauge-ring" id="clinoGaugeRing">
+            <div class="clino-gauge-face">
+              <div class="clino-needle" id="clinoNeedle"></div>
+              <div class="clino-center-dot"></div>
+              <!-- Tick marks -->
+              <div class="clino-tick clino-tick-0"><span>0°</span></div>
+              <div class="clino-tick clino-tick-30"><span>30°</span></div>
+              <div class="clino-tick clino-tick-60"><span>60°</span></div>
+              <div class="clino-tick clino-tick-90"><span>90°</span></div>
+              <div class="clino-tick clino-tick-n30"><span>-30°</span></div>
+              <div class="clino-tick clino-tick-n60"><span>-60°</span></div>
+              <div class="clino-tick clino-tick-n90"><span>-90°</span></div>
+            </div>
+          </div>
+          <div class="clino-angle-display">
+            <span class="clino-angle-label">Current Pitch</span>
+            <span class="clino-angle-value" id="clinoAngleValue">0.0°</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manual Fallback (Desktop) -->
+      <div class="form-card" id="clinoManualFallback" style="display:none;">
+        <h3 class="card-title" style="color:var(--amber);">⚠ Manual Mode (No Gyroscope)</h3>
+        <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;">Use the slider to simulate device tilt for testing on desktop.</p>
+        <div class="form-group">
+          <label>Simulated Pitch Angle</label>
+          <input type="range" id="clinoManualSlider" min="-90" max="90" value="0" step="0.5"
+            style="width:100%;accent-color:var(--amber);" />
+        </div>
+      </div>
+
+      <!-- Angle Locking -->
+      <div class="form-card">
+        <h3 class="card-title">Angle Measurements</h3>
+        <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:12px;">Point device at tree base, lock the angle. Then aim at the top and lock again.</p>
+        <div class="clino-lock-row">
+          <div class="clino-lock-card">
+            <div class="clino-lock-label">Base Angle</div>
+            <div class="clino-lock-value" id="clinoBaseValue">—</div>
+            <button class="btn btn-accent btn-sm" id="btnLockBase">🎯 Lock Base</button>
+          </div>
+          <div class="clino-lock-card">
+            <div class="clino-lock-label">Top Angle</div>
+            <div class="clino-lock-value" id="clinoTopValue">—</div>
+            <button class="btn btn-primary btn-sm" id="btnLockTop">🎯 Lock Top</button>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="btnClinoReset" style="margin-top:12px;width:100%;">↺ Reset Angles</button>
+      </div>
+
+      <!-- Distance & Height -->
+      <div class="form-card">
+        <h3 class="card-title">Height Calculation</h3>
+        <p style="font-size:0.7rem;color:var(--text-muted);margin-bottom:8px;">H = D × (tan(α<sub>top</sub>) − tan(α<sub>base</sub>))</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="clinoDistance">Distance to Tree (<span class="unit-dist">m</span>)</label>
+            <input type="number" id="clinoDistance" min="0.1" step="0.1" placeholder="e.g., 15" />
+          </div>
+          <div class="form-group">
+            <label>Estimated Height</label>
+            <div class="clino-height-result" id="clinoHeightResult">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Apply to Species -->
+      <div class="form-card">
+        <h3 class="card-title">Apply to Species Record</h3>
+        <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;">Optionally link this measurement to a species in your active survey's quadrats.</p>
+        <div class="form-group">
+          <label for="clinoSpeciesSelect">Select Species</label>
+          <select id="clinoSpeciesSelect">
+            <option value="">— No species loaded —</option>
+          </select>
+        </div>
+        <button class="btn btn-primary btn-block" id="btnApplyHeight">Apply Height to Species</button>
       </div>
     </section>
   </main>

@@ -20,6 +20,7 @@ export function addSpeciesEntry() {
 <div class="sp-photo-preview" style="display:none;margin-bottom:8px;text-align:center;"><img class="sp-photo-img" src="" style="max-width:100%;max-height:120px;border-radius:6px;border:1px solid var(--border);" /><div class="sp-photo-ref" style="font-size:0.65rem;color:var(--text-muted);margin-top:2px;"></div></div>
 <div class="form-row"><div class="form-group"><label>Life Stage</label><select class="sp-stage"><option value="tree">Tree</option><option value="sapling">Sapling</option><option value="seedling">Seedling</option><option value="climber">Climber</option><option value="shrub">Shrub</option><option value="herb">Herb</option></select></div><div class="form-group"><label>Tree Status</label><select class="sp-status"><option value="live">Live</option><option value="dead-standing">Dead Standing</option><option value="dead-fallen">Dead Fallen</option><option value="stump">Stump</option></select></div></div>
 <div class="form-row"><div class="form-group"><label>Stratum / Layer</label><select class="sp-stratum"><option value="">—</option><option value="emergent">Emergent</option><option value="canopy">Canopy</option><option value="understory">Understory (Shrub)</option><option value="ground">Ground (Herbaceous)</option></select></div><div class="form-group"><label>Cover (%)</label><input type="number" class="sp-cover" min="0" max="100" placeholder="0-100" /></div></div>
+<div class="form-row"><div class="form-group"><label>Sub-plot Tier</label><select class="sp-subplot-tier"><option value="">— (Main Plot)</option><option value="overstory">Overstory</option><option value="understory">Understory</option><option value="ground-cover">Ground Cover</option></select></div><div class="form-group"></div></div>
 <div class="form-row"><div class="form-group"><label>Abundance</label><input type="number" class="sp-abundance" min="0" placeholder="Count" /></div><div class="form-group"><label>Stem Count</label><input type="number" class="sp-stems" min="1" placeholder="Stems" title="Number of stems per individual (multi-stemmed trees)" /></div></div>
 <div class="form-row"><div class="form-group"><label>DBH (<span class="unit-diam">cm</span>)</label><input type="number" class="sp-dbh" min="0" step="0.1" placeholder="Diameter" /></div><div class="form-group"><label>GBH (<span class="unit-diam">cm</span>)</label><input type="number" class="sp-gbh" min="0" step="0.1" placeholder="Girth" /></div></div>
 <div class="form-row"><div class="form-group"><label>DBH Meas. Height (<span class="unit-dist">m</span>)</label><input type="number" class="sp-dbh-height" min="0" step="0.1" value="1.3" title="Standard: 1.3m. Adjust for buttressed trees." /></div><div class="form-group"><label>Crown Diameter (<span class="unit-dist">m</span>)</label><input type="number" class="sp-crown-diam" min="0" step="0.1" placeholder="Avg. of 2 axes" /></div></div>
@@ -127,6 +128,10 @@ export async function saveQuadrat() {
     size: parseFloat($('#quadratSize').value) || 0,
     shape: $('#quadratShape').value,
     vegType: $('#quadratVegType') ? $('#quadratVegType').value : '',
+    nestedEnabled: $('#quadratNestedToggle')?.checked || false,
+    nestedOverstory: parseFloat($('#quadratNestedOverstory')?.value) || 0,
+    nestedUnderstory: parseFloat($('#quadratNestedUnderstory')?.value) || 0,
+    nestedGroundCover: parseFloat($('#quadratNestedGroundCover')?.value) || 0,
     measDate: $('#quadratDate')?.value || new Date().toISOString().split('T')[0],
     recordedAt: getLocalISO(),
     observer: $('#quadratObserver')?.value.trim() || '',
@@ -156,6 +161,7 @@ export async function saveQuadrat() {
       bark: e.querySelector('.sp-bark')?.value || '',
       decayClass: parseInt(e.querySelector('.sp-decay')?.value) || 0,
       stratum: e.querySelector('.sp-stratum')?.value || '',
+      subplotTier: e.querySelector('.sp-subplot-tier')?.value || '',
       cover: parseFloat(e.querySelector('.sp-cover')?.value) || 0,
       isMorpho: e.querySelector('.sp-morpho')?.checked || false,
       photoRef: e.dataset?.photoRef || '',
@@ -239,6 +245,14 @@ export async function refreshQuadratTable() {
           $('#quadratSize').value = q.size;
           $('#quadratShape').value = q.shape;
           if (q.vegType && $('#quadratVegType')) $('#quadratVegType').value = q.vegType;
+          if ($('#quadratNestedToggle')) {
+            $('#quadratNestedToggle').checked = q.nestedEnabled || false;
+            const nestedPanel = $('#quadratNestedPanel');
+            if (nestedPanel) nestedPanel.style.display = q.nestedEnabled ? 'block' : 'none';
+          }
+          if (q.nestedOverstory && $('#quadratNestedOverstory')) $('#quadratNestedOverstory').value = q.nestedOverstory;
+          if (q.nestedUnderstory && $('#quadratNestedUnderstory')) $('#quadratNestedUnderstory').value = q.nestedUnderstory;
+          if (q.nestedGroundCover && $('#quadratNestedGroundCover')) $('#quadratNestedGroundCover').value = q.nestedGroundCover;
           if (q.measDate && $('#quadratDate')) $('#quadratDate').value = q.measDate;
           if (q.observer && $('#quadratObserver')) $('#quadratObserver').value = q.observer;
           $('#quadratGPS').value = q.gps;
@@ -272,6 +286,7 @@ export async function refreshQuadratTable() {
               last.querySelector('.sp-health').value = sp.health || '';
               if (last.querySelector('.sp-bark')) last.querySelector('.sp-bark').value = sp.bark || '';
               if (last.querySelector('.sp-decay')) last.querySelector('.sp-decay').value = sp.decayClass || '';
+              if (last.querySelector('.sp-subplot-tier')) last.querySelector('.sp-subplot-tier').value = sp.subplotTier || '';
           });
           $('#btnSaveQuadrat').textContent = 'Update Quadrat Data';
           $('#btnSaveQuadrat').dataset.editIdx = idx;
@@ -298,6 +313,11 @@ export function init() {
   $('#btnQuadratGPS')?.addEventListener('click', () => { fillGPSField('#quadratGPS'); window.fcIsDirty = true; });
   $('#btnSaveQuadrat')?.addEventListener('click', async () => {
     await saveQuadrat();
+  });
+  // Nested sub-plot toggle
+  $('#quadratNestedToggle')?.addEventListener('change', (e) => {
+    const panel = $('#quadratNestedPanel');
+    if (panel) panel.style.display = e.target.checked ? 'block' : 'none';
   });
   
   // Track changes to mark form as dirty

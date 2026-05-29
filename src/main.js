@@ -22,6 +22,7 @@ import { initHerbarium, init as initHerbariumListeners } from './modules/herbari
 import { init as initGermplasm, onScreenEnter as germplasmEnter } from './modules/germplasm.js';
 import { addPrismTally, refreshPrismTable, init as initPrism } from './modules/prism.js';
 import { initBackgrounds } from './modules/backgrounds.js';
+import { init as initClinometer, onScreenEnter as clinometerEnter, onScreenLeave as clinometerLeave } from './modules/clinometer.js';
 import { init as initCalculation } from './modules/calculation.js';
 import { init as initForestExport } from './modules/forest-capture-export.js';
 import { ensureAuth, EmailLogin, EmailSignup, AppSignOut, AppDeleteAccount } from './modules/firebase.js';
@@ -337,6 +338,7 @@ const screenCallbacks = {
   screenHerbarium: initHerbarium,
   screenGermplasm: germplasmEnter,
   screenPrism: refreshPrismTable,
+  screenClinometer: clinometerEnter,
   screenExport: refreshPreview,
   screenChat: () => { updateBars(); }
 };
@@ -347,7 +349,7 @@ async function updateBars() {
   try {
     const s = await Store.getActive();
     const n = s ? s.name : 'No survey';
-    ['mapSurveyName', 'quadratSurveyName', 'envSurveyName', 'distSurveyName', 'photoSurveyName', 'exportSurveyName', 'analyticsSurveyName', 'transectSurveyName', 'herbSurveyName', 'germSurveyName', 'prismSurveyName', 'chatSurveyName'].forEach(id => {
+    ['mapSurveyName', 'quadratSurveyName', 'envSurveyName', 'distSurveyName', 'photoSurveyName', 'exportSurveyName', 'analyticsSurveyName', 'transectSurveyName', 'herbSurveyName', 'germSurveyName', 'prismSurveyName', 'clinoSurveyName', 'chatSurveyName'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.textContent = n;
     });
@@ -748,6 +750,7 @@ function setupEventListeners() {
   initPrism();
   initCalculation();
   initForestExport();
+  initClinometer();
 
   // Export
   $('#btnExportCSV')?.addEventListener('click', exportSurveyCSV);

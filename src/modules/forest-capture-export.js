@@ -539,10 +539,121 @@ ${trkTag}
 }
 
 // ============================================================
+//  4. DARWIN CORE (DwC-A) EXPORT
+// ============================================================
+export async function exportDwC() {
+  const s = await Store.getActive();
+  if (!s) { toast('No active survey', true); return; }
+
+  // DwC standard column headers
+  const headers = [
+    'occurrenceID', 'eventID', 'eventDate', 'recordedBy',
+    'scientificName', 'lifeStage', 'individualCount',
+    'decimalLatitude', 'decimalLongitude',
+    'coordinateUncertaintyInMeters', 'verbatimElevation',
+    'occurrenceStatus', 'basisOfRecord',
+    'measurementType', 'measurementValue', 'measurementUnit',
+    'occurrenceRemarks'
+  ];
+
+  const rows = [headers.join(',')];
+  let occIdx = 0;
+
+  // Process quadrat species
+  (s.quadrats || []).forEach((q, qi) => {
+    // Parse GPS
+    let lat = '', lon = '';
+    if (q.gps) {
+      const parts = q.gps.split(',').map(p => p.trim());
+      if (parts.length >= 2) { lat = parts[0]; lon = parts[1]; }
+    }
+
+    (q.species || []).forEach((sp, si) => {
+      occIdx++;
+      const occID = `FC-${s.id || 'survey'}-Q${qi}-S${si}-${occIdx}`;
+      const row = [
+        occID,
+        s.id || '',
+        q.measDate || q.recordedAt || '',
+        q.observer || s.investigator || '',
+        sp.name || '',
+        sp.stage || '',
+        sp.abundance || 1,
+        lat,
+        lon,
+        '',  // coordinateUncertaintyInMeters
+        '',  // verbatimElevation
+        'present',
+        'HumanObservation',
+        sp.dbh ? 'DBH' : (sp.height ? 'height' : ''),
+        sp.dbh || sp.height || '',
+        sp.dbh ? 'cm' : (sp.height ? 'm' : ''),
+        sp.isMorpho ? 'Morphospecies - unidentified' : ''
+      ];
+      // CSV-safe: wrap fields containing commas in quotes
+      rows.push(row.map(v => {
+        const str = String(v ?? '');
+        return str.includes(',') ? `"${str}"` : str;
+      }).join(','));
+    });
+  });
+
+  // Process transect intercepts
+  (s.transects || []).forEach((t, ti) => {
+    let lat = '', lon = '';
+    if (t.startGPS) {
+      const parts = t.startGPS.split(',').map(p => p.trim());
+      if (parts.length >= 2) { lat = parts[0]; lon = parts[1]; }
+    }
+
+    (t.intercepts || []).forEach((ic, ii) => {
+      occIdx++;
+      const occID = `FC-${s.id || 'survey'}-T${ti}-I${ii}-${occIdx}`;
+      const row = [
+        occID,
+        s.id || '',
+        t.date || t.recordedAt || '',
+        t.observer || s.investigator || '',
+        ic.species || '',
+        '',  // lifeStage
+        1,
+        lat,
+        lon,
+        '',
+        '',
+        'present',
+        'HumanObservation',
+        ic.interceptLength ? 'interceptLength' : '',
+        ic.interceptLength || '',
+        ic.interceptLength ? 'm' : '',
+        ''
+      ];
+      rows.push(row.map(v => {
+        const str = String(v ?? '');
+        return str.includes(',') ? `"${str}"` : str;
+      }).join(','));
+    });
+  });
+
+  if (rows.length <= 1) {
+    toast('No species data to export', true);
+    return;
+  }
+
+  const csv = rows.join('\n');
+  _download(
+    new Blob([csv], { type: 'text/csv;charset=utf-8' }),
+    _filename(s.name || 'DarwinCore', 'csv')
+  );
+  toast(`Darwin Core exported — ${rows.length - 1} occurrences`);
+}
+
+// ============================================================
 //  INIT — Wire up buttons
 // ============================================================
 export function init() {
   $('#btnExportPDF')?.addEventListener('click', exportPDF);
   $('#btnExportWord')?.addEventListener('click', exportWord);
   $('#btnExportEnhancedGPX')?.addEventListener('click', exportEnhancedGPX);
+  $('#btnExportDwC')?.addEventListener('click', exportDwC);
 }
