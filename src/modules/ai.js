@@ -50,10 +50,10 @@ function clearPhotoPreview() {
   if (fileInput) fileInput.value = '';
 }
 
-function appendMessage(role, text) {
+function appendMessage(role, text, imageSrc) {
   const historyEl = $('#chatHistory');
   if (!historyEl) return;
-  
+
   // Remove empty state if present
   const emptyState = historyEl.querySelector('.empty-state');
   if (emptyState) emptyState.remove();
@@ -78,12 +78,32 @@ function appendMessage(role, text) {
     bubble.style.marginRight = 'auto';
   }
 
-  // Handle line breaks in text
-  bubble.innerHTML = text.replace(/\n/g, '<br/>');
+  // Render as plain text (preserving line breaks) so external content
+  // (AI replies, error messages) can never be parsed as markup.
+  setBubbleText(bubble, text);
+
+  if (imageSrc) {
+    const img = document.createElement('img');
+    img.src = imageSrc;
+    img.style.maxHeight = '100px';
+    img.style.borderRadius = 'var(--radius-sm)';
+    img.style.marginTop = '8px';
+    img.style.display = 'block';
+    bubble.appendChild(img);
+  }
 
   historyEl.appendChild(bubble);
   historyEl.scrollTop = historyEl.scrollHeight;
   return bubble;
+}
+
+function setBubbleText(bubble, text) {
+  bubble.textContent = '';
+  const lines = String(text).split('\n');
+  lines.forEach((line, i) => {
+    if (i > 0) bubble.appendChild(document.createElement('br'));
+    bubble.appendChild(document.createTextNode(line));
+  });
 }
 
 async function handleChatSubmit() {
@@ -120,7 +140,7 @@ async function handleChatSubmit() {
         }
       });
       // Add image to UI bubble
-      appendMessage('user', text + `<br/><img src="${currentPhotoBase64}" style="max-height:100px; border-radius:var(--radius-sm); margin-top:8px;" />`);
+      appendMessage('user', text, currentPhotoBase64);
     } else {
       appendMessage('user', text);
     }
@@ -153,8 +173,8 @@ Answer anything and everything related to forestry, ecology, GIS, the app, etc.
 Keep your answers concise and suitable for a mobile app chat interface.
 Here is the context of the user's current field data:\n${contextStr}`;
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-    
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+
     const payload = {
       system_instruction: { parts: [{ text: systemInstruction }] },
       contents: messageHistory
@@ -162,7 +182,7 @@ Here is the context of the user's current field data:\n${contextStr}`;
 
     const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify(payload)
     });
 
@@ -173,13 +193,18 @@ Here is the context of the user's current field data:\n${contextStr}`;
 
     const data = await response.json();
     const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't generate a response.";
-    
-    loadingBubble.innerHTML = replyText.replace(/\n/g, '<br/>');
+
+    // Model output is external content — render as text, never as markup.
+    setBubbleText(loadingBubble, replyText);
     messageHistory.push({ role: 'model', parts: [{ text: replyText }] });
 
   } catch (err) {
     console.error('SylvX Error:', err);
-    loadingBubble.innerHTML = `<span style="color:var(--red);">Error: ${err.message}</span>`;
+    loadingBubble.textContent = '';
+    const errSpan = document.createElement('span');
+    errSpan.style.color = 'var(--red)';
+    errSpan.textContent = `Error: ${err.message}`;
+    loadingBubble.appendChild(errSpan);
     messageHistory.pop(); // remove user message from history if failed
   }
 }

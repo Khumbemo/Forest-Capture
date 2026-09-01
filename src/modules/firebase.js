@@ -73,7 +73,7 @@ export async function ensureAuth() {
             lastUser = user;
             authPromise = null;
             if (user) {
-                console.log('ensureAuth: Restored session for', user.uid);
+                console.log('ensureAuth: Restored session');
                 resolve(user);
             } else {
                 console.log('ensureAuth: No cached session — login required');
@@ -94,14 +94,14 @@ onAuthStateChanged(auth, (user) => {
 // Sign in an existing user with email + password
 export async function EmailLogin(email, pwd) {
     const cred = await signInWithEmailAndPassword(auth, email, pwd);
-    console.log('EmailLogin: success', cred.user.uid);
+    console.log('EmailLogin: success');
     return cred.user;
 }
 
 // Register a new user with email + password
 export async function EmailSignup(email, pwd) {
     const cred = await createUserWithEmailAndPassword(auth, email, pwd);
-    console.log('EmailSignup: success', cred.user.uid);
+    console.log('EmailSignup: success');
     return cred.user;
 }
 
