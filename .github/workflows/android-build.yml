@@ -30,6 +30,9 @@ jobs:
     - name: Install NPM Dependencies
       run: npm install
 
+    - name: Run Unit Tests
+      run: npm run test:unit
+
     - name: Build Web Assets & Sync Capacitor
       run: npm run cap:sync
 
