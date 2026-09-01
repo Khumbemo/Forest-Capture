@@ -5,10 +5,21 @@ import { Store, MediaStore } from './storage.js';
 import { fillGPSField } from './gps.js';
 
 import { attachAutocomplete } from './species-autocomplete.js';
-import { storage, ensureAuth } from './firebase.js';
-import { ref, uploadString, getDownloadURL } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js';
+import { ensureAuth, loadSDK } from './firebase.js';
 
 let currentImageUrl = null;
+
+// Bound once loadSDK() succeeds — see the matching helper in media.js.
+let storage, ref, uploadString, getDownloadURL;
+
+async function ensureStorageBindings() {
+  if (storage) return true;
+  const s = await loadSDK();
+  if (!s) return false;
+  storage = s.storage;
+  ({ ref, uploadString, getDownloadURL } = s.storageMod);
+  return true;
+}
 
 export function initHerbarium() {
   attachAutocomplete('herbScientific', { maxResults: 10 });
@@ -47,7 +58,7 @@ export async function handleHerbariumPhoto(file) {
       // Try uploading to Firebase Storage
       const user = await ensureAuth();
       const s = await Store.getActive();
-      if (user && s) {
+      if (user && s && await ensureStorageBindings()) {
         try {
           const fileName = `herb_${Date.now()}.jpg`;
           const storageRef = ref(storage, `users/${user.uid}/surveys/${s.id}/herbarium/${fileName}`);

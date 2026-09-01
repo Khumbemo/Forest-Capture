@@ -1,8 +1,15 @@
 // src/modules/storage.js
 
-import { db, ensureAuth } from './firebase.js';
-import { collection, doc, setDoc, getDoc, getDocs, deleteDoc, writeBatch } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+import { ensureAuth, loadSDK } from './firebase.js';
 import { toast } from './ui.js';
+
+// Bound once loadSDK() succeeds (inside getUserRef(), below). Every call
+// site in this file that uses these already awaits getUserRef() first —
+// directly or via getWps/loadSettings/etc., which all route through it —
+// so none of those call sites need to change: by the time they run,
+// these are either populated or getUserRef() has already thrown and the
+// surrounding try/catch (present at every call site) has taken over.
+let collection, doc, setDoc, getDoc, getDocs, deleteDoc, writeBatch, db;
 
 // ─── IndexedDB Wrapper ───
 const DB_NAME = 'fc_offline_db';
@@ -275,7 +282,7 @@ async function _cleanupSurveyMedia(survey) {
 // ─── IndexedDB survey cache helpers ───
 
 export async function getCurrentUid() {
-    return (await getUserRef()).id;
+    return getCurrentUidValue();
 }
 async function _getSurveyCacheKey() { return 'fc_surveys_cache_' + await getCurrentUid(); }
 async function _getActiveCacheKey() { return 'fc_active_survey_' + await getCurrentUid(); }
@@ -321,27 +328,48 @@ async function _removeSurveyFromLocalCache(id) {
 
 // References will be scoped to the authenticated user
 let cachedUserRef = null;
+let cachedUid = null;
 
 /** Reset cached user ref — call on login/logout to avoid cross-user data leaks */
 export function resetUserRef() {
     cachedUserRef = null;
+    cachedUid = null;
 }
 
-async function getUserRef() {
-    if (cachedUserRef) return cachedUserRef;
+// Resolves the current user id from cached auth (or a local fallback).
+// Deliberately never touches Firestore — local IndexedDB cache keys are
+// built from this and must resolve even when Firebase is unreachable.
+async function getCurrentUidValue() {
+    if (cachedUid) return cachedUid;
 
     console.log('getUserRef: start');
     const user = await ensureAuth();
-    let uid = 'anonymous';
     if (user) {
         console.log('getUserRef: user found', user.uid);
-        uid = user.uid;
+        cachedUid = user.uid;
     } else {
-        // Handle unauthenticated state (likely offline or timeout)
+        // Handle unauthenticated state (likely offline, timeout, or SDK unreachable)
         const localUser = JSON.parse(localStorage.getItem('fc_user') || '{}');
-        uid = localUser.uid || 'anonymous';
-        console.warn('getUserRef: using local/anonymous user', uid);
+        cachedUid = localUser.uid || 'anonymous';
+        console.warn('getUserRef: using local/anonymous user', cachedUid);
     }
+    return cachedUid;
+}
+
+// Firestore DocumentReference for the current user. Throws if Firebase is
+// unreachable — every call site awaits this inside a try/catch already
+// (they all have to tolerate ordinary Firestore failures regardless), so
+// that's all this needs to do to degrade to the existing offline paths.
+async function getUserRef() {
+    if (cachedUserRef) return cachedUserRef;
+
+    const s = await loadSDK();
+    if (!s) throw new Error('Firebase unavailable (offline or unreachable)');
+
+    ({ collection, doc, setDoc, getDoc, getDocs, deleteDoc, writeBatch } = s.firestoreMod);
+    db = s.db;
+
+    const uid = await getCurrentUidValue();
     cachedUserRef = doc(db, 'users', uid);
     return cachedUserRef;
 }
@@ -469,7 +497,7 @@ export const Store = {
       setDoc(doc(collection(userDocRef, 'settings'), 'activeId'), { id });
       console.log('Store.setActive: success');
     } catch (e) {
-      console.error('Store.setActive error:', e);
+      console.warn('Store.setActive: Firestore sync failed (offline?)', e.message);
     }
   },
 
@@ -496,7 +524,7 @@ export const Store = {
       if (id) await idb.set(await _getActiveCacheKey(), id);
       return id;
     } catch (e) {
-      console.error('Store._syncActiveIdFromFirestore error:', e);
+      console.warn('Store._syncActiveIdFromFirestore: Firestore sync failed (offline?)', e.message);
       return (await idb.get(await _getActiveCacheKey())) || null;
     }
   },
@@ -504,8 +532,12 @@ export const Store = {
   async add(s) {
     console.log('Store.add: Attempting to save survey', s.id);
     s = await _signSurvey(s);
-    // Cache to idb IMMEDIATELY so it's always available offline
+    // Cache to idb IMMEDIATELY so it's always available offline — this is
+    // the save; everything below is optional cloud sync on top of it, so
+    // a Firestore failure here must never block or fail the caller.
     await _addSurveyToLocalCache(s);
+    await idb.set(await _getActiveCacheKey(), s.id);
+
     try {
       const userDocRef = await getUserRef();
       const surveyDocRef = doc(collection(userDocRef, 'surveys'), s.id);
@@ -514,22 +546,19 @@ export const Store = {
       // Firestore's setDoc with persistence enabled resolves when written to local cache.
       setDoc(surveyDocRef, s);
 
-      // Update active session locally first
-      await idb.set(await _getActiveCacheKey(), s.id);
-
       // Attempt background Firestore update for activeId
-    withRetry(() => setDoc(doc(collection(userDocRef, 'settings'), 'activeId'), { id: s.id })).catch(() => {
-      console.warn('Store.add: Background activeId sync failed after retries');
-    });
+      withRetry(() => setDoc(doc(collection(userDocRef, 'settings'), 'activeId'), { id: s.id })).catch(() => {
+        console.warn('Store.add: Background activeId sync failed after retries');
+      });
 
-      console.log('Store.add: Survey written to local cache');
-      triggerAutoBackup();
-      return true;
+      console.log('Store.add: Survey synced to Firestore');
     } catch (e) {
-      console.error('Store.add: Error saving survey:', e);
-      toast('Save error: ' + e.message, true);
-      throw e; // Re-throw so caller knows it failed
+      console.warn('Store.add: Firestore sync failed (offline?)', e.message);
     }
+
+    console.log('Store.add: Survey written to local cache');
+    triggerAutoBackup();
+    return true;
   },
 
   async update(s) {
