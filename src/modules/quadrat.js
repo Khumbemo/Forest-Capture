@@ -207,6 +207,58 @@ export async function saveQuadrat() {
   }
 }
 
+// Data-layer entry point for SylvX (AI chat) natural-language data entry.
+// Operates directly on the stored survey object — never touches the DOM
+// form — and only ever appends to an *existing* quadrat (never creates
+// one), so a misread instruction can't silently spawn new plots.
+// Returns { ok: true, quadratNumber } or { ok: false, error }.
+export async function addSpeciesToQuadrat(quadratNumber, speciesData) {
+  const s = await Store.getActive();
+  if (!s) return { ok: false, error: 'No active survey selected.' };
+  if (!s.quadrats || !s.quadrats.length) {
+    return { ok: false, error: 'This survey has no quadrats yet — save one from the Quadrat tool first.' };
+  }
+  const q = s.quadrats.find(q => q.number === quadratNumber);
+  if (!q) {
+    const known = s.quadrats.map(q => q.number).join(', ');
+    return { ok: false, error: `Quadrat #${quadratNumber} not found. Existing quadrats: ${known || 'none'}.` };
+  }
+  if (!speciesData.speciesName || !speciesData.speciesName.trim()) {
+    return { ok: false, error: 'Species name is required.' };
+  }
+
+  if (!q.species) q.species = [];
+  q.species.push({
+    name: speciesData.speciesName.trim(),
+    stage: speciesData.stage || 'tree',
+    status: 'live',
+    abundance: parseInt(speciesData.abundance) || 1,
+    stems: 1,
+    dbh: parseFloat(speciesData.dbh) || 0,
+    gbh: 0,
+    dbhMeasHeight: 1.3,
+    crownDiameter: 0,
+    height: parseFloat(speciesData.height) || 0,
+    crownClass: '',
+    distance: 0,
+    azimuth: 0,
+    phenology: '',
+    health: '',
+    bark: '',
+    decayClass: 0,
+    stratum: '',
+    subplotTier: '',
+    cover: 0,
+    isMorpho: false,
+    photoRef: '',
+    photoData: '',
+    addedBy: 'sylvx'
+  });
+
+  await Store.update(s);
+  return { ok: true, quadratNumber };
+}
+
 export async function refreshQuadratTable() {
   const s = await Store.getActive();
   const tb = $('#quadratTableBody');
