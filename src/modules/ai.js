@@ -1,5 +1,5 @@
 // src/modules/ai.js
-import { $, $$, toast } from './ui.js';
+import { $, $$, toast, fcConfirm } from './ui.js';
 import { Store, idb } from './storage.js';
 import { compress } from './utils.js';
 import { APP_KNOWLEDGE, TOOL_DECLARATIONS, isWriteTool, describeWriteCall } from './ai-knowledge.js';
@@ -7,6 +7,11 @@ import { addSpeciesToQuadrat } from './quadrat.js';
 import { addNoteRecord } from './notes.js';
 import { searchTaxonomy } from './species-autocomplete.js';
 import { calculateIndicesPayload } from './analytics.js';
+import { matchOfflineGuide } from './ai-offline-guide.js';
+import {
+  checkOfflineAISupport, isOfflineModelDownloaded, loadOfflineModel,
+  offlineChat, deleteOfflineModel, getStorageEstimate
+} from './ai-offline-llm.js';
 
 let messageHistory = [];
 let currentPhotoBase64 = null;
@@ -23,6 +28,72 @@ export function initAI() {
 
   $('#chatPhotoUpload')?.addEventListener('change', handlePhotoUpload);
   $('#btnRemoveChatPhoto')?.addEventListener('click', clearPhotoPreview);
+
+  initOfflineAISettings();
+}
+
+async function initOfflineAISettings() {
+  const statusEl = $('#offlineAIStatus');
+  const downloadBtn = $('#btnDownloadOfflineAI');
+  const deleteBtn = $('#btnDeleteOfflineAI');
+  const progressWrap = $('#offlineAIProgressWrap');
+  const progressFill = $('#offlineAIProgressFill');
+  const progressLabel = $('#offlineAIProgressLabel');
+  if (!statusEl || !downloadBtn) return;
+
+  const support = checkOfflineAISupport();
+
+  async function refreshStatus() {
+    if (!support.supported) {
+      statusEl.textContent = `Not available on this device: ${support.reason}`;
+      downloadBtn.style.display = 'none';
+      deleteBtn.style.display = 'none';
+      return;
+    }
+    if (await isOfflineModelDownloaded()) {
+      statusEl.textContent = 'Offline AI is downloaded and ready — works with no connection.';
+      downloadBtn.style.display = 'none';
+      deleteBtn.style.display = 'block';
+    } else {
+      const est = await getStorageEstimate();
+      statusEl.textContent = est && est.freeMB
+        ? `Ready to download (~1GB, one-time, needs a connection). ${est.freeMB}MB free on this device.`
+        : 'Ready to download (~1GB, one-time, needs a connection).';
+      downloadBtn.style.display = 'block';
+      deleteBtn.style.display = 'none';
+    }
+  }
+
+  await refreshStatus();
+
+  downloadBtn.addEventListener('click', async () => {
+    downloadBtn.disabled = true;
+    downloadBtn.textContent = 'Downloading…';
+    if (progressWrap) progressWrap.style.display = 'block';
+
+    try {
+      await loadOfflineModel((progress, text) => {
+        const pct = Math.round((progress || 0) * 100);
+        if (progressFill) progressFill.style.width = `${pct}%`;
+        if (progressLabel) progressLabel.textContent = `${pct}%${text ? ' — ' + text : ''}`;
+      });
+      toast('Offline AI ready');
+    } catch (err) {
+      toast(`Offline AI download failed: ${err.message}`, true);
+    } finally {
+      downloadBtn.disabled = false;
+      downloadBtn.textContent = 'Download Offline AI';
+      if (progressWrap) progressWrap.style.display = 'none';
+      await refreshStatus();
+    }
+  });
+
+  deleteBtn?.addEventListener('click', async () => {
+    if (!await fcConfirm('Delete the offline AI model and free its storage? You can download it again later.')) return;
+    await deleteOfflineModel();
+    toast('Offline AI deleted');
+    await refreshStatus();
+  });
 }
 
 // Loads the active survey's saved chat history into `messageHistory` and
@@ -483,21 +554,52 @@ function formatToolResultFallback(name, result) {
   return result.message || result.error || JSON.stringify(result);
 }
 
-// When there's no network, SylvX can't reach Gemini — but a downloaded
-// regional taxonomy pack works entirely offline, so route the message
-// there instead of just refusing.
+// When there's no network, SylvX can't reach Gemini. It still has three
+// fully offline fallbacks, tried in order: a taxonomy-pack species lookup,
+// a deterministic app-guide answer, and — if the user downloaded it — a
+// real on-device model. All three work with zero connectivity.
 async function handleOfflineMessage(text) {
   appendMessage('user', text);
+  messageHistory.push({ role: 'user', parts: [{ text }] });
 
-  const results = await searchTaxonomy(text, 5);
-  if (results.length) {
+  const taxResults = await searchTaxonomy(text, 5);
+  if (taxResults.length) {
     const summary = '📴 Offline taxonomy lookup:\n' +
-      results.map(r => `• ${r.scientific}${r.common ? ` (${r.common})` : ''}${r.family ? ` — ${r.family}` : ''}`).join('\n');
+      taxResults.map(r => `• ${r.scientific}${r.common ? ` (${r.common})` : ''}${r.family ? ` — ${r.family}` : ''}`).join('\n');
     appendMessage('model', summary);
-    messageHistory.push({ role: 'user', parts: [{ text }] });
     messageHistory.push({ role: 'model', parts: [{ text: summary }] });
     await persistHistory();
-  } else {
-    appendMessage('model', "I'm offline, so I can't reach the AI right now — but I can still look up species names from your downloaded taxonomy pack. Try asking about a species name directly.");
+    return;
   }
+
+  const guideAnswer = matchOfflineGuide(text);
+  if (guideAnswer) {
+    appendMessage('model', guideAnswer);
+    messageHistory.push({ role: 'model', parts: [{ text: guideAnswer }] });
+    await persistHistory();
+    return;
+  }
+
+  if (await isOfflineModelDownloaded()) {
+    const loadingBubble = appendMessage('model', 'Thinking offline…');
+    try {
+      const survey = await Store.getActive();
+      const contextStr = survey
+        ? `${survey.name} — ${survey.quadrats?.length || 0} quadrats, ${survey.transects?.length || 0} transects`
+        : 'no survey active';
+      const reply = await offlineChat(text, contextStr);
+      setBubbleText(loadingBubble, reply);
+      messageHistory.push({ role: 'model', parts: [{ text: reply }] });
+    } catch (err) {
+      setBubbleText(loadingBubble, `Offline AI error: ${err.message}`);
+      messageHistory.pop();
+    }
+    await persistHistory();
+    return;
+  }
+
+  const fallback = "I'm offline, so I can't reach cloud AI right now. I can still help with species lookups and app guidance — try asking about a species name or a tool by name (e.g. \"how do I use the CBI tool\"). For open-ended questions offline, download the Offline AI model from Settings.";
+  appendMessage('model', fallback);
+  messageHistory.push({ role: 'model', parts: [{ text: fallback }] });
+  await persistHistory();
 }

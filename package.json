@@ -9,7 +9,7 @@
     "cap:sync": "node prep-www.js && cap sync android",
     "cap:open": "cap open android",
     "test": "npm run test:unit && npm run test:e2e",
-    "test:unit": "cross-env NODE_OPTIONS=--experimental-vm-modules jest tests/analytics.test.js tests/ai-knowledge.test.js",
+    "test:unit": "cross-env NODE_OPTIONS=--experimental-vm-modules jest tests/analytics.test.js tests/ai-knowledge.test.js tests/ai-offline-guide.test.js",
     "test:e2e": "jest --runInBand --config=jest-e2e.config.js"
   },
   "dependencies": {

@@ -1,4 +1,4 @@
 module.exports = {
   testEnvironment: 'jsdom',
-  testMatch: ['**/tests/analytics.test.js', '**/tests/ai-knowledge.test.js'],
+  testMatch: ['**/tests/analytics.test.js', '**/tests/ai-knowledge.test.js', '**/tests/ai-offline-guide.test.js'],
 };
