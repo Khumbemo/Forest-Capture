@@ -2,8 +2,7 @@
 
 import { $, toast } from './ui.js';
 import { Store, MediaStore } from './storage.js';
-import { storage, ensureAuth } from './firebase.js';
-import { ref, uploadBytes, uploadString, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js';
+import { ensureAuth, loadSDK } from './firebase.js';
 import { compress } from './utils.js';
 import { curPos } from './gps.js';
 
@@ -12,6 +11,20 @@ import { curPos } from './gps.js';
 const NativeCap = window.Capacitor || null;
 const NativeFS = NativeCap && NativeCap.Plugins ? NativeCap.Plugins.Filesystem : null;
 const CACHE_DIR = 'CACHE';
+
+// Bound once loadSDK() succeeds. Every use below is inside a try/catch
+// (or gated on ensureAuth() returning a user, which itself only happens
+// once loadSDK() has already succeeded) — see firebase.js.
+let storage, ref, uploadBytes, uploadString, getDownloadURL, deleteObject;
+
+async function ensureStorageBindings() {
+  if (storage) return true;
+  const s = await loadSDK();
+  if (!s) return false;
+  storage = s.storage;
+  ({ ref, uploadBytes, uploadString, getDownloadURL, deleteObject } = s.storageMod);
+  return true;
+}
 
 export async function refreshPhotos() {
   const s = await Store.getActive();
@@ -37,6 +50,7 @@ export async function refreshPhotos() {
         // Delete from Firebase Storage
         if (p.path) {
           try {
+            await ensureStorageBindings();
             const storageRef = ref(storage, p.path);
             await deleteObject(storageRef);
           } catch {}
@@ -72,6 +86,7 @@ export async function handlePhotoInput(file) {
   try {
     if (!s.photos) s.photos = [];
     const user = await ensureAuth();
+    if (user) await ensureStorageBindings();
 
     // ─── NATIVE ANDROID: HIGH PERFORMANCE RAW BLOB ───
     if (NativeFS && NativeCap.isNativePlatform()) {
@@ -188,6 +203,7 @@ export async function startRecording(onStart) {
 
       try {
         const user = await ensureAuth();
+        if (user) await ensureStorageBindings();
 
         // ─── NATIVE ANDROID: HIGH PERFORMANCE RAW BLOB ───
         if (NativeFS && NativeCap.isNativePlatform()) {
@@ -322,6 +338,7 @@ export async function refreshAudio() {
       toast('Deleted');
       try {
         if (note && note.path) {
+          await ensureStorageBindings();
           const storageRef = ref(storage, note.path);
           await deleteObject(storageRef);
         }
