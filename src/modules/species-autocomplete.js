@@ -151,6 +151,15 @@ async function _getActiveTaxonomyPackResults(query, max) {
   return [];
 }
 
+// Public entry point for SylvX (AI chat) taxonomy lookups. Wraps the same
+// local-pack-first / learned-species / GBIF-fallback search used by the
+// autocomplete dropdown, so results stay identical between the two. Works
+// fully offline whenever a regional taxonomy pack is downloaded.
+export async function searchTaxonomy(query, max = 6) {
+  if (!query || !query.trim()) return [];
+  return _search(query.trim(), max);
+}
+
 async function _search(query, max) {
   const q = query.toLowerCase().trim();
   const results = [];

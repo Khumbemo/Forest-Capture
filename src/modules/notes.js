@@ -23,20 +23,31 @@ export async function refreshNotes() {
   });
 }
 
-export async function addNote() {
+// Data-layer entry point, shared by the Notes screen and SylvX (AI chat)
+// natural-language note logging. Operates directly on the stored survey
+// object. Returns { ok: true } or { ok: false, error }.
+export async function addNoteRecord(text, category = 'general', quadrat = null) {
   const s = await Store.getActive();
-  if (!s) { toast('Select survey', true); return; }
-  const t = $('#noteContent').value.trim();
-  if (!t) { toast('Enter text', true); return; }
+  if (!s) return { ok: false, error: 'No active survey selected.' };
+  const t = (text || '').trim();
+  if (!t) return { ok: false, error: 'Note text is required.' };
   if (!s.notes) s.notes = [];
-  s.notes.push({ 
+  s.notes.push({
     uid: Date.now().toString(36) + Math.random().toString(36).substring(2, 6),
-    quadrat: parseInt($('#noteQuadratRef').value) || null, 
-    category: $('#noteCategory').value, 
-    text: t, 
-    time: new Date().toISOString() 
+    quadrat: quadrat != null ? parseInt(quadrat) || null : null,
+    category: category || 'general',
+    text: t,
+    time: new Date().toISOString()
   });
   await Store.update(s);
+  return { ok: true };
+}
+
+export async function addNote() {
+  const t = $('#noteContent').value.trim();
+  if (!t) { toast('Enter text', true); return; }
+  const result = await addNoteRecord(t, $('#noteCategory').value, $('#noteQuadratRef').value);
+  if (!result.ok) { toast(result.error, true); return; }
   $('#noteContent').value = '';
   refreshNotes();
   toast('Note saved');

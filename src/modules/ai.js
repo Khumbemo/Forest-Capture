@@ -1,11 +1,24 @@
 // src/modules/ai.js
-import { $, $$, toast } from './ui.js';
-import { Store } from './storage.js';
+import { $, $$, toast, fcConfirm } from './ui.js';
+import { Store, idb } from './storage.js';
 import { compress } from './utils.js';
+import { APP_KNOWLEDGE, TOOL_DECLARATIONS, isWriteTool, describeWriteCall } from './ai-knowledge.js';
+import { addSpeciesToQuadrat } from './quadrat.js';
+import { addNoteRecord } from './notes.js';
+import { searchTaxonomy } from './species-autocomplete.js';
+import { calculateIndicesPayload } from './analytics.js';
+import { matchOfflineGuide } from './ai-offline-guide.js';
+import {
+  checkOfflineAISupport, isOfflineModelDownloaded, loadOfflineModel,
+  offlineChat, deleteOfflineModel, getStorageEstimate
+} from './ai-offline-llm.js';
 
 let messageHistory = [];
 let currentPhotoBase64 = null;
 let currentPhotoMime = null;
+let historyLoadedForSurveyId = null;
+let historyLoadInFlight = null; // { surveyId, promise } — de-dupes concurrent loads
+let pendingWrite = null; // { name, args } awaiting user confirm/cancel
 
 export function initAI() {
   $('#btnSendChat')?.addEventListener('click', handleChatSubmit);
@@ -15,6 +28,133 @@ export function initAI() {
 
   $('#chatPhotoUpload')?.addEventListener('change', handlePhotoUpload);
   $('#btnRemoveChatPhoto')?.addEventListener('click', clearPhotoPreview);
+
+  initOfflineAISettings();
+}
+
+async function initOfflineAISettings() {
+  const statusEl = $('#offlineAIStatus');
+  const downloadBtn = $('#btnDownloadOfflineAI');
+  const deleteBtn = $('#btnDeleteOfflineAI');
+  const progressWrap = $('#offlineAIProgressWrap');
+  const progressFill = $('#offlineAIProgressFill');
+  const progressLabel = $('#offlineAIProgressLabel');
+  if (!statusEl || !downloadBtn) return;
+
+  const support = checkOfflineAISupport();
+
+  async function refreshStatus() {
+    if (!support.supported) {
+      statusEl.textContent = `Not available on this device: ${support.reason}`;
+      downloadBtn.style.display = 'none';
+      deleteBtn.style.display = 'none';
+      return;
+    }
+    if (await isOfflineModelDownloaded()) {
+      statusEl.textContent = 'Offline AI is downloaded and ready — works with no connection.';
+      downloadBtn.style.display = 'none';
+      deleteBtn.style.display = 'block';
+    } else {
+      const est = await getStorageEstimate();
+      statusEl.textContent = est && est.freeMB
+        ? `Ready to download (~1GB, one-time, needs a connection). ${est.freeMB}MB free on this device.`
+        : 'Ready to download (~1GB, one-time, needs a connection).';
+      downloadBtn.style.display = 'block';
+      deleteBtn.style.display = 'none';
+    }
+  }
+
+  await refreshStatus();
+
+  downloadBtn.addEventListener('click', async () => {
+    downloadBtn.disabled = true;
+    downloadBtn.textContent = 'Downloading…';
+    if (progressWrap) progressWrap.style.display = 'block';
+
+    try {
+      await loadOfflineModel((progress, text) => {
+        const pct = Math.round((progress || 0) * 100);
+        if (progressFill) progressFill.style.width = `${pct}%`;
+        if (progressLabel) progressLabel.textContent = `${pct}%${text ? ' — ' + text : ''}`;
+      });
+      toast('Offline AI ready');
+    } catch (err) {
+      toast(`Offline AI download failed: ${err.message}`, true);
+    } finally {
+      downloadBtn.disabled = false;
+      downloadBtn.textContent = 'Download Offline AI';
+      if (progressWrap) progressWrap.style.display = 'none';
+      await refreshStatus();
+    }
+  });
+
+  deleteBtn?.addEventListener('click', async () => {
+    if (!await fcConfirm('Delete the offline AI model and free its storage? You can download it again later.')) return;
+    await deleteOfflineModel();
+    toast('Offline AI deleted');
+    await refreshStatus();
+  });
+}
+
+// Loads the active survey's saved chat history into `messageHistory` and
+// replays it into the DOM, exactly once per survey. Called both when the
+// user opens the Chat tab and at the top of handleChatSubmit — sharing one
+// in-flight promise means a send that happens right after opening the tab
+// waits on the same load instead of racing it and clobbering a bubble
+// that's mid-response with a stale replay.
+async function ensureHistoryLoaded() {
+  const survey = await Store.getActive();
+  const surveyId = survey ? survey.id : '_no_survey_';
+  if (surveyId === historyLoadedForSurveyId) return;
+  if (historyLoadInFlight && historyLoadInFlight.surveyId === surveyId) {
+    return historyLoadInFlight.promise;
+  }
+
+  const promise = (async () => {
+    pendingWrite = null;
+    const stored = await idb.get(`chat_${surveyId}`);
+    messageHistory = stored ? JSON.parse(stored) : [];
+    historyLoadedForSurveyId = surveyId;
+
+    const historyEl = $('#chatHistory');
+    if (historyEl) historyEl.innerHTML = '';
+    for (const msg of messageHistory) {
+      renderStoredMessage(msg);
+    }
+  })();
+
+  historyLoadInFlight = { surveyId, promise };
+  await promise;
+  historyLoadInFlight = null;
+}
+
+// Called from main.js's screenChat callback whenever the user opens the AI
+// Chat tab.
+export async function onChatScreenEnter() {
+  await ensureHistoryLoaded();
+}
+
+function renderStoredMessage(msg) {
+  const textPart = (msg.parts || []).find(p => p.text);
+  if (msg.role === 'user' && textPart) appendMessage('user', textPart.text);
+  else if (msg.role === 'model' && textPart) appendMessage('model', textPart.text);
+  // functionCall/functionResponse turns are conversational bookkeeping only
+  // — not re-rendered as bubbles on reload.
+}
+
+async function persistHistory() {
+  if (!historyLoadedForSurveyId) return;
+  // Strip inline photo data before persisting — keeps the stored history
+  // small; the text/tool-call parts are what give the model continuity.
+  const slim = messageHistory.map(m => ({
+    role: m.role,
+    parts: (m.parts || []).filter(p => !p.inline_data)
+  }));
+  try {
+    await idb.set(`chat_${historyLoadedForSurveyId}`, JSON.stringify(slim));
+  } catch (e) {
+    console.warn('AI: failed to persist chat history', e.message);
+  }
 }
 
 function handlePhotoUpload(e) {
@@ -22,11 +162,11 @@ function handlePhotoUpload(e) {
   if (!file) return;
 
   currentPhotoMime = file.type;
-  
+
   // Compress image to max 1024px for faster upload to Gemini
   compress(file, 1024, (base64) => {
     currentPhotoBase64 = base64;
-    
+
     // Show preview
     const previewContainer = $('#chatPhotoPreviewContainer');
     const previewImg = $('#chatPhotoPreview');
@@ -40,11 +180,11 @@ function handlePhotoUpload(e) {
 function clearPhotoPreview() {
   currentPhotoBase64 = null;
   currentPhotoMime = null;
-  
+
   const previewContainer = $('#chatPhotoPreviewContainer');
   const previewImg = $('#chatPhotoPreview');
   const fileInput = $('#chatPhotoUpload');
-  
+
   if (previewContainer) previewContainer.style.display = 'none';
   if (previewImg) previewImg.src = '';
   if (fileInput) fileInput.value = '';
@@ -67,7 +207,7 @@ function appendMessage(role, text, imageSrc) {
   bubble.style.fontSize = '0.95rem';
 
   if (role === 'user') {
-    bubble.style.background = 'var(--primary)';
+    bubble.style.background = 'var(--emerald)';
     bubble.style.color = '#fff';
     bubble.style.alignSelf = 'flex-end';
     bubble.style.marginLeft = 'auto';
@@ -106,28 +246,137 @@ function setBubbleText(bubble, text) {
   });
 }
 
+// Renders a pending write (add_species_entry / add_note) as a card with
+// Confirm/Cancel buttons — SylvX never mutates survey data on its own.
+function appendConfirmCard(name, args) {
+  const historyEl = $('#chatHistory');
+  if (!historyEl) return null;
+
+  const emptyState = historyEl.querySelector('.empty-state');
+  if (emptyState) emptyState.remove();
+
+  const card = document.createElement('div');
+  card.style.margin = '8px 0';
+  card.style.padding = '12px 16px';
+  card.style.borderRadius = 'var(--radius-md)';
+  card.style.maxWidth = '90%';
+  card.style.background = 'var(--bg-card)';
+  card.style.border = '1px solid var(--emerald)';
+  card.style.alignSelf = 'flex-start';
+  card.style.marginRight = 'auto';
+
+  const label = document.createElement('div');
+  label.style.fontSize = '0.7rem';
+  label.style.textTransform = 'uppercase';
+  label.style.letterSpacing = '0.05em';
+  label.style.opacity = '0.7';
+  label.style.marginBottom = '6px';
+  label.textContent = 'SylvX wants to:';
+  card.appendChild(label);
+
+  const desc = document.createElement('div');
+  desc.style.fontSize = '0.95rem';
+  desc.style.marginBottom = '10px';
+  desc.textContent = describeWriteCall(name, args);
+  card.appendChild(desc);
+
+  const row = document.createElement('div');
+  row.style.display = 'flex';
+  row.style.gap = '8px';
+
+  const confirmBtn = document.createElement('button');
+  confirmBtn.className = 'btn btn-primary btn-sm';
+  confirmBtn.type = 'button';
+  confirmBtn.textContent = 'Confirm';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn btn-ghost btn-sm';
+  cancelBtn.type = 'button';
+  cancelBtn.textContent = 'Cancel';
+
+  confirmBtn.addEventListener('click', () => resolvePendingWrite(true, card, row));
+  cancelBtn.addEventListener('click', () => resolvePendingWrite(false, card, row));
+
+  row.appendChild(confirmBtn);
+  row.appendChild(cancelBtn);
+  card.appendChild(row);
+
+  historyEl.appendChild(card);
+  historyEl.scrollTop = historyEl.scrollHeight;
+  return card;
+}
+
+async function resolvePendingWrite(confirmed, card, buttonRow) {
+  if (!pendingWrite) return;
+  const { name, args } = pendingWrite;
+  pendingWrite = null;
+  buttonRow.remove();
+
+  const status = document.createElement('div');
+  status.style.fontSize = '0.85rem';
+  status.style.marginTop = '4px';
+
+  let functionResponse;
+  if (!confirmed) {
+    status.textContent = 'Cancelled.';
+    status.style.color = 'var(--text-muted)';
+    functionResponse = { cancelled: true };
+  } else {
+    let result;
+    if (name === 'add_species_entry') {
+      result = await addSpeciesToQuadrat(args.quadratNumber, args);
+    } else if (name === 'add_note') {
+      result = await addNoteRecord(args.text, args.category, args.quadratNumber);
+    } else {
+      result = { ok: false, error: 'Unknown action.' };
+    }
+
+    if (result.ok) {
+      status.textContent = '✅ Done.';
+      status.style.color = 'var(--emerald)';
+      toast('Saved by SylvX');
+    } else {
+      status.textContent = `❌ ${result.error}`;
+      status.style.color = 'var(--red)';
+    }
+    functionResponse = result;
+  }
+
+  card.appendChild(status);
+
+  messageHistory.push({
+    role: 'function',
+    parts: [{ functionResponse: { name, response: functionResponse } }]
+  });
+  await persistHistory();
+}
+
 async function handleChatSubmit() {
   const inputEl = $('#chatInput');
   const text = inputEl?.value.trim();
   if (!text) return;
 
+  await ensureHistoryLoaded();
+
   const apiKey = $('#settingsGeminiApiKey')?.value.trim();
+
+  if (!navigator.onLine) {
+    await handleOfflineMessage(text);
+    inputEl.value = '';
+    return;
+  }
+
   if (!apiKey) {
     toast('Please enter your Gemini API Key in Settings', true);
     $('#btnSettings')?.click();
     return;
   }
 
-  if (!navigator.onLine) {
-    toast('SylvX requires an internet connection', true);
-    return;
-  }
-
   inputEl.value = '';
-  
+
   // Build user message parts
   const userParts = [{ text }];
-  
+
   // Add image to payload if present
   if (currentPhotoBase64 && currentPhotoMime) {
     // Extract base64 data without data URI prefix for Gemini API
@@ -150,54 +399,14 @@ async function handleChatSubmit() {
   }
 
   messageHistory.push({ role: 'user', parts: userParts });
+  await persistHistory();
 
   const loadingBubble = appendMessage('model', '...');
-  
+
   try {
-    const survey = await Store.getActive();
-    let contextStr = 'No survey active.';
-    if (survey) {
-      contextStr = `Active Survey: ${survey.name}\n` +
-                   `Total Quadrats: ${survey.quadrats?.length || 0}\n` +
-                   `Total Transects: ${survey.transects?.length || 0}\n` +
-                   `Waypoints: ${survey.waypoints?.length || 0}\n` +
-                   `Start Date: ${survey.date || 'Unknown'}\n`;
-      if (survey.location) {
-         contextStr += `Location: ${survey.location}\n`;
-      }
-    }
-
-    const systemInstruction = `You are SylvX, an AI Field Assistant built into the Forest Capture app. 
-You are an expert in forestry, ecology, GIS, botany, and environmental science. 
-Answer anything and everything related to forestry, ecology, GIS, the app, etc.
-Keep your answers concise and suitable for a mobile app chat interface.
-Here is the context of the user's current field data:\n${contextStr}`;
-
-    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-
-    const payload = {
-      system_instruction: { parts: [{ text: systemInstruction }] },
-      contents: messageHistory
-    };
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.error?.message || 'API request failed');
-    }
-
-    const data = await response.json();
-    const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't generate a response.";
-
-    // Model output is external content — render as text, never as markup.
-    setBubbleText(loadingBubble, replyText);
-    messageHistory.push({ role: 'model', parts: [{ text: replyText }] });
-
+    const systemInstruction = await buildSystemInstruction();
+    const data = await callGemini(apiKey, systemInstruction);
+    await handleGeminiResponse(data, apiKey, systemInstruction, loadingBubble);
   } catch (err) {
     console.error('SylvX Error:', err);
     loadingBubble.textContent = '';
@@ -206,5 +415,191 @@ Here is the context of the user's current field data:\n${contextStr}`;
     errSpan.textContent = `Error: ${err.message}`;
     loadingBubble.appendChild(errSpan);
     messageHistory.pop(); // remove user message from history if failed
+    await persistHistory();
   }
+}
+
+async function buildSystemInstruction() {
+  const survey = await Store.getActive();
+  let contextStr = 'No survey active.';
+  if (survey) {
+    contextStr = `Active Survey: ${survey.name}\n` +
+                 `Total Quadrats: ${survey.quadrats?.length || 0}\n` +
+                 `Total Transects: ${survey.transects?.length || 0}\n` +
+                 `Waypoints: ${survey.waypoints?.length || 0}\n` +
+                 `Start Date: ${survey.date || 'Unknown'}\n`;
+    if (survey.location) contextStr += `Location: ${survey.location}\n`;
+    if (survey.quadrats?.length) {
+      contextStr += `Quadrat numbers: ${survey.quadrats.map(q => q.number).join(', ')}\n`;
+    }
+  }
+
+  return `You are SylvX, the AI Field Assistant built into the Forest Capture app.
+You are an expert in forestry, ecology, GIS, botany, and environmental science.
+
+${APP_KNOWLEDGE}
+
+You have tools to look up taxonomy, compare surveys, and (with the user's
+confirmation) log species entries and notes. Call a tool directly when the
+user's intent is clear — the app will always ask the user to confirm before
+anything is written, so you do not need to ask for confirmation yourself.
+
+Keep answers concise and suitable for a mobile app chat interface.
+Here is the context of the user's current field data:
+${contextStr}`;
+}
+
+async function callGemini(apiKey, systemInstruction, contents = messageHistory) {
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+
+  const payload = {
+    system_instruction: { parts: [{ text: systemInstruction }] },
+    tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
+    contents
+  };
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}));
+    throw new Error(errData.error?.message || 'API request failed');
+  }
+
+  return response.json();
+}
+
+async function handleGeminiResponse(data, apiKey, systemInstruction, loadingBubble) {
+  const parts = data.candidates?.[0]?.content?.parts || [];
+  const functionCallPart = parts.find(p => p.functionCall);
+
+  if (functionCallPart) {
+    const { name, args } = functionCallPart.functionCall;
+
+    if (isWriteTool(name)) {
+      loadingBubble.remove();
+      messageHistory.push({ role: 'model', parts: [{ functionCall: { name, args } }] });
+      pendingWrite = { name, args };
+      appendConfirmCard(name, args);
+      await persistHistory();
+      return;
+    }
+
+    // Read-only tools execute immediately, then we ask Gemini for a
+    // natural-language summary of the result.
+    const toolResult = await executeReadOnlyTool(name, args);
+    messageHistory.push({ role: 'model', parts: [{ functionCall: { name, args } }] });
+    messageHistory.push({ role: 'function', parts: [{ functionResponse: { name, response: toolResult } }] });
+    await persistHistory();
+
+    try {
+      const followUp = await callGemini(apiKey, systemInstruction);
+      const followParts = followUp.candidates?.[0]?.content?.parts || [];
+      const replyText = followParts.find(p => p.text)?.text || JSON.stringify(toolResult);
+      setBubbleText(loadingBubble, replyText);
+      messageHistory.push({ role: 'model', parts: [{ text: replyText }] });
+    } catch (e) {
+      console.warn('SylvX: follow-up call failed, showing raw tool result', e.message);
+      setBubbleText(loadingBubble, formatToolResultFallback(name, toolResult));
+    }
+    await persistHistory();
+    return;
+  }
+
+  const replyText = parts.find(p => p.text)?.text || "Sorry, I couldn't generate a response.";
+  // Model output is external content — render as text, never as markup.
+  setBubbleText(loadingBubble, replyText);
+  messageHistory.push({ role: 'model', parts: [{ text: replyText }] });
+  await persistHistory();
+}
+
+async function executeReadOnlyTool(name, args) {
+  if (name === 'compare_surveys') {
+    const surveys = await Store.getSurveys();
+    const findByName = (n) => surveys.find(s => s.name && s.name.toLowerCase().includes((n || '').toLowerCase()));
+    const a = findByName(args.surveyNameA);
+    const b = findByName(args.surveyNameB);
+    if (!a || !b) {
+      return { error: `Could not find ${!a ? `"${args.surveyNameA}"` : `"${args.surveyNameB}"`} among saved surveys: ${surveys.map(s => s.name).join(', ') || 'none'}.` };
+    }
+    const ia = calculateIndicesPayload(a);
+    const ib = calculateIndicesPayload(b);
+    return {
+      surveyA: { name: a.name, richness: ia.S, shannonH: ia.H, simpsonD: ia.D, evenness: ia.E, basalArea: ia.totalBA },
+      surveyB: { name: b.name, richness: ib.S, shannonH: ib.H, simpsonD: ib.D, evenness: ib.E, basalArea: ib.totalBA },
+      delta: { richness: ia.S - ib.S, shannonH: +(ia.H - ib.H).toFixed(3), basalArea: +(ia.totalBA - ib.totalBA).toFixed(3) }
+    };
+  }
+
+  if (name === 'lookup_taxonomy') {
+    const results = await searchTaxonomy(args.query, 6);
+    if (!results.length) return { found: false, message: `No matches for "${args.query}" in the local taxonomy pack or this survey's logged species.` };
+    return { found: true, results: results.map(r => ({ scientific: r.scientific, common: r.common, family: r.family })) };
+  }
+
+  return { error: `Unknown tool: ${name}` };
+}
+
+function formatToolResultFallback(name, result) {
+  if (name === 'compare_surveys' && result.surveyA) {
+    return `${result.surveyA.name}: S=${result.surveyA.richness}, H'=${result.surveyA.shannonH}\n` +
+           `${result.surveyB.name}: S=${result.surveyB.richness}, H'=${result.surveyB.shannonH}`;
+  }
+  if (name === 'lookup_taxonomy' && result.results) {
+    return result.results.map(r => `${r.scientific}${r.common ? ` (${r.common})` : ''}${r.family ? ` — ${r.family}` : ''}`).join('\n');
+  }
+  return result.message || result.error || JSON.stringify(result);
+}
+
+// When there's no network, SylvX can't reach Gemini. It still has three
+// fully offline fallbacks, tried in order: a taxonomy-pack species lookup,
+// a deterministic app-guide answer, and — if the user downloaded it — a
+// real on-device model. All three work with zero connectivity.
+async function handleOfflineMessage(text) {
+  appendMessage('user', text);
+  messageHistory.push({ role: 'user', parts: [{ text }] });
+
+  const taxResults = await searchTaxonomy(text, 5);
+  if (taxResults.length) {
+    const summary = '📴 Offline taxonomy lookup:\n' +
+      taxResults.map(r => `• ${r.scientific}${r.common ? ` (${r.common})` : ''}${r.family ? ` — ${r.family}` : ''}`).join('\n');
+    appendMessage('model', summary);
+    messageHistory.push({ role: 'model', parts: [{ text: summary }] });
+    await persistHistory();
+    return;
+  }
+
+  const guideAnswer = matchOfflineGuide(text);
+  if (guideAnswer) {
+    appendMessage('model', guideAnswer);
+    messageHistory.push({ role: 'model', parts: [{ text: guideAnswer }] });
+    await persistHistory();
+    return;
+  }
+
+  if (await isOfflineModelDownloaded()) {
+    const loadingBubble = appendMessage('model', 'Thinking offline…');
+    try {
+      const survey = await Store.getActive();
+      const contextStr = survey
+        ? `${survey.name} — ${survey.quadrats?.length || 0} quadrats, ${survey.transects?.length || 0} transects`
+        : 'no survey active';
+      const reply = await offlineChat(text, contextStr);
+      setBubbleText(loadingBubble, reply);
+      messageHistory.push({ role: 'model', parts: [{ text: reply }] });
+    } catch (err) {
+      setBubbleText(loadingBubble, `Offline AI error: ${err.message}`);
+      messageHistory.pop();
+    }
+    await persistHistory();
+    return;
+  }
+
+  const fallback = "I'm offline, so I can't reach cloud AI right now. I can still help with species lookups and app guidance — try asking about a species name or a tool by name (e.g. \"how do I use the CBI tool\"). For open-ended questions offline, download the Offline AI model from Settings.";
+  appendMessage('model', fallback);
+  messageHistory.push({ role: 'model', parts: [{ text: fallback }] });
+  await persistHistory();
 }

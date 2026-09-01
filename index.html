@@ -2103,10 +2103,27 @@
         <!-- AI Settings -->
         <div class="settings-section">
           <div class="settings-section-title">AI Assistant (SylvX)</div>
-          <div class="form-group" style="margin-bottom:0;">
-            <label for="settingsGeminiApiKey" style="font-size:0.75rem;">Gemini API Key</label>
-            <input type="password" id="settingsGeminiApiKey" placeholder="Enter API Key to enable AI" style="font-size:0.85rem; padding:8px;" />
-            <p style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">Used locally in your browser. Not sent to our servers.</p>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label for="settingsGeminiApiKey" style="font-size:0.75rem;">Gemini API Key (Cloud, optional)</label>
+            <input type="password" id="settingsGeminiApiKey" placeholder="Enter API Key to enable cloud AI" style="font-size:0.85rem; padding:8px;" />
+            <p style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">Used locally in your browser. Not sent to our servers. Needed for cloud AI's full reasoning and its ability to log data for you.</p>
+          </div>
+
+          <div class="form-group" style="margin-bottom:0; border-top:1px solid var(--border); padding-top:12px;">
+            <label style="font-size:0.75rem;">Offline AI (No internet or API key required)</label>
+            <p style="font-size:0.7rem; color:var(--text-muted); margin:4px 0 8px;">Downloads a small AI model to this device once, then answers questions with zero connectivity — for use in the field. Read-only: it can't save data to your survey, so use the app's tools directly for that.</p>
+            <div id="offlineAIStatus" style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">Checking device compatibility…</div>
+            <div class="offline-progress-wrap" id="offlineAIProgressWrap" style="display:none; margin-bottom:8px;">
+              <div class="offline-progress-bar">
+                <div class="offline-progress-fill" id="offlineAIProgressFill" style="width:0%"></div>
+              </div>
+              <span class="offline-progress-label" id="offlineAIProgressLabel">0%</span>
+            </div>
+            <button class="btn btn-primary btn-block" id="btnDownloadOfflineAI" style="font-size:0.8rem;">Download Offline AI</button>
+            <button class="btn btn-ghost btn-block" id="btnDeleteOfflineAI"
+              style="font-size:0.75rem; margin-top:8px; display:none; color:var(--red); border:1px dashed var(--red);">
+              Delete Offline AI (Free Storage)
+            </button>
           </div>
         </div>
         <div class="settings-section">

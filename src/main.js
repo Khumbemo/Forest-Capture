@@ -26,7 +26,7 @@ import { init as initClinometer, onScreenEnter as clinometerEnter, onScreenLeave
 import { init as initCalculation } from './modules/calculation.js';
 import { init as initForestExport } from './modules/forest-capture-export.js';
 import { ensureAuth, EmailLogin, EmailSignup, AppSignOut, AppDeleteAccount } from './modules/firebase.js';
-import { initAI } from './modules/ai.js';
+import { initAI, onChatScreenEnter } from './modules/ai.js';
 import { start as startCompass, stop as stopCompass } from './modules/compass.js';
 
 
@@ -345,7 +345,7 @@ const screenCallbacks = {
   screenPrism: () => { refreshPrismTable(); stopCompass(); },
   screenClinometer: () => { clinometerEnter(); stopCompass(); },
   screenExport: () => { refreshPreview(); stopCompass(); },
-  screenChat: () => { updateBars(); stopCompass(); }
+  screenChat: () => { updateBars(); stopCompass(); onChatScreenEnter(); }
 };
 // Expose for cross-module navigation (e.g., survey.js data record clicks)
 window._fcScreenCallbacks = screenCallbacks;
