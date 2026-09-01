@@ -30,6 +30,14 @@ jobs:
     - name: Install NPM Dependencies
       run: npm install
 
+    # npm install on this runner doesn't set the executable bit on
+    # node_modules/.bin/* shims (reproduced locally: `cap sync android`
+    # fails with "Permission denied" until this is applied) — this has
+    # broken every build in the workflow's history, unrelated to any
+    # particular change.
+    - name: Fix npm bin executable bits
+      run: chmod +x node_modules/.bin/*
+
     - name: Run Unit Tests
       run: npm run test:unit
 
