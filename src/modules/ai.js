@@ -344,6 +344,11 @@ async function resolvePendingWrite(confirmed, card, buttonRow) {
 
   card.appendChild(status);
 
+  // Push the functionCall and its functionResponse together, atomically —
+  // this is the first time either enters messageHistory (see the comment
+  // in handleGeminiResponse), so a functionCall can never end up recorded
+  // without its matching response immediately after it.
+  messageHistory.push({ role: 'model', parts: [{ functionCall: { name, args } }] });
   messageHistory.push({
     role: 'function',
     parts: [{ functionResponse: { name, response: functionResponse } }]
@@ -356,12 +361,22 @@ async function handleChatSubmit() {
   const text = inputEl?.value.trim();
   if (!text) return;
 
+  if (pendingWrite) {
+    toast('Please Confirm or Cancel the pending action above first', true);
+    return;
+  }
+
   await ensureHistoryLoaded();
+  // Captured so a response that arrives after the user switches to a
+  // different survey's chat (network delay, offline-model inference time)
+  // can be detected and discarded instead of being written into the wrong
+  // survey's history — see the checks after each await below.
+  const requestSurveyId = historyLoadedForSurveyId;
 
   const apiKey = $('#settingsGeminiApiKey')?.value.trim();
 
   if (!navigator.onLine) {
-    await handleOfflineMessage(text);
+    await handleOfflineMessage(text, requestSurveyId);
     inputEl.value = '';
     return;
   }
@@ -406,8 +421,20 @@ async function handleChatSubmit() {
   try {
     const systemInstruction = await buildSystemInstruction();
     const data = await callGemini(apiKey, systemInstruction);
-    await handleGeminiResponse(data, apiKey, systemInstruction, loadingBubble);
+    if (requestSurveyId !== historyLoadedForSurveyId) {
+      // The user switched to a different survey's chat while this request
+      // was in flight. ensureHistoryLoaded() already reset messageHistory
+      // and the DOM for the new survey — writing this response into either
+      // would corrupt the new survey's chat. Just drop it.
+      console.warn('SylvX: response arrived after switching surveys — discarded');
+      return;
+    }
+    await handleGeminiResponse(data, apiKey, systemInstruction, loadingBubble, requestSurveyId);
   } catch (err) {
+    if (requestSurveyId !== historyLoadedForSurveyId) {
+      console.warn('SylvX: request failed after switching surveys — discarded');
+      return;
+    }
     console.error('SylvX Error:', err);
     loadingBubble.textContent = '';
     const errSpan = document.createElement('span');
@@ -472,7 +499,7 @@ async function callGemini(apiKey, systemInstruction, contents = messageHistory) 
   return response.json();
 }
 
-async function handleGeminiResponse(data, apiKey, systemInstruction, loadingBubble) {
+async function handleGeminiResponse(data, apiKey, systemInstruction, loadingBubble, requestSurveyId) {
   const parts = data.candidates?.[0]?.content?.parts || [];
   const functionCallPart = parts.find(p => p.functionCall);
 
@@ -481,10 +508,17 @@ async function handleGeminiResponse(data, apiKey, systemInstruction, loadingBubb
 
     if (isWriteTool(name)) {
       loadingBubble.remove();
-      messageHistory.push({ role: 'model', parts: [{ functionCall: { name, args } }] });
+      // Deliberately NOT pushed to messageHistory yet. A functionCall turn
+      // must be immediately followed by its functionResponse turn — if we
+      // recorded this now, a user who sends a new message before resolving
+      // the card (Confirm/Cancel) would insert a user turn in between,
+      // permanently breaking this survey's history against Gemini's API
+      // (every future call would 400). resolvePendingWrite() pushes the
+      // functionCall and functionResponse together, atomically, only once
+      // the user actually resolves it — see below. (Sending a new message
+      // while a card is pending is itself blocked in handleChatSubmit.)
       pendingWrite = { name, args };
       appendConfirmCard(name, args);
-      await persistHistory();
       return;
     }
 
@@ -497,6 +531,10 @@ async function handleGeminiResponse(data, apiKey, systemInstruction, loadingBubb
 
     try {
       const followUp = await callGemini(apiKey, systemInstruction);
+      if (requestSurveyId !== historyLoadedForSurveyId) {
+        console.warn('SylvX: follow-up response arrived after switching surveys — discarded');
+        return;
+      }
       const followParts = followUp.candidates?.[0]?.content?.parts || [];
       const replyText = followParts.find(p => p.text)?.text || JSON.stringify(toolResult);
       setBubbleText(loadingBubble, replyText);
@@ -558,7 +596,7 @@ function formatToolResultFallback(name, result) {
 // fully offline fallbacks, tried in order: a taxonomy-pack species lookup,
 // a deterministic app-guide answer, and — if the user downloaded it — a
 // real on-device model. All three work with zero connectivity.
-async function handleOfflineMessage(text) {
+async function handleOfflineMessage(text, requestSurveyId) {
   appendMessage('user', text);
   messageHistory.push({ role: 'user', parts: [{ text }] });
 
@@ -588,9 +626,20 @@ async function handleOfflineMessage(text) {
         ? `${survey.name} — ${survey.quadrats?.length || 0} quadrats, ${survey.transects?.length || 0} transects`
         : 'no survey active';
       const reply = await offlineChat(text, contextStr);
+      if (requestSurveyId !== historyLoadedForSurveyId) {
+        // Switched surveys while the on-device model was still generating
+        // — same reasoning as the cloud path above. Discard rather than
+        // write this survey's reply into whatever chat is open now.
+        console.warn('SylvX: offline reply arrived after switching surveys — discarded');
+        return;
+      }
       setBubbleText(loadingBubble, reply);
       messageHistory.push({ role: 'model', parts: [{ text: reply }] });
     } catch (err) {
+      if (requestSurveyId !== historyLoadedForSurveyId) {
+        console.warn('SylvX: offline request failed after switching surveys — discarded');
+        return;
+      }
       setBubbleText(loadingBubble, `Offline AI error: ${err.message}`);
       messageHistory.pop();
     }
