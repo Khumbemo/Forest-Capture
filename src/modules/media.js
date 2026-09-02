@@ -1,6 +1,6 @@
 // src/modules/media.js
 
-import { $, toast } from './ui.js';
+import { $, toast, esc } from './ui.js';
 import { Store, MediaStore } from './storage.js';
 import { ensureAuth, loadSDK } from './firebase.js';
 import { compress } from './utils.js';
@@ -40,7 +40,7 @@ export async function refreshPhotos() {
   // Resolve all media URLs (from Firebase, local URI, or IndexedDB)
   const resolved = await Promise.all(s.photos.map(p => MediaStore.resolveUrl(p)));
 
-  g.innerHTML = s.photos.map((p, i) => `<div class="photo-thumb"><img src="${resolved[i]}" alt="Photo" /><button class="photo-thumb-delete" data-i="${i}">✕</button></div>`).join('');
+  g.innerHTML = s.photos.map((p, i) => `<div class="photo-thumb"><img src="${esc(resolved[i])}" alt="Photo" /><button class="photo-thumb-delete" data-i="${i}">✕</button></div>`).join('');
   g.querySelectorAll('.photo-thumb-delete').forEach(b => {
     b.addEventListener('click', async () => {
       const idx = +b.dataset.i;
@@ -323,7 +323,7 @@ export async function refreshAudio() {
   // Resolve all media URLs
   const resolved = await Promise.all(s.audioNotes.map(a => MediaStore.resolveUrl(a)));
 
-  list.innerHTML = s.audioNotes.map((a, i) => `<div class="audio-item"><audio controls src="${resolved[i]}"></audio><button data-i="${i}">✕</button></div>`).join('');
+  list.innerHTML = s.audioNotes.map((a, i) => `<div class="audio-item"><audio controls src="${esc(resolved[i])}"></audio><button data-i="${i}">✕</button></div>`).join('');
   list.querySelectorAll('button').forEach(b => {
     b.addEventListener('click', async () => {
       const idx = +b.dataset.i;

@@ -5,6 +5,7 @@
  */
 
 import { Store, idb } from './storage.js';
+import { esc } from './ui.js';
 
 const _learnedSpecies = new Map(); // scientific name → entry object
 const _gbifCache = new Map(); // query string → cached GBIF results
@@ -273,8 +274,8 @@ function _render(dropdown, results, activeIndex, onSelect) {
       : entry.source === 'regional_pack' ? `<span class="species-badge-regional" style="background:var(--emerald);color:#000;font-size:0.7em;padding:2px 6px;border-radius:4px;">regional dict</span>` : '';
 
     const statusBadge = entry.status === 'SYNONYM' ? `<span class="species-badge-synonym">synonym</span>` : '';
-    const thumbnailHtml = entry.thumbnail 
-      ? `<img src="${entry.thumbnail}" style="width:36px; height:36px; border-radius:4px; object-fit:cover; margin-right:12px; border:1px solid var(--border); background:#fff;" loading="lazy" />` 
+    const thumbnailHtml = entry.thumbnail
+      ? `<img src="${esc(entry.thumbnail)}" style="width:36px; height:36px; border-radius:4px; object-fit:cover; margin-right:12px; border:1px solid var(--border); background:#fff;" loading="lazy" />`
       : '';
 
     li.innerHTML = `
@@ -283,10 +284,10 @@ function _render(dropdown, results, activeIndex, onSelect) {
         <div style="flex:1;">
           <div class="species-option-main">
             <span class="species-scientific">${_highlight(entry.scientific, dropdown._query || '')}</span>
-            ${entry.common ? `<span class="species-common">${escapeHtml(entry.common)}</span>` : ''}
+            ${entry.common ? `<span class="species-common">${esc(entry.common)}</span>` : ''}
           </div>
           <div class="species-option-meta">
-            ${entry.family ? `<span class="species-family">${escapeHtml(entry.family)}</span>` : ''}
+            ${entry.family ? `<span class="species-family">${esc(entry.family)}</span>` : ''}
             ${badge}
             ${statusBadge}
           </div>
@@ -346,18 +347,12 @@ function _hide(el) { el.style.display = 'none';  }
 function _isVisible(el) { return el.style.display !== 'none'; }
 
 function _highlight(text, query) {
-  if (!query) return escapeHtml(text);
+  if (!query) return esc(text);
   const i = text.toLowerCase().indexOf(query.toLowerCase());
-  if (i === -1) return escapeHtml(text);
-  return escapeHtml(text.slice(0, i))
-    + `<strong>${escapeHtml(text.slice(i, i + query.length))}</strong>`
-    + escapeHtml(text.slice(i + query.length));
-}
-
-function escapeHtml(str) {
-  return String(str || '')
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  if (i === -1) return esc(text);
+  return esc(text.slice(0, i))
+    + `<strong>${esc(text.slice(i, i + query.length))}</strong>`
+    + esc(text.slice(i + query.length));
 }
 
 

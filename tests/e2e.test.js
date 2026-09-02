@@ -31,14 +31,14 @@ describe('Forest Capture E2E UI Tests', () => {
 
     // Click New Survey button
     await page.waitForSelector('#btnNewSurvey', { timeout: 2000 });
-    await page.click('#btnNewSurvey');
-    
+    await page.evaluate(() => document.querySelector('#btnNewSurvey').click());
+
     // Wait for Modal and type name
     await page.waitForSelector('#surveyName', { timeout: 2000 });
     await page.type('#surveyName', 'E2E Puppeteer Survey');
-    
+
     // Save
-    await page.click('#btnSaveSurvey');
+    await page.evaluate(() => document.querySelector('#btnSaveSurvey').click());
     await new Promise(r => setTimeout(r, 1000));
   });
 

@@ -14,7 +14,7 @@
  */
 
 import { Store } from './storage.js';
-import { toast, $ } from './ui.js';
+import { toast, $, esc } from './ui.js';
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let _allSurveys      = [];
@@ -74,7 +74,7 @@ function _renderSurveyPicker() {
       chip.style.setProperty('--chip-color', color);
       chip.innerHTML  = `
         <span class="compare-chip-dot" style="background:${color}"></span>
-        <span class="compare-chip-name">${escapeHtml(survey.name)}</span>
+        <span class="compare-chip-name">${esc(survey.name)}</span>
         <span class="compare-chip-meta">${records} records</span>
       `;
 
@@ -353,7 +353,7 @@ function _renderSpeciesOverlapTable(data) {
   );
 
   const headerCells = data.map(({ survey, color }) =>
-    `<th style="color:${color}">${escapeHtml(_truncate(survey.name, 14))}</th>`
+    `<th style="color:${color}">${esc(_truncate(survey.name, 14))}</th>`
   ).join('');
 
   const rows = allSpecies.map(([key, name]) => {
@@ -367,7 +367,7 @@ function _renderSpeciesOverlapTable(data) {
 
     const sharedClass = surveyCount === data.length ? 'overlap-row--shared' : '';
     return `<tr class="${sharedClass}">
-      <td class="overlap-name">${escapeHtml(name)}</td>
+      <td class="overlap-name">${esc(name)}</td>
       ${cells}
       <td class="overlap-count">${surveyCount}/${data.length}</td>
     </tr>`;
@@ -408,7 +408,7 @@ function _renderIVIComparison(data) {
     <div class="compare-section-title">IVI by species</div>
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px">
       <select id="compareIVISpeciesSelect" style="flex:1;font-size:13px">
-        ${allSpeciesNames.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('')}
+        ${allSpeciesNames.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('')}
       </select>
     </div>
     <canvas id="compareIVIChart"></canvas>
@@ -599,17 +599,11 @@ function _destroyChart(canvasId) {
 
 function _showEmptyState(message) {
   const container = document.getElementById('compareSurveyPicker');
-  if (container) container.innerHTML = `<p class="compare-empty">${escapeHtml(message)}</p>`;
+  if (container) container.innerHTML = `<p class="compare-empty">${esc(message)}</p>`;
 }
 
 function _truncate(str, max) {
   return str.length > max ? str.slice(0, max) + '…' : str;
-}
-
-function escapeHtml(str) {
-  return String(str || '')
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function _renderEmptyCharts() {
