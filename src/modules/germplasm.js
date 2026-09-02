@@ -1,6 +1,6 @@
 // src/modules/germplasm.js
 
-import { $, $$, toast, switchScreen, fcConfirm } from './ui.js';
+import { $, $$, toast, switchScreen, fcConfirm, esc } from './ui.js';
 import { Store } from './storage.js';
 import { curPos } from './gps.js';
 
@@ -221,16 +221,16 @@ export async function refreshGermplasmUI() {
                   <div style="width:40px; height:40px;">${body.icon}</div>
                   <div>
                     <div class="g-card-meta">${body.name}</div>
-                    <div style="font-size:1.05rem; color:var(--text-primary); font-weight:700; font-style:italic;">${r.speciesScientific || '—'}</div>
-                    <div style="font-size:0.85rem; color:var(--text-muted);">${r.speciesCommon || ''}</div>
+                    <div style="font-size:1.05rem; color:var(--text-primary); font-weight:700; font-style:italic;">${esc(r.speciesScientific || '—')}</div>
+                    <div style="font-size:0.85rem; color:var(--text-muted);">${esc(r.speciesCommon || '')}</div>
                   </div>
                 </div>
-                <button class="btn-ghost btn-g-del" data-id="${r.id}" style="color:var(--red); padding:4px;">✕</button>
+                <button class="btn-ghost btn-g-del" data-id="${esc(r.id)}" style="color:var(--red); padding:4px;">✕</button>
               </div>
               <div style="font-size:0.75rem; color:var(--text-muted); margin-top:12px; display:flex; gap:12px; flex-wrap:wrap; font-weight:500;">
-                ${r.collectionDate||r.acquisitionDate||r.samplingDate ? `<span>${r.collectionDate||r.acquisitionDate||r.samplingDate}</span>` : ''}
-                ${r.district||r.collectionDistrict ? `<span>${r.district||r.collectionDistrict}</span>` : ''}
-                ${r.collectorName||r.samplingOfficer ? `<span>${r.collectorName||r.samplingOfficer}</span>` : ''}
+                ${r.collectionDate||r.acquisitionDate||r.samplingDate ? `<span>${esc(r.collectionDate||r.acquisitionDate||r.samplingDate)}</span>` : ''}
+                ${r.district||r.collectionDistrict ? `<span>${esc(r.district||r.collectionDistrict)}</span>` : ''}
+                ${r.collectorName||r.samplingOfficer ? `<span>${esc(r.collectorName||r.samplingOfficer)}</span>` : ''}
               </div>
             </div>
           `;

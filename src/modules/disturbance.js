@@ -4,34 +4,55 @@ import { $, $$, toast } from './ui.js';
 import { Store } from './storage.js';
 import { getLocalISO } from './utils.js';
 
-const cbiL = { substrate: ['cbiSubLitter', 'cbiSubDuff', 'cbiSubSoil'], herbaceous: ['cbiHerbFreq', 'cbiHerbMort'], shrub: ['cbiShrubMort', 'cbiShrubChar'], intermediate: ['cbiIntChar', 'cbiIntMort'], overstory: ['cbiOverScorch', 'cbiOverMort', 'cbiOverChar'] };
+export const cbiL = { substrate: ['cbiSubLitter', 'cbiSubDuff', 'cbiSubSoil'], herbaceous: ['cbiHerbFreq', 'cbiHerbMort'], shrub: ['cbiShrubMort', 'cbiShrubChar'], intermediate: ['cbiIntChar', 'cbiIntMort'], overstory: ['cbiOverScorch', 'cbiOverMort', 'cbiOverChar'] };
+
+/**
+ * Pure Composite Burn Index calculation — no DOM, so it's directly
+ * unit-testable. fieldValues is keyed by the same field ids used
+ * throughout this module and in saved survey data (s.cbi[layer][id]),
+ * e.g. { cbiSubLitter: 2, cbiSubDuff: 1, cbiOverMort: 3, ... }. Missing
+ * fields default to 0, matching the original DOM-reading behavior.
+ */
+export function calculateCBI(fieldValues) {
+  const strataAverages = {};
+  let tot = 0, cnt = 0;
+  for (const [layer, ids] of Object.entries(cbiL)) {
+    const sum = ids.reduce((a, id) => a + (parseFloat(fieldValues[id]) || 0), 0);
+    const avg = ids.length ? sum / ids.length : 0;
+    strataAverages[layer] = avg;
+    tot += avg; cnt++;
+  }
+  const composite = cnt ? tot / cnt : 0;
+
+  let severity = 'Unburned';
+  if (composite > 2.25) severity = 'High';
+  else if (composite > 1.25) severity = 'Moderate-High';
+  else if (composite > 0.5) severity = 'Moderate-Low';
+  else if (composite > 0) severity = 'Low';
+
+  return { strataAverages, composite, severity };
+}
 
 export function recalcCBI() {
-  let tot = 0, cnt = 0;
-  Object.entries(cbiL).forEach(([l, ids]) => {
-    let lt = 0;
-    ids.forEach(id => {
-      const inp = document.getElementById(id);
-      if (inp) lt += parseFloat(inp.value) || 0;
-    });
-    const avg = ids.length ? lt / ids.length : 0;
-    const el = document.getElementById('cbi' + l.charAt(0).toUpperCase() + l.slice(1) + 'Avg');
-    if (el) el.textContent = avg.toFixed(2);
-    tot += avg; cnt++;
+  const fieldValues = {};
+  Object.values(cbiL).flat().forEach(id => {
+    const inp = document.getElementById(id);
+    if (inp) fieldValues[id] = parseFloat(inp.value) || 0;
   });
-  const c = cnt ? tot / cnt : 0;
+
+  const { strataAverages, composite, severity } = calculateCBI(fieldValues);
+
+  Object.entries(strataAverages).forEach(([layer, avg]) => {
+    const el = document.getElementById('cbi' + layer.charAt(0).toUpperCase() + layer.slice(1) + 'Avg');
+    if (el) el.textContent = avg.toFixed(2);
+  });
+
   const cs = $('#cbiCompositeScore'), cf = $('#cbiScoreFill'), cl = $('#cbiSeverityClass');
-  if (cs) cs.textContent = c.toFixed(2);
+  if (cs) cs.textContent = composite.toFixed(2);
   // FIX #8: Clamp to 100% so bar never overflows its container.
-  if (cf) cf.style.width = Math.min(100, (c / 3) * 100) + '%';
-  
+  if (cf) cf.style.width = Math.min(100, (composite / 3) * 100) + '%';
+
   if (cl) {
-    let severity = 'Unburned';
-    if (c > 2.25) severity = 'High';
-    else if (c > 1.25) severity = 'Moderate-High';
-    else if (c > 0.5) severity = 'Moderate-Low';
-    else if (c > 0) severity = 'Low';
-    
     cl.textContent = severity;
     cl.className = 'severity-badge ' + severity.toLowerCase().replace(' ', '-');
   }

@@ -36,10 +36,17 @@ export function toast(m, e, action = null) {
   toastT = setTimeout(() => el.classList.remove('show'), 5000);
 }
 
+// HTML-escapes all five characters that are special in both element
+// content AND double- or single-quoted attribute values. The previous
+// implementation (round-tripping through textContent/innerHTML) escaped
+// &, <, > but NOT " or ' — safe for element content, but every call site
+// across this codebase that interpolates esc()'d text into an attribute
+// (e.g. class="stage-badge ${esc(x.stage)}") was silently vulnerable to
+// attribute-breakout injection from a value containing a double quote.
 export function esc(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
 }
 
 export const ICONS = {
