@@ -29,6 +29,7 @@ const PREFERRED_MODELS = [
 let engine = null;
 let engineModule = null;
 let loadedModelId = null;
+let loadInFlight = null;
 
 export function checkOfflineAISupport() {
   if (typeof navigator === 'undefined' || !('gpu' in navigator)) {
@@ -72,7 +73,23 @@ function pickModelId(modelList) {
 // Downloads (first run) or reloads-from-cache (subsequent sessions) the
 // on-device model. Safe to call repeatedly — WebLLM skips re-downloading
 // weights it already has cached.
+//
+// Guarded against concurrent callers (e.g. a double-tap on Send before the
+// input is cleared): without this, two overlapping calls would each start
+// their own multi-hundred-MB CreateMLCEngine() load and race to overwrite
+// the shared `engine` variable, wasting bandwidth/GPU memory. All concurrent
+// callers now await the same in-flight load instead.
 export async function loadOfflineModel(onProgress) {
+  if (loadInFlight) return loadInFlight;
+  loadInFlight = _loadOfflineModel(onProgress);
+  try {
+    return await loadInFlight;
+  } finally {
+    loadInFlight = null;
+  }
+}
+
+async function _loadOfflineModel(onProgress) {
   const support = checkOfflineAISupport();
   if (!support.supported) throw new Error(support.reason);
 

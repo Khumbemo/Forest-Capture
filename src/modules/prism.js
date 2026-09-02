@@ -1,6 +1,6 @@
 // src/modules/prism.js — Variable-Radius Point Sampling (Prism Sweep)
 
-import { $, $$, toast, esc, fcConfirm } from './ui.js';
+import { $, $$, toast, fcConfirm } from './ui.js';
 import { Store } from './storage.js';
 import { fillGPSField } from './gps.js';
 import { attachAutocomplete } from './species-autocomplete.js';
