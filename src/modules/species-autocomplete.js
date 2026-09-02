@@ -168,8 +168,6 @@ async function _search(query, max) {
 
   const regionalPack = await _getActiveTaxonomyPackResults(query, max);
 
-  await Store.getActive();
-
   // Priority 1: Regional Taxonomy Pack (if active)
   for (const entry of regionalPack) {
       if (results.length >= max) break;
