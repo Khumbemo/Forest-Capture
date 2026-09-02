@@ -1,3 +1,18 @@
+// The app guards navigation with an "unsaved changes" confirm dialog
+// (window.fcIsDirty, reset on a successful save — see quadrat.js /
+// ui.js switchScreen()). If a prior test's save hasn't finished
+// resetting that flag by the time the next test navigates away, this
+// dialog appears and silently blocks the click the test issued. Call
+// this before/after any cross-screen navigation so a stray dialog
+// never strands a later test on the wrong screen.
+async function dismissUnsavedChangesDialog(page) {
+  const okBtn = await page.$('.fc-modal-overlay.show .fc-modal-ok');
+  if (okBtn) {
+    await page.evaluate(() => document.querySelector('.fc-modal-overlay.show .fc-modal-ok')?.click());
+    await new Promise(r => setTimeout(r, 300));
+  }
+}
+
 describe('Forest Capture E2E UI Tests', () => {
   beforeAll(async () => {
     // Navigate to the local server
@@ -64,9 +79,14 @@ describe('Forest Capture E2E UI Tests', () => {
       await new Promise(r => setTimeout(r, 500));
       await new Promise(r => setTimeout(r, 1000));
       
-      // Since it's dynamic DOM, we will just try to hit save quadrat
+      // Since it's dynamic DOM, we will just try to hit save quadrat.
+      // Store.update() runs async work (local cache write, background
+      // Firestore sync attempt) after this click resolves — give it real
+      // time to finish and reset window.fcIsDirty before the next test
+      // tries to navigate away.
       await page.evaluate(() => document.querySelector('#btnSaveQuadrat').click());
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 1500));
+      await dismissUnsavedChangesDialog(page);
     } catch(e) {
       console.log('Quadrat tool err: ' + e.message);
     }
@@ -77,12 +97,14 @@ describe('Forest Capture E2E UI Tests', () => {
     await page.waitForSelector('button[data-screen="screenToolbar"]');
     await page.evaluate(() => document.querySelector('button[data-screen="screenToolbar"]').click());
     await new Promise(r => setTimeout(r, 500));
+    await dismissUnsavedChangesDialog(page);
 
     // FIX #13: stat-cards now use data-screen (was data-tool)
     await page.waitForSelector('.stat-card[data-screen="screenAnalytics"]');
     await page.evaluate(() => document.querySelector('.stat-card[data-screen="screenAnalytics"]').click());
     await new Promise(r => setTimeout(r, 1000));
-    
+    await dismissUnsavedChangesDialog(page);
+
     const bodyText = await page.evaluate(() => document.body.innerText);
     expect(bodyText.toUpperCase()).toContain('RICHNESS');
   });
