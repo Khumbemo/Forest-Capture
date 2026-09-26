@@ -31,11 +31,16 @@ function calculateIndicesPayload(s) {
       if (dbhVal > 0) {
         for(let i=0; i<abundance; i++) allDBH.push(dbhVal);
         let treeAGB = 0;
+        // Default wood density (g/cm³); both models below scale with it.
         const rho = 0.65;
         if (hVal > 0) {
+           // Chave et al. (2014) pantropical model: DBH (cm), height (m), kg
            treeAGB = 0.0673 * Math.pow((rho * dbhVal * dbhVal * hVal), 0.976);
         } else {
-           treeAGB = Math.exp(-2.289 + 2.649*Math.log(dbhVal) - 0.021*Math.pow(Math.log(dbhVal), 2));
+           // No height: Chave et al. (2005) moist-forest model II.3, which,
+           // unlike Brown (1997), includes wood density
+           const lnD = Math.log(dbhVal);
+           treeAGB = rho * Math.exp(-1.499 + 2.148*lnD + 0.207*lnD*lnD - 0.0281*lnD*lnD*lnD);
         }
         totalAGB += (treeAGB * abundance);
       }

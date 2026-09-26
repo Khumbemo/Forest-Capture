@@ -105,4 +105,21 @@ describe('EcologicalAnalytics', () => {
     const { E } = calculateIndicesPayload(evenDistribution);
     expect(E).toBeCloseTo(1, 1);
   });
+
+  // Expected values computed independently from the published equations.
+  const oneTree = (height) => ({
+    quadrats: [{ size: 400, species: [{ name: 'Shorea robusta', abundance: 1, dbh: 30, height }] }]
+  });
+
+  test('AGB with height uses Chave et al. (2014): 0.0673(ρD²H)^0.976', () => {
+    // ρ = 0.65, D = 30 cm, H = 20 m → 628.875 kg over 0.04 ha
+    expect(calculateIndicesPayload(oneTree(20)).agbHa).toBeCloseTo(628.875 / 1000 / 0.04, 3);
+  });
+
+  test('AGB without height uses Chave et al. (2005) moist model with wood density', () => {
+    // ρ·exp(−1.499 + 2.148 lnD + 0.207 (lnD)² − 0.0281 (lnD)³) = 784.452 kg for D = 30 cm
+    const r = calculateIndicesPayload(oneTree(0));
+    expect(r.agbHa).toBeCloseTo(784.452 / 1000 / 0.04, 3);
+    expect(r.carbonHa).toBeCloseTo(784.452 * 0.47 / 1000 / 0.04, 3);
+  });
 });
