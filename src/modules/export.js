@@ -16,10 +16,10 @@ export async function refreshPreview() {
 }
 
 export function toCSV(s) {
-  const rows = [['Survey', 'Date', 'Location', 'Investigator', 'Q#', 'Size', 'MeasDate', 'Observer', 'Species', 'Stage', 'Status', 'Phenology', 'Abundance', 'Stems', 'DBH', 'DBH_MeasHt', 'GBH', 'Height', 'CrownClass', 'CrownDiam', 'Distance', 'Azimuth', 'Health', 'Bark', 'DecayClass', 'GPS', 'Cover%', 'Stratum']];
+  const rows = [['Survey', 'Date', 'Location', 'Investigator', 'Q#', 'Size', 'MeasDate', 'Observer', 'Species', 'Stage', 'Status', 'Phenology', 'Abundance', 'Stems', 'DBH', 'DBH_MeasHt', 'GBH', 'Height', 'CrownClass', 'CrownDiam', 'Distance', 'Azimuth', 'Health', 'Bark', 'DecayClass', 'GPS', 'Cover%', 'Stratum', 'Morpho', 'Photo_Ref']];
   if (s.quadrats) s.quadrats.forEach(q => {
     if (q.species) q.species.forEach(sp => {
-      rows.push([s.name, s.date, s.location, s.investigator || '', q.number, q.size, q.measDate || '', q.observer || '', sp.name, sp.stage, sp.status || 'live', sp.phenology || '', sp.abundance, sp.stems || 1, sp.dbh, sp.dbhMeasHeight || 1.3, sp.gbh || 0, sp.height, sp.crownClass || '', sp.crownDiameter || 0, sp.distance || 0, sp.azimuth || 0, sp.health || '', sp.bark || '', sp.decayClass || 0, q.gps || '', sp.cover || 0, sp.stratum || '']);
+      rows.push([s.name, s.date, s.location, s.investigator || '', q.number, q.size, q.measDate || '', q.observer || '', sp.name, sp.stage, sp.status || 'live', sp.phenology || '', sp.abundance, sp.stems || 1, sp.dbh, sp.dbhMeasHeight || 1.3, sp.gbh || 0, sp.height, sp.crownClass || '', sp.crownDiameter || 0, sp.distance || 0, sp.azimuth || 0, sp.health || '', sp.bark || '', sp.decayClass || 0, q.gps || '', sp.cover || 0, sp.stratum || '', sp.isMorpho ? 'Yes' : '', sp.photoRef || '']);
     });
   });
   // Transect data as additional CSV rows
@@ -30,6 +30,17 @@ export function toCSV(s) {
     s.transects.forEach(tr => {
       if (tr.intercepts) tr.intercepts.forEach(int => {
         rows.push([s.name, tr.number, tr.type || 'belt', tr.length, tr.width, tr.bearing, tr.slope || 0, tr.measDate || '', tr.observer || '', int.name, int.lifeForm || '', int.interceptType || '', int.startDist || 0, int.endDist || 0, int.distance, int.cover, int.height || 0, int.dbh || 0, int.abundance || 0, int.stratum || '', int.substrate || '', int.perpDistance || 0, int.notes || '']);
+      });
+    });
+  }
+  // Prism sweeps, matching the Prism_Sweeps sheet of the XLSX export
+  if (s.prismPoints && s.prismPoints.length) {
+    rows.push([]);
+    rows.push(['--- PRISM SWEEP DATA ---']);
+    rows.push(['Survey', 'Pt#', 'BAF', 'MeasDate', 'Observer', 'GPS', 'Species', 'DBH', 'Status', 'TreeCount', 'BA_per_ha']);
+    s.prismPoints.forEach(p => {
+      (p.tallies || []).forEach((tally, ti) => {
+        rows.push([s.name, p.number, p.baf, p.measDate || '', p.observer || '', p.gps || '', tally.species, tally.dbh || '', tally.status || 'live', ti === 0 ? p.treeCount : '', ti === 0 ? p.basalAreaPerHa : '']);
       });
     });
   }

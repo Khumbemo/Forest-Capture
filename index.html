@@ -2420,9 +2420,11 @@
   <div class="toast" id="toast"></div>
   <div class="brightness-overlay" id="brightnessOverlay"></div>
   <script src="./vendor/leaflet/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="./vendor/chartjs/chart.umd.min.js"></script>
+  <!-- SheetJS is not on npm past the vulnerable 0.18.5, so it stays on its CDN (pinned);
+       the service worker caches it for offline use and export falls back to CSV without it. -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="./vendor/jspdf/jspdf.umd.min.js"></script>
   <script type="module" src="./src/main.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
