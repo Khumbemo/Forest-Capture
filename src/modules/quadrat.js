@@ -6,7 +6,28 @@ import { attachAutocomplete } from './species-autocomplete.js';
 
 let spCount = 0;
 
-let morphoCount = 0;
+// Next free morphospecies number for the active survey. Derived from the
+// saved quadrats and the rows on screen (rather than a session counter) so
+// IDs never repeat after an app restart — analytics groups species by name,
+// so a reused ID would merge two different unknown species.
+async function nextMorphoNumber() {
+  const names = Array.from($$('#speciesList .sp-name'), el => el.value);
+  const s = await Store.getActive();
+  s?.quadrats?.forEach(q => q.species?.forEach(sp => names.push(sp.name)));
+  const used = names.map(n => /^Morpho-(\d+)$/.exec(n || '')).filter(Boolean).map(m => parseInt(m[1], 10));
+  return Math.max(0, ...used) + 1;
+}
+
+function setMorphoStyle(d, on) {
+  const nameInput = d.querySelector('.sp-name');
+  const photoBtn = d.querySelector('.sp-photo-btn');
+  nameInput.readOnly = on;
+  nameInput.style.fontStyle = on ? 'italic' : '';
+  nameInput.style.color = on ? 'var(--amber)' : '';
+  photoBtn.style.background = on ? 'rgba(239,68,68,0.15)' : '';
+  photoBtn.style.borderColor = on ? 'var(--red)' : '';
+  photoBtn.style.color = on ? 'var(--red)' : '';
+}
 
 export function addSpeciesEntry() {
   spCount++;
@@ -51,25 +72,13 @@ export function addSpeciesEntry() {
   // Morphospecies checkbox: auto-generate ID and highlight photo button
   const morphoCb = d.querySelector('.sp-morpho');
   const nameInput = d.querySelector('.sp-name');
-  const photoBtn = d.querySelector('.sp-photo-btn');
-  morphoCb.addEventListener('change', () => {
+  morphoCb.addEventListener('change', async () => {
     if (morphoCb.checked) {
-      morphoCount++;
-      nameInput.value = `Morpho-${String(morphoCount).padStart(2, '0')}`;
-      nameInput.readOnly = true;
-      nameInput.style.fontStyle = 'italic';
-      nameInput.style.color = 'var(--amber)';
-      photoBtn.style.background = 'rgba(239,68,68,0.15)';
-      photoBtn.style.borderColor = 'var(--red)';
-      photoBtn.style.color = 'var(--red)';
+      setMorphoStyle(d, true);
+      nameInput.value = `Morpho-${String(await nextMorphoNumber()).padStart(2, '0')}`;
     } else {
       nameInput.value = '';
-      nameInput.readOnly = false;
-      nameInput.style.fontStyle = '';
-      nameInput.style.color = '';
-      photoBtn.style.background = '';
-      photoBtn.style.borderColor = '';
-      photoBtn.style.color = '';
+      setMorphoStyle(d, false);
     }
   });
 
@@ -120,6 +129,17 @@ export async function saveQuadrat() {
   if (!s) { toast('Select survey', true); return; }
   const entries = $$('#speciesList .species-entry');
   if (!entries.length) { toast('Add species', true); return; }
+  // Analytics groups by name and skips unnamed rows while exports keep them,
+  // so an unnamed row would make the two disagree.
+  const unnamed = Array.from(entries).find(e => !e.querySelector('.sp-name').value.trim());
+  if (unnamed) {
+    const label = unnamed.querySelector('.species-entry-num')?.textContent || 'A species entry';
+    toast(`${label} needs a name — enter one or tick "Unknown (Morphospecies)"`, true);
+    const input = unnamed.querySelector('.sp-name');
+    input.scrollIntoView({ block: 'center' });
+    input.focus();
+    return;
+  }
   const sysSettings = await loadSettings();
   const isImperial = sysSettings.settingUnitSystem === 'imperial';
 
@@ -320,6 +340,17 @@ export async function refreshQuadratTable() {
               addSpeciesEntry();
               const last = $('#speciesList').lastElementChild;
               last.querySelector('.sp-name').value = sp.name;
+              if (sp.isMorpho) {
+                last.querySelector('.sp-morpho').checked = true;
+                setMorphoStyle(last, true);
+              }
+              if (sp.photoRef) last.dataset.photoRef = sp.photoRef;
+              if (sp.photoData) {
+                last.dataset.photoData = sp.photoData;
+                last.querySelector('.sp-photo-img').src = sp.photoData;
+                last.querySelector('.sp-photo-ref').textContent = sp.photoRef || '';
+                last.querySelector('.sp-photo-preview').style.display = 'block';
+              }
               last.querySelector('.sp-stage').value = sp.stage;
               if (last.querySelector('.sp-status')) last.querySelector('.sp-status').value = sp.status || 'live';
               if (last.querySelector('.sp-stratum')) last.querySelector('.sp-stratum').value = sp.stratum || '';
