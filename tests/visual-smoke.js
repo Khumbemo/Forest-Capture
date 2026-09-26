@@ -98,37 +98,8 @@ async function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
       log('Back button visible on Quadrat screen', false, 'Quadrat card not found');
     }
 
-    // ── TEST 3: Connectivity banner ─────────────────────────────────────
-    console.log('\n🧪  TEST 3 — Connectivity banner');
-    await page.evaluate(() => {
-      const btn = document.querySelector('button[data-screen="screenDashboard"]');
-      if (btn) btn.click();
-    });
-    await wait(800);
-    // Call via the window.__fc bridge exposed by main.js — deterministic regardless of timer order.
-    await page.evaluate(() => {
-      if (window.__fc && window.__fc.updateConnectivityBanner) {
-        window.__fc.updateConnectivityBanner();
-      }
-    });
-    await wait(300);
-    await shot(page, '04_connectivity_banner');
-    const bannerDiag = await page.evaluate(() => {
-      const b = document.getElementById('connectivityBanner');
-      const hdr = document.getElementById('appHeader');
-      return {
-        bannerExists: !!b,
-        bannerText: b ? b.textContent.trim() : null,
-        headerExists: !!hdr,
-        headerParent: hdr ? hdr.parentNode.tagName : null,
-        bodyChildCount: document.body.children.length
-      };
-    });
-    log('Connectivity banner rendered with text', !!bannerDiag.bannerText,
-      bannerDiag.bannerText || `absent — header:${bannerDiag.headerExists}, __fc:${!!bannerDiag.headerExists}`);
-
-    // ── TEST 4: Environment — no duplicate fields ────────────────────────
-    console.log('\n🧪  TEST 4 — Environment: unique field IDs');
+    // ── TEST 3: Environment — no duplicate fields ────────────────────────
+    console.log('\n🧪  TEST 3 — Environment: unique field IDs');
     await page.evaluate(() => {
       const btn = document.querySelector('button[data-screen="screenToolbar"]');
       if (btn) btn.click();
@@ -151,8 +122,8 @@ async function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
     log('Topographic Position field present', topoPresent);
     log('Drainage/Hydrology field present', hydPresent);
 
-    // ── TEST 5: Germplasm — async body cards + unique GPS IDs ────────────
-    console.log('\n🧪  TEST 5 — Germplasm async render + unique GPS IDs');
+    // ── TEST 4: Germplasm — async body cards + unique GPS IDs ────────────
+    console.log('\n🧪  TEST 4 — Germplasm async render + unique GPS IDs');
     await page.evaluate(() => {
       const btn = document.querySelector('button[data-screen="screenToolbar"]');
       if (btn) btn.click();
@@ -196,8 +167,8 @@ async function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
       log('ICFRE form has unique GPS button ID', false, 'ICFRE card not found');
     }
 
-    // ── TEST 6: Export — Summary Report icon ────────────────────────────
-    console.log('\n🧪  TEST 6 — Export: Summary Report button icon');
+    // ── TEST 5: Export — Summary Report icon ────────────────────────────
+    console.log('\n🧪  TEST 5 — Export: Summary Report button icon');
     await page.evaluate(() => {
       const btn = document.querySelector('button[data-screen="screenToolbar"]');
       if (btn) btn.click();
@@ -221,8 +192,8 @@ async function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
     log('Summary Report button has SVG icon (not α)', reportBtnHasSVG && !reportBtnHasAlpha,
       `hasSVG=${reportBtnHasSVG}, hasAlpha=${reportBtnHasAlpha}`);
 
-    // ── TEST 7: CBI bar clamped ──────────────────────────────────────────
-    console.log('\n🧪  TEST 7 — CBI score bar clamp');
+    // ── TEST 6: CBI bar clamped ──────────────────────────────────────────
+    console.log('\n🧪  TEST 6 — CBI score bar clamp');
     await page.evaluate(() => {
       const btn = document.querySelector('button[data-screen="screenToolbar"]');
       if (btn) btn.click();
@@ -248,8 +219,8 @@ async function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
     log('CBI bar width ≤ 100% (Fix #8 clamp)', !cbiOk.found || cbiOk.width <= 100,
       cbiOk.found ? `width=${cbiOk.width}%` : 'element missing');
 
-    // ── TEST 8: Settings sign-out section ───────────────────────────────
-    console.log('\n🧪  TEST 8 — Settings Account section');
+    // ── TEST 7: Settings sign-out section ───────────────────────────────
+    console.log('\n🧪  TEST 7 — Settings Account section');
     await page.evaluate(() => {
       const btn = document.querySelector('button[data-screen="screenDashboard"]');
       if (btn) btn.click();

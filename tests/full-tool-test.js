@@ -116,7 +116,6 @@ const fieldCount = (page, selector) =>
     log('Telemetry grid present', !!(await fieldExists(page, '.telemetry-grid')));
     // Dashboard has telemetry cards, no static welcome heading (header rendered in Tools screen)
     log('Telemetry Location card present', !!(await fieldExists(page, '#teleCardLocation')));
-    log('Connectivity banner present', !!(await fieldExists(page, '#connectivityBanner')));
     log('Back button hidden on Dashboard', await page.evaluate(() => {
       const b = document.getElementById('btnHeaderBack');
       return b ? b.style.display === 'none' : true;

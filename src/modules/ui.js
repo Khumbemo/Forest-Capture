@@ -77,31 +77,6 @@ export function updateOnlineDot() {
     online ? d.classList.remove('offline') : d.classList.add('offline');
   }
   setHeaderWeatherIcon(online ? 'online' : 'offline');
-  updateConnectivityBanner();
-}
-
-export function updateConnectivityBanner() { return;
-  const online = navigator.onLine;
-  let banner = $('#connectivityBanner');
-  if (!banner) {
-    banner = document.createElement('div');
-    banner.id = 'connectivityBanner';
-    // FIX #5: Was '#globalHeader' — correct ID is 'appHeader'.
-    // Insert banner immediately after the app header so it appears at the top.
-    const header = $('#appHeader');
-    if (header && header.parentNode) {
-      header.parentNode.insertBefore(banner, header.nextSibling);
-    } else {
-      document.body.prepend(banner);
-    }
-  }
-  if (online) {
-    banner.className = 'connectivity-banner online';
-    banner.innerHTML = `<span class="conn-dot online"></span> ${t('Online — GPS & weather auto-fill active')}`;
-  } else {
-    banner.className = 'connectivity-banner offline';
-    banner.innerHTML = `<span class="conn-dot offline"></span> ${t('Offline — Manual entry mode')}`;
-  }
 }
 
 export function updateClock() {

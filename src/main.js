@@ -1,7 +1,7 @@
 // src/main.js
 
 import { setLanguage, walkDOMAndTranslate } from './modules/i18n.js';
-import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot, updateConnectivityBanner, fcConfirm, fcPrompt } from './modules/ui.js';
+import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot, fcConfirm, fcPrompt } from './modules/ui.js';
 import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, resetUserRef, migrateFromLocalStorage, migrateInlineMedia, clearUserCache, getOrCreateLocalUser, recoverOrphanedGuestData } from './modules/storage.js';
 import { startGPS, fmtCoords, curPos } from './modules/gps.js';
 import { fetchWeather } from './modules/weather.js';
@@ -116,10 +116,7 @@ async function initApp() {
     _updateWelcomeStatus();
   });
   setTimeout(updateOnlineDot, 500);
-  setTimeout(updateConnectivityBanner, 600);
   setTimeout(_updateWelcomeStatus, 700);
-  // Expose for smoke tests — zero production impact.
-  window.__fc = { updateConnectivityBanner };
 
   // Show login if no valid Firebase session exists.
   // The user can always dismiss login with "Continue Offline" and use the app fully.
