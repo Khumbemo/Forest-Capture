@@ -1,7 +1,7 @@
 // src/modules/export.js
 
 import { $, esc, toast, fcConfirm } from './ui.js';
-import { dl } from './utils.js';
+import { dl, toCSVRow } from './utils.js';
 import { Store, getWps } from './storage.js';
 import { t } from './i18n.js';
 
@@ -25,7 +25,7 @@ export function toCSV(s) {
   // Transect data as additional CSV rows
   if (s.transects && s.transects.length) {
     rows.push([]);
-    rows.push(['--- TRANSECT DATA ---']);
+    rows.push(['[TRANSECT DATA]']);
     rows.push(['Survey', 'T#', 'Method', 'Length', 'Width', 'Bearing', 'Slope', 'MeasDate', 'Observer', 'Species', 'LifeForm', 'IntType', 'StartDist', 'EndDist', 'Distance', 'Cover%', 'Height', 'DBH', 'Abundance', 'Stratum', 'Substrate', 'PerpDist', 'Notes']);
     s.transects.forEach(tr => {
       if (tr.intercepts) tr.intercepts.forEach(int => {
@@ -36,7 +36,7 @@ export function toCSV(s) {
   // Prism sweeps, matching the Prism_Sweeps sheet of the XLSX export
   if (s.prismPoints && s.prismPoints.length) {
     rows.push([]);
-    rows.push(['--- PRISM SWEEP DATA ---']);
+    rows.push(['[PRISM SWEEP DATA]']);
     rows.push(['Survey', 'Pt#', 'BAF', 'MeasDate', 'Observer', 'GPS', 'Species', 'DBH', 'Status', 'TreeCount', 'BA_per_ha']);
     s.prismPoints.forEach(p => {
       (p.tallies || []).forEach((tally, ti) => {
@@ -44,7 +44,7 @@ export function toCSV(s) {
       });
     });
   }
-  return rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+  return rows.map(toCSVRow).join('\n');
 }
 
 export async function exportSurveyCSV() {
@@ -156,9 +156,8 @@ export async function exportAllSurveysCSV() {
       
       if (s.quadrats) s.quadrats.forEach(q => {
         if (q.species) q.species.forEach(sp => {
-          const row = [s.name, s.date, s.location, s.investigator || '', q.number, q.size, q.measDate || '', q.observer || '', sp.name, sp.stage, sp.status || 'live', sp.phenology || '', sp.abundance, sp.stems || 1, sp.dbh, sp.dbhMeasHeight || 1.3, sp.gbh || 0, sp.height, sp.crownClass || '', sp.crownDiameter || 0, sp.distance || 0, sp.azimuth || 0, sp.health || '', sp.bark || '', sp.decayClass || 0, q.gps || '', sp.cover || 0, sp.stratum || '']
-            .map(c => `"${String(c).replace(/"/g, '""')}"`).join(',');
-          csvContent += row + '\n';
+          const row = [s.name, s.date, s.location, s.investigator || '', q.number, q.size, q.measDate || '', q.observer || '', sp.name, sp.stage, sp.status || 'live', sp.phenology || '', sp.abundance, sp.stems || 1, sp.dbh, sp.dbhMeasHeight || 1.3, sp.gbh || 0, sp.height, sp.crownClass || '', sp.crownDiameter || 0, sp.distance || 0, sp.azimuth || 0, sp.health || '', sp.bark || '', sp.decayClass || 0, q.gps || '', sp.cover || 0, sp.stratum || ''];
+          csvContent += toCSVRow(row) + '\n';
         });
       });
       // Yield to UI thread

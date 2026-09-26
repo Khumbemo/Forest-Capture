@@ -10,6 +10,7 @@
 
 import { $, toast } from './ui.js';
 import { Store, getWps } from './storage.js';
+import { toCSVRow } from './utils.js';
 
 // ----------------------------------------------------------
 // HELPER: trigger a file download from a Blob
@@ -556,7 +557,7 @@ export async function exportDwC() {
     'occurrenceRemarks'
   ];
 
-  const rows = [headers.join(',')];
+  const rows = [toCSVRow(headers)];
   let occIdx = 0;
 
   // Process quadrat species
@@ -590,11 +591,7 @@ export async function exportDwC() {
         sp.dbh ? 'cm' : (sp.height ? 'm' : ''),
         sp.isMorpho ? 'Morphospecies - unidentified' : ''
       ];
-      // CSV-safe: wrap fields containing commas in quotes
-      rows.push(row.map(v => {
-        const str = String(v ?? '');
-        return str.includes(',') ? `"${str}"` : str;
-      }).join(','));
+      rows.push(toCSVRow(row));
     });
   });
 
@@ -609,12 +606,13 @@ export async function exportDwC() {
     (t.intercepts || []).forEach((ic, ii) => {
       occIdx++;
       const occID = `FC-${s.id || 'survey'}-T${ti}-I${ii}-${occIdx}`;
+      const interceptLength = (parseFloat(ic.endDist) || 0) - (parseFloat(ic.startDist) || 0);
       const row = [
         occID,
         s.id || '',
-        t.date || t.recordedAt || '',
+        t.measDate || t.recordedAt || '',
         t.observer || s.investigator || '',
-        ic.species || '',
+        ic.name || '',
         '',  // lifeStage
         1,
         lat,
@@ -623,15 +621,12 @@ export async function exportDwC() {
         '',
         'present',
         'HumanObservation',
-        ic.interceptLength ? 'interceptLength' : '',
-        ic.interceptLength || '',
-        ic.interceptLength ? 'm' : '',
+        interceptLength > 0 ? 'interceptLength' : '',
+        interceptLength > 0 ? interceptLength : '',
+        interceptLength > 0 ? 'm' : '',
         ''
       ];
-      rows.push(row.map(v => {
-        const str = String(v ?? '');
-        return str.includes(',') ? `"${str}"` : str;
-      }).join(','));
+      rows.push(toCSVRow(row));
     });
   });
 

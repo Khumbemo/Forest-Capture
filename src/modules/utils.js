@@ -183,3 +183,18 @@ export function toImperial(val, type) {
   }
   return v;
 }
+
+// One RFC 4180 CSV cell. Text starting with =, +, -, @, tab or CR is run as a
+// formula by Excel/Sheets/LibreOffice, so it gets a leading apostrophe
+// (OWASP "CSV injection" guidance) — unless it is only numbers and
+// separators, e.g. "-27.1, 88.6", which can't form a formula call and must
+// stay readable by R/Python.
+export function csvCell(value) {
+  let str = String(value ?? '');
+  if (/^[=+\-@\t\r]/.test(str) && !/^[-+]?[\d.,\s+\-eE]*$/.test(str)) str = "'" + str;
+  return `"${str.replace(/"/g, '""')}"`;
+}
+
+export function toCSVRow(cells) {
+  return cells.map(csvCell).join(',');
+}
