@@ -2,7 +2,7 @@
 
 import { setLanguage, walkDOMAndTranslate } from './modules/i18n.js';
 import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot, updateConnectivityBanner, fcConfirm, fcPrompt } from './modules/ui.js';
-import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, resetUserRef, migrateFromLocalStorage, migrateInlineMedia, clearUserCache } from './modules/storage.js';
+import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, resetUserRef, migrateFromLocalStorage, migrateInlineMedia, clearUserCache, getOrCreateLocalUser, recoverOrphanedGuestData } from './modules/storage.js';
 import { startGPS, fmtCoords, curPos } from './modules/gps.js';
 import { fetchWeather } from './modules/weather.js';
 import { refreshDataRecords, createNewSurvey, populateSurveySelector } from './modules/survey.js';
@@ -69,6 +69,8 @@ async function initApp() {
     }
 
     await migrateFromLocalStorage();
+    const recovered = await recoverOrphanedGuestData();
+    if (recovered) toast(`Recovered ${recovered} survey${recovered > 1 ? 's' : ''} from an earlier session`);
     // Move any inline base64 photos/audio out of survey docs into MediaStore
     await migrateInlineMedia();
 
@@ -121,15 +123,11 @@ async function initApp() {
 
   // Show login if no valid Firebase session exists.
   // The user can always dismiss login with "Continue Offline" and use the app fully.
-  const storedUser = JSON.parse(localStorage.getItem('fc_user') || 'null');
-  if (!storedUser || !storedUser.uid) {
-    localStorage.removeItem('fc_user'); // clear stale anonymous entry
-    // Create a temporary anonymous session so the app is immediately usable
-    const anonId = 'anon_' + Date.now();
-    localStorage.setItem('fc_user', JSON.stringify({ uid: anonId, email: null, anonymous: true, time: Date.now() }));
+  // The guest session is normally created by the first storage call above;
+  // this only creates one if init failed before reaching storage.
+  const storedUser = getOrCreateLocalUser();
+  if (!storedUser.email || storedUser.anonymous) {
     // Show login after splash fades, but it's dismissible via "Continue Offline"
-    setTimeout(showLogin, 2900);
-  } else if (!storedUser.email || storedUser.anonymous) {
     setTimeout(showLogin, 2900);
   }
 
@@ -611,11 +609,7 @@ function setupEventListeners() {
   // Skip Login / Continue Offline
   $('#btnSkipLogin')?.addEventListener('click', () => {
     // Ensure anonymous session exists
-    const stored = JSON.parse(localStorage.getItem('fc_user') || 'null');
-    if (!stored || !stored.uid) {
-      const anonId = 'anon_' + Date.now();
-      localStorage.setItem('fc_user', JSON.stringify({ uid: anonId, email: null, anonymous: true, time: Date.now() }));
-    }
+    getOrCreateLocalUser();
     hideLogin();
     toast('Working offline — data saved locally');
   });

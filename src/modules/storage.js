@@ -348,12 +348,80 @@ async function getCurrentUidValue() {
         console.log('getUserRef: user found', user.uid);
         cachedUid = user.uid;
     } else {
-        // Handle unauthenticated state (likely offline, timeout, or SDK unreachable)
-        const localUser = JSON.parse(localStorage.getItem('fc_user') || '{}');
-        cachedUid = localUser.uid || 'anonymous';
+        // Handle unauthenticated state (guest, offline, timeout, or SDK unreachable)
+        cachedUid = getOrCreateLocalUser().uid;
         console.warn('getUserRef: using local/anonymous user', cachedUid);
     }
     return cachedUid;
+}
+
+/**
+ * Returns the locally stored user (fc_user), creating a persistent guest
+ * entry if none exists yet. Every local cache key is derived from this uid,
+ * so it must be the same value on every launch — the first storage call of a
+ * fresh install runs before the login screen is shown, and a placeholder uid
+ * used there would hide that session's data on the next launch.
+ */
+export function getOrCreateLocalUser() {
+    let localUser = null;
+    try { localUser = JSON.parse(localStorage.getItem('fc_user') || 'null'); } catch { /* corrupt entry — replaced below */ }
+    if (localUser && localUser.uid) return localUser;
+    localUser = { uid: 'anon_' + Date.now(), email: null, anonymous: true, time: Date.now() };
+    localStorage.setItem('fc_user', JSON.stringify(localUser));
+    return localUser;
+}
+
+const LEGACY_PLACEHOLDER_UID = 'anonymous';
+
+/**
+ * Recovers guest data orphaned by older builds, which cached a fresh install's
+ * first session under the placeholder uid 'anonymous' and looked under the
+ * 'anon_<timestamp>' guest uid on every later launch. Merges those surveys,
+ * waypoints and active-survey pointer into the current guest's cache, then
+ * deletes the placeholder keys. Signed-in accounts are left alone so device
+ * guest data is never pushed into a cloud account without the user's say.
+ */
+export async function recoverOrphanedGuestData() {
+  try {
+    const uid = await getCurrentUid();
+    if (!uid || !uid.startsWith('anon_')) return 0;
+
+    const legacySurveysKey = 'fc_surveys_cache_' + LEGACY_PLACEHOLDER_UID;
+    const legacyActiveKey = 'fc_active_survey_' + LEGACY_PLACEHOLDER_UID;
+    const legacyWpsKey = 'fc_waypoints_cache_' + LEGACY_PLACEHOLDER_UID;
+
+    const legacySurveysRaw = await idb.get(legacySurveysKey);
+    const legacyActive = await idb.get(legacyActiveKey);
+    const legacyWpsRaw = await idb.get(legacyWpsKey);
+    if (!legacySurveysRaw && !legacyActive && !legacyWpsRaw) return 0;
+
+    const legacySurveys = legacySurveysRaw ? JSON.parse(legacySurveysRaw) : [];
+    const surveys = await _loadSurveysFromLocal();
+    const known = new Set(surveys.map(s => s.id));
+    const recovered = legacySurveys.filter(s => s && !known.has(s.id));
+    if (recovered.length) await _cacheSurveysToLocal(surveys.concat(recovered));
+
+    const legacyWps = legacyWpsRaw ? JSON.parse(legacyWpsRaw) : [];
+    if (legacyWps.length) {
+      const wps = await _loadWpsFromLocal();
+      const seen = new Set(wps.map(w => JSON.stringify(w)));
+      const merged = wps.concat(legacyWps.filter(w => !seen.has(JSON.stringify(w))));
+      await idb.set(await _getWpsCacheKey(), JSON.stringify(merged));
+    }
+
+    const activeKey = await _getActiveCacheKey();
+    if (legacyActive && !(await idb.get(activeKey))) await idb.set(activeKey, legacyActive);
+
+    await idb.remove(legacySurveysKey);
+    await idb.remove(legacyActiveKey);
+    await idb.remove(legacyWpsKey);
+    if (recovered.length) console.log(`recoverOrphanedGuestData: recovered ${recovered.length} survey(s)`);
+    return recovered.length;
+  } catch (e) {
+    // Leave the placeholder keys in place so a later launch can retry.
+    console.warn('recoverOrphanedGuestData failed', e);
+    return 0;
+  }
 }
 
 // Firestore DocumentReference for the current user. Throws if Firebase is
