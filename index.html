@@ -317,6 +317,15 @@
             </div>
             <div class="stat-label">Export Data</div>
           </div>
+          <div class="stat-card" role="button" tabindex="0" data-screen="screenEditData">
+            <div class="stat-icon">
+              <svg viewBox="0 0 100 100" width="48" height="48" fill="none" stroke-linejoin="round" stroke-linecap="round">
+                <path d="M60 20 L80 40 L40 80 L18 82 L20 60 Z" fill="rgba(16,185,129,0.15)" stroke="var(--emerald)" stroke-width="4"/>
+                <line x1="52" y1="28" x2="72" y2="48" stroke="var(--amber)" stroke-width="4"/>
+              </svg>
+            </div>
+            <div class="stat-label">Edit Data</div>
+          </div>
         </div>
       </div>
       <div class="data-records-header data-header-flex">
@@ -334,6 +343,44 @@
         </div>
       </div>
       <div id="dataRecordsList" class="data-records-list"></div>
+    </section>
+
+    <!-- ===== EDIT DATA ===== -->
+    <section class="screen" id="screenEditData">
+      <div id="editDataListView">
+        <div class="screen-header">
+          <h2>Edit Data</h2>
+        </div>
+        <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:16px;">Every recorded quadrat, transect, note and record — from every survey — in one place. Tap any entry to edit its fields directly.</p>
+        <div class="data-records-header data-header-flex">
+          <h2 class="data-title-lg">All Records</h2>
+          <div class="flex-gap-sm">
+            <select id="editDataFilterType" class="filter-select-custom">
+              <option value="all">All Types</option>
+              <option value="survey">Survey Info</option>
+              <option value="quadrat">Quadrats</option>
+              <option value="transect">Transects</option>
+              <option value="environment">Environment</option>
+              <option value="disturbance">Disturbance</option>
+              <option value="notes">Notes</option>
+              <option value="herbarium">Herbarium</option>
+              <option value="germplasm">Germplasm</option>
+            </select>
+          </div>
+        </div>
+        <div id="editDataList" class="data-records-list"></div>
+      </div>
+      <div id="editDataFormView" style="display:none;">
+        <div class="screen-header">
+          <h2 id="editDataFormTitle">Edit Record</h2>
+        </div>
+        <div class="form-card" id="editDataFormFields"></div>
+        <div class="flex-gap-sm" style="margin-top:12px;">
+          <button class="btn btn-ghost" id="btnEditDataCancel" style="flex:1;">Cancel</button>
+          <button class="btn btn-danger" id="btnEditDataDelete" style="flex:1;">Delete</button>
+          <button class="btn btn-primary" id="btnEditDataSave" style="flex:1;">Save</button>
+        </div>
+      </div>
     </section>
 
     <!-- Modal (Global) -->

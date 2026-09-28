@@ -3,6 +3,7 @@ import { Store, loadSettings } from './storage.js';
 import { fillGPSField } from './gps.js';
 import { toMetric, toImperial, getLocalISO } from './utils.js';
 import { attachAutocomplete } from './species-autocomplete.js';
+import { ensureActiveSurvey } from './survey.js';
 
 let spCount = 0;
 
@@ -116,8 +117,8 @@ export async function saveQuadrat() {
   if (isSavingQuadrat) return;
   isSavingQuadrat = true;
   try {
-    const s = await Store.getActive();
-  if (!s) { toast('Select survey', true); return; }
+    const s = await ensureActiveSurvey();
+  if (!s) { toast('Could not start a survey — try again.', true); return; }
   const entries = $$('#speciesList .species-entry');
   if (!entries.length) { toast('Add species', true); return; }
   const sysSettings = await loadSettings();

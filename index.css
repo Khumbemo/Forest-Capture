@@ -603,6 +603,9 @@ button,.btn,.nav-btn,.stat-card,.map-ctrl-btn,a,input,select,textarea{
 .data-record-icon.type-disturbance{background:#ef444420;color:#f87171;}
 .data-record-icon.type-notes{background:#a78bfa20;color:#a78bfa;}
 .data-record-icon.type-photos{background:#22d3ee20;color:#22d3ee;}
+.data-record-icon.type-herbarium{background:#84cc1620;color:#a3e635;}
+.data-record-icon.type-germplasm{background:#f9731620;color:#fb923c;}
+.data-record-icon.type-survey{background:#64748b20;color:#94a3b8;}
 .data-record-body{flex:1;min-width:0;}
 .data-record-title{font-size:.88rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .data-record-meta{font-size:.68rem;color:var(--text-muted);margin-top:2px;}
