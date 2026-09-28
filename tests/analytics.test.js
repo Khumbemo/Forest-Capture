@@ -105,4 +105,49 @@ describe('EcologicalAnalytics', () => {
     const { E } = calculateIndicesPayload(evenDistribution);
     expect(E).toBeCloseTo(1, 1);
   });
+
+  test('AGB excludes trees with no recorded height instead of using a different formula', () => {
+    const noHeightSurvey = {
+      quadrats: [{
+        size: 100,
+        species: [{ name: 'Shorea robusta', abundance: 2, dbh: 40, height: 0 }]
+      }]
+    };
+    const { agbHa, agbExcludedNoHeight, agbDefaultDensityCount } = calculateIndicesPayload(noHeightSurvey);
+    expect(agbHa).toBe(0);
+    expect(agbExcludedNoHeight).toBe(2);
+    expect(agbDefaultDensityCount).toBe(0);
+  });
+
+  test('AGB uses the default wood density and flags it when none is supplied', () => {
+    const defaultDensitySurvey = {
+      quadrats: [{
+        size: 100,
+        species: [{ name: 'Shorea robusta', abundance: 3, dbh: 40, height: 20 }]
+      }]
+    };
+    const { agbHa, agbDefaultDensityCount, agbExcludedNoHeight } = calculateIndicesPayload(defaultDensitySurvey);
+    expect(agbHa).toBeGreaterThan(0);
+    expect(agbDefaultDensityCount).toBe(3);
+    expect(agbExcludedNoHeight).toBe(0);
+  });
+
+  test('AGB uses a supplied per-tree wood density instead of the default', () => {
+    const withDensity = {
+      quadrats: [{
+        size: 100,
+        species: [{ name: 'Shorea robusta', abundance: 1, dbh: 40, height: 20, woodDensity: 0.85 }]
+      }]
+    };
+    const withoutDensity = {
+      quadrats: [{
+        size: 100,
+        species: [{ name: 'Shorea robusta', abundance: 1, dbh: 40, height: 20 }]
+      }]
+    };
+    const withResult = calculateIndicesPayload(withDensity);
+    const withoutResult = calculateIndicesPayload(withoutDensity);
+    expect(withResult.agbDefaultDensityCount).toBe(0);
+    expect(withResult.agbHa).toBeGreaterThan(withoutResult.agbHa);
+  });
 });
