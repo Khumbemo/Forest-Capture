@@ -907,7 +907,7 @@ function setupEventListeners() {
     }
   }));
 
-  ['settingsGPSContinuous', 'settingLanguage', 'settingUnitSystem', 'settingMapTileUrl', 'settingGBIFEnabled', 'settingItalicSpecies', 'settingAutoSave', 'settingExportGPS', 'settingCoordFormat', 'settingsTaxonomyPack'].forEach(id => {
+  ['settingsGPSContinuous', 'settingLanguage', 'settingUnitSystem', 'settingMapTileUrl', 'settingGBIFEnabled', 'settingItalicSpecies', 'settingAutoSave', 'settingExportGPS', 'settingCoordFormat', 'settingsTaxonomyPack', 'settingsGeminiApiKey'].forEach(id => {
     const el = $('#' + id);
     if (!el) return;
     el.addEventListener('change', async () => {
