@@ -263,7 +263,6 @@ input,select,textarea,button{font-family:'Roboto',-apple-system,BlinkMacSystemFo
 .tele-label{font-size:.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
 .tele-value{font-size:1.6rem;font-weight:900;color:var(--emerald);}
 .tele-sub{font-size:.7rem;color:var(--text-secondary);margin-top:2px;}
-#teleCardAspect{grid-column:span 2;}
 
 
 /* =========== STATS GRID =========== */
@@ -604,6 +603,9 @@ button,.btn,.nav-btn,.stat-card,.map-ctrl-btn,a,input,select,textarea{
 .data-record-icon.type-disturbance{background:#ef444420;color:#f87171;}
 .data-record-icon.type-notes{background:#a78bfa20;color:#a78bfa;}
 .data-record-icon.type-photos{background:#22d3ee20;color:#22d3ee;}
+.data-record-icon.type-herbarium{background:#84cc1620;color:#a3e635;}
+.data-record-icon.type-germplasm{background:#f9731620;color:#fb923c;}
+.data-record-icon.type-survey{background:#64748b20;color:#94a3b8;}
 .data-record-body{flex:1;min-width:0;}
 .data-record-title{font-size:.88rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .data-record-meta{font-size:.68rem;color:var(--text-muted);margin-top:2px;}
@@ -1037,6 +1039,16 @@ button,.btn,.nav-btn,.stat-card,.map-ctrl-btn,a,input,select,textarea{
 @keyframes floatCloud {
   0%, 100% { transform: translateX(0) translateY(0); }
   50% { transform: translateX(-5px) translateY(-5px); }
+}
+
+/* Slope Ramp */
+.anim-slope {
+  width: 100%; height: 100%;
+  animation: slopeTilt 8s ease-in-out infinite;
+}
+@keyframes slopeTilt {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-3deg); filter: drop-shadow(0 10px 10px rgba(16,185,129,0.2)); }
 }
 .rain-drop {
   animation: rainDown 1.5s linear infinite;

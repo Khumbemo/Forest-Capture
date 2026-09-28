@@ -5,6 +5,7 @@ import { Store } from './storage.js';
 import { fillGPSField } from './gps.js';
 import { attachAutocomplete } from './species-autocomplete.js';
 import { getLocalISO } from './utils.js';
+import { ensureActiveSurvey } from './survey.js';
 
 let tallyCount = 0;
 
@@ -27,8 +28,8 @@ export async function savePrismPoint() {
   if (isSavingPrism) return;
   isSavingPrism = true;
   try {
-    const s = await Store.getActive();
-  if (!s) { toast('Select survey', true); return; }
+    const s = await ensureActiveSurvey();
+  if (!s) { toast('Could not start a survey — try again.', true); return; }
   const entries = $$('#prismTallyList .species-entry');
   if (!entries.length) { toast('Add at least one tree tally', true); return; }
 

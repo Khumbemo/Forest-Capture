@@ -4,6 +4,7 @@ import { $, toast, fcConfirm } from './ui.js';
 import { Store, loadSettings } from './storage.js';
 import { curPos } from './gps.js';
 import { toMetric, toImperial, getLocalISO } from './utils.js';
+import { ensureActiveSurvey } from './survey.js';
 
 export function autoFillEnv() {
   if (curPos.alt !== null) $('#envElevation').value = Math.round(curPos.alt);
@@ -22,8 +23,8 @@ function numOrNull(v) {
 }
 
 export async function saveEnv() {
-  const s = await Store.getActive();
-  if (!s) { toast('Select survey', true); return; }
+  const s = await ensureActiveSurvey();
+  if (!s) { toast('Could not start a survey — try again.', true); return; }
   const sysSettings = await loadSettings();
   const isImperial = sysSettings.settingUnitSystem === 'imperial';
   const eData = {

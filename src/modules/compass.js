@@ -71,7 +71,7 @@ function _updateUI(h, s) {
     aspectValue.textContent = `${h}° ${getCardinal(h)}`;
   }
   if (slopeValue) {
-    slopeValue.textContent = `Slope: ${s}°`;
+    slopeValue.textContent = `${s}°`;
   }
   if (compassSvg) {
     // Rotate the needle (polygon) by applying negative rotation to the compass SVG dial
@@ -136,10 +136,14 @@ export function start() {
     _enableSimulationMode();
   }
 
-  // Bind click simulator on the card for desktop users
+  // Bind click simulator on the cards for desktop users
   const aspectCard = $('#teleCardAspect');
   if (aspectCard) {
     aspectCard.addEventListener('click', simulateStep);
+  }
+  const slopeCard = $('#teleCardSlope');
+  if (slopeCard) {
+    slopeCard.addEventListener('click', simulateStep);
   }
 }
 
@@ -156,5 +160,9 @@ export function stop() {
   const aspectCard = $('#teleCardAspect');
   if (aspectCard) {
     aspectCard.removeEventListener('click', simulateStep);
+  }
+  const slopeCard = $('#teleCardSlope');
+  if (slopeCard) {
+    slopeCard.removeEventListener('click', simulateStep);
   }
 }

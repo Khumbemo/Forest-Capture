@@ -3,6 +3,7 @@
 import { $, toast, esc, fcConfirm } from './ui.js';
 import { Store, MediaStore } from './storage.js';
 import { fillGPSField } from './gps.js';
+import { ensureActiveSurvey } from './survey.js';
 
 import { attachAutocomplete } from './species-autocomplete.js';
 import { ensureAuth, loadSDK } from './firebase.js';
@@ -124,8 +125,8 @@ function getFormData() {
 }
 
 export async function saveHerbarium(exportDoc = false) {
-  const s = await Store.getActive();
-  if (!s) { toast('Select a survey first', true); return; }
+  const s = await ensureActiveSurvey();
+  if (!s) { toast('Could not start a survey — try again.', true); return; }
   
   const data = getFormData();
   if (!data.scientific && !data.family) {

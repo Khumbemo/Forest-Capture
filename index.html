@@ -253,16 +253,28 @@
               <circle cx="50" cy="50" r="4" fill="var(--bg-input)" stroke="var(--emerald)" stroke-width="2" />
             </svg>
           </div>
-          <div class="tele-label tele-label-custom">🧭 ASPECT & SLOPE</div>
+          <div class="tele-label tele-label-custom">ASPECT</div>
           <div class="tele-value tele-value-xl" id="teleAspect">---°</div>
-          <div class="tele-sub tele-sub-sm" id="teleSlope">Slope: ---°</div>
+        </div>
+        <div class="tele-card tele-card-padded" role="button" tabindex="0" id="teleCardSlope"
+          title="Open Clinometer" style="cursor:pointer;">
+          <div class="tele-3d-bg">
+            <svg class="anim-slope" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 80 L75 80 L15 30 Z" fill="rgba(16,185,129,0.1)" stroke="var(--emerald)" />
+              <path d="M15 80 L75 80" stroke="var(--text-muted)" />
+              <path d="M30 80 A 15 15 0 0 1 33 68" stroke="var(--amber)" />
+            </svg>
+          </div>
+          <div class="tele-label tele-label-custom">SLOPE</div>
+          <div class="tele-value tele-value-xl" id="teleSlope">---°</div>
         </div>
       </div>
     </section>
 
     <!-- ===== AI CHATBOT ===== -->
     <section class="screen" id="screenChat">
-      <div class="form-card chat-container-ui" style="height: calc(100vh - 100px); display: flex; flex-direction: column; padding: 12px; margin-bottom: 0;">
+      <div class="form-card chat-container-ui" style="height: calc(100dvh - var(--header-h) - var(--sat) - var(--banner-h) - var(--nav-h) - var(--sab) - 30px); display: flex; flex-direction: column; padding: 12px; margin-bottom: 0;">
         <div id="chatHistory" style="flex: 1; overflow-y: auto; margin-bottom: 16px; padding-right: 8px;">
         </div>
         <div id="chatPhotoPreviewContainer" style="display: none; position: relative; margin-bottom: 8px;">
@@ -305,6 +317,15 @@
             </div>
             <div class="stat-label">Export Data</div>
           </div>
+          <div class="stat-card" role="button" tabindex="0" data-screen="screenEditData">
+            <div class="stat-icon">
+              <svg viewBox="0 0 100 100" width="48" height="48" fill="none" stroke-linejoin="round" stroke-linecap="round">
+                <path d="M60 20 L80 40 L40 80 L18 82 L20 60 Z" fill="rgba(16,185,129,0.15)" stroke="var(--emerald)" stroke-width="4"/>
+                <line x1="52" y1="28" x2="72" y2="48" stroke="var(--amber)" stroke-width="4"/>
+              </svg>
+            </div>
+            <div class="stat-label">Edit Data</div>
+          </div>
         </div>
       </div>
       <div class="data-records-header data-header-flex">
@@ -322,6 +343,44 @@
         </div>
       </div>
       <div id="dataRecordsList" class="data-records-list"></div>
+    </section>
+
+    <!-- ===== EDIT DATA ===== -->
+    <section class="screen" id="screenEditData">
+      <div id="editDataListView">
+        <div class="screen-header">
+          <h2>Edit Data</h2>
+        </div>
+        <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:16px;">Every recorded quadrat, transect, note and record — from every survey — in one place. Tap any entry to edit its fields directly.</p>
+        <div class="data-records-header data-header-flex">
+          <h2 class="data-title-lg">All Records</h2>
+          <div class="flex-gap-sm">
+            <select id="editDataFilterType" class="filter-select-custom">
+              <option value="all">All Types</option>
+              <option value="survey">Survey Info</option>
+              <option value="quadrat">Quadrats</option>
+              <option value="transect">Transects</option>
+              <option value="environment">Environment</option>
+              <option value="disturbance">Disturbance</option>
+              <option value="notes">Notes</option>
+              <option value="herbarium">Herbarium</option>
+              <option value="germplasm">Germplasm</option>
+            </select>
+          </div>
+        </div>
+        <div id="editDataList" class="data-records-list"></div>
+      </div>
+      <div id="editDataFormView" style="display:none;">
+        <div class="screen-header">
+          <h2 id="editDataFormTitle">Edit Record</h2>
+        </div>
+        <div class="form-card" id="editDataFormFields"></div>
+        <div class="flex-gap-sm" style="margin-top:12px;">
+          <button class="btn btn-ghost" id="btnEditDataCancel" style="flex:1;">Cancel</button>
+          <button class="btn btn-danger" id="btnEditDataDelete" style="flex:1;">Delete</button>
+          <button class="btn btn-primary" id="btnEditDataSave" style="flex:1;">Save</button>
+        </div>
+      </div>
     </section>
 
     <!-- Modal (Global) -->
@@ -2033,12 +2092,12 @@
           <div class="clino-lock-card">
             <div class="clino-lock-label">Base Angle</div>
             <div class="clino-lock-value" id="clinoBaseValue">—</div>
-            <button class="btn btn-accent btn-sm" id="btnLockBase">🎯 Lock Base</button>
+            <button class="btn btn-accent btn-sm" id="btnLockBase">Lock Base</button>
           </div>
           <div class="clino-lock-card">
             <div class="clino-lock-label">Top Angle</div>
             <div class="clino-lock-value" id="clinoTopValue">—</div>
-            <button class="btn btn-primary btn-sm" id="btnLockTop">🎯 Lock Top</button>
+            <button class="btn btn-primary btn-sm" id="btnLockTop">Lock Top</button>
           </div>
         </div>
         <button class="btn btn-ghost btn-sm" id="btnClinoReset" style="margin-top:12px;width:100%;">↺ Reset Angles</button>
