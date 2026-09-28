@@ -125,13 +125,13 @@ export async function saveQuadrat() {
 
   const q = {
     number: parseInt($('#quadratNumber').value) || 1,
-    size: parseFloat($('#quadratSize').value) || 0,
+    size: isImperial ? (toMetric(parseFloat($('#quadratSize').value), 'area') || 0) : (parseFloat($('#quadratSize').value) || 0),
     shape: $('#quadratShape').value,
     vegType: $('#quadratVegType') ? $('#quadratVegType').value : '',
     nestedEnabled: $('#quadratNestedToggle')?.checked || false,
-    nestedOverstory: parseFloat($('#quadratNestedOverstory')?.value) || 0,
-    nestedUnderstory: parseFloat($('#quadratNestedUnderstory')?.value) || 0,
-    nestedGroundCover: parseFloat($('#quadratNestedGroundCover')?.value) || 0,
+    nestedOverstory: isImperial ? (toMetric(parseFloat($('#quadratNestedOverstory')?.value), 'area') || 0) : (parseFloat($('#quadratNestedOverstory')?.value) || 0),
+    nestedUnderstory: isImperial ? (toMetric(parseFloat($('#quadratNestedUnderstory')?.value), 'area') || 0) : (parseFloat($('#quadratNestedUnderstory')?.value) || 0),
+    nestedGroundCover: isImperial ? (toMetric(parseFloat($('#quadratNestedGroundCover')?.value), 'area') || 0) : (parseFloat($('#quadratNestedGroundCover')?.value) || 0),
     measDate: $('#quadratDate')?.value || new Date().toISOString().split('T')[0],
     recordedAt: getLocalISO(),
     observer: $('#quadratObserver')?.value.trim() || '',
@@ -294,7 +294,7 @@ export async function refreshQuadratTable() {
           const idx = +b.dataset.i;
           const q = s.quadrats[idx];
           $('#quadratNumber').value = q.number;
-          $('#quadratSize').value = q.size;
+          $('#quadratSize').value = isImperial ? toImperial(q.size, 'area') : q.size;
           $('#quadratShape').value = q.shape;
           if (q.vegType && $('#quadratVegType')) $('#quadratVegType').value = q.vegType;
           if ($('#quadratNestedToggle')) {
@@ -302,9 +302,9 @@ export async function refreshQuadratTable() {
             const nestedPanel = $('#quadratNestedPanel');
             if (nestedPanel) nestedPanel.style.display = q.nestedEnabled ? 'block' : 'none';
           }
-          if (q.nestedOverstory && $('#quadratNestedOverstory')) $('#quadratNestedOverstory').value = q.nestedOverstory;
-          if (q.nestedUnderstory && $('#quadratNestedUnderstory')) $('#quadratNestedUnderstory').value = q.nestedUnderstory;
-          if (q.nestedGroundCover && $('#quadratNestedGroundCover')) $('#quadratNestedGroundCover').value = q.nestedGroundCover;
+          if (q.nestedOverstory && $('#quadratNestedOverstory')) $('#quadratNestedOverstory').value = isImperial ? toImperial(q.nestedOverstory, 'area') : q.nestedOverstory;
+          if (q.nestedUnderstory && $('#quadratNestedUnderstory')) $('#quadratNestedUnderstory').value = isImperial ? toImperial(q.nestedUnderstory, 'area') : q.nestedUnderstory;
+          if (q.nestedGroundCover && $('#quadratNestedGroundCover')) $('#quadratNestedGroundCover').value = isImperial ? toImperial(q.nestedGroundCover, 'area') : q.nestedGroundCover;
           if (q.measDate && $('#quadratDate')) $('#quadratDate').value = q.measDate;
           if (q.observer && $('#quadratObserver')) $('#quadratObserver').value = q.observer;
           $('#quadratGPS').value = q.gps;
