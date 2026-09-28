@@ -504,6 +504,12 @@ function setupEventListeners() {
       switchScreen('screenClinometer', screenCallbacks);
     }
   });
+  document.getElementById('teleCardSlope')?.addEventListener('click', () => {
+    // If it's a non-touch screen (desktop), we let the manual click simulation run in compass.js
+    if ('ontouchstart' in window) {
+      switchScreen('screenClinometer', screenCallbacks);
+    }
+  });
 
 
   $('#btnToolOfflineMap')?.addEventListener('click', () => {

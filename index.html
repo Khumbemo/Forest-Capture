@@ -253,9 +253,21 @@
               <circle cx="50" cy="50" r="4" fill="var(--bg-input)" stroke="var(--emerald)" stroke-width="2" />
             </svg>
           </div>
-          <div class="tele-label tele-label-custom">🧭 ASPECT & SLOPE</div>
+          <div class="tele-label tele-label-custom">ASPECT</div>
           <div class="tele-value tele-value-xl" id="teleAspect">---°</div>
-          <div class="tele-sub tele-sub-sm" id="teleSlope">Slope: ---°</div>
+        </div>
+        <div class="tele-card tele-card-padded" role="button" tabindex="0" id="teleCardSlope"
+          title="Open Clinometer" style="cursor:pointer;">
+          <div class="tele-3d-bg">
+            <svg class="anim-slope" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 80 L75 80 L15 30 Z" fill="rgba(16,185,129,0.1)" stroke="var(--emerald)" />
+              <path d="M15 80 L75 80" stroke="var(--text-muted)" />
+              <path d="M30 80 A 15 15 0 0 1 33 68" stroke="var(--amber)" />
+            </svg>
+          </div>
+          <div class="tele-label tele-label-custom">SLOPE</div>
+          <div class="tele-value tele-value-xl" id="teleSlope">---°</div>
         </div>
       </div>
     </section>
