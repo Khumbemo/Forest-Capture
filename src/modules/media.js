@@ -247,33 +247,42 @@ export async function startRecording(onStart) {
           // ─── WEB FALLBACK: STORE IN IndexedDB ───
           const reader = new FileReader();
           reader.onload = async ev => {
-            let finalUrl = null;
-            let finalPath = '';
-            let mediaId = null;
-            const fileName = `audio_${Date.now()}.webm`;
-            const audioDataUrl = ev.target.result;
+            // This callback fires asynchronously, after the outer try/catch
+            // has already returned, so it needs its own error handling —
+            // without it, a failed upload left "Uploading audio..." on
+            // screen forever with no error feedback and the recording lost.
+            try {
+              let finalUrl = null;
+              let finalPath = '';
+              let mediaId = null;
+              const fileName = `audio_${Date.now()}.webm`;
+              const audioDataUrl = ev.target.result;
 
-            if (user) {
-              toast('Uploading audio...', false);
-              const storageRef = ref(storage, `users/${user.uid}/surveys/${s.id}/audio/${fileName}`);
-              const snapshot = await uploadString(storageRef, audioDataUrl, 'data_url');
-              finalUrl = await getDownloadURL(snapshot.ref);
-              finalPath = snapshot.ref.fullPath;
-            } else {
-              // Offline: store in IndexedDB (not in survey doc)
-              mediaId = await MediaStore.save(audioDataUrl);
+              if (user) {
+                toast('Uploading audio...', false);
+                const storageRef = ref(storage, `users/${user.uid}/surveys/${s.id}/audio/${fileName}`);
+                const snapshot = await uploadString(storageRef, audioDataUrl, 'data_url');
+                finalUrl = await getDownloadURL(snapshot.ref);
+                finalPath = snapshot.ref.fullPath;
+              } else {
+                // Offline: store in IndexedDB (not in survey doc)
+                mediaId = await MediaStore.save(audioDataUrl);
+              }
+
+              s.audioNotes.push({
+                mediaId,
+                url: finalUrl,
+                path: finalPath,
+                time: new Date().toISOString()
+              });
+
+              await Store.update(s);
+              refreshAudio();
+              toast(user ? 'Voice note uploaded' : 'Voice note saved (offline)');
+            } catch (e) {
+              console.error('Audio save failed', e);
+              toast('Audio save failed', true);
             }
-
-            s.audioNotes.push({ 
-              mediaId,
-              url: finalUrl, 
-              path: finalPath,
-              time: new Date().toISOString() 
-            });
-
-            await Store.update(s);
-            refreshAudio();
-            toast(user ? 'Voice note uploaded' : 'Voice note saved (offline)');
           };
           reader.readAsDataURL(blob);
         }

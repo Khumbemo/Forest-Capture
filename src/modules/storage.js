@@ -321,6 +321,32 @@ async function _addSurveyToLocalCache(s) {
   await _cacheSurveysToLocal(surveys);
 }
 
+/**
+ * Background sync: pull the survey list from Firestore and merge in any
+ * survey this device doesn't have locally yet (e.g. created on another
+ * device). Never overwrites a survey this device already has — that copy
+ * may hold a newer, not-yet-synced edit, and Store.update()/add() already
+ * push local writes to Firestore themselves, so this device's own copy is
+ * never the stale one to worry about here.
+ */
+async function _syncSurveysFromFirestore() {
+  try {
+    const userDocRef = await getUserRef();
+    const surveysSnapshot = await withTimeout(getDocs(collection(userDocRef, 'surveys')), 5000, null);
+    if (!surveysSnapshot || typeof surveysSnapshot.forEach !== 'function') return;
+    const remote = [];
+    surveysSnapshot.forEach(doc => remote.push(doc.data()));
+    if (!remote.length) return;
+
+    const local = await _loadSurveysFromLocal();
+    const knownIds = new Set(local.map(s => s.id));
+    const newOnes = remote.filter(s => !knownIds.has(s.id));
+    if (newOnes.length) await _cacheSurveysToLocal([...local, ...newOnes]);
+  } catch (e) {
+    console.debug('_syncSurveysFromFirestore: background sync failed (offline?)', e.message);
+  }
+}
+
 async function _removeSurveyFromLocalCache(id) {
   const surveys = (await _loadSurveysFromLocal()).filter(x => x.id !== id);
   await _cacheSurveysToLocal(surveys);
@@ -416,11 +442,14 @@ async function withRetry(fn, maxRetries = 3, initialDelay = 1000) {
 export const Store = {
   async getSurveys() {
     console.log('Store.getSurveys: start');
-    
+
     // Snappy offline-first priority
     const cached = await _loadSurveysFromLocal();
     if (cached && cached.length > 0) {
       console.log('Store.getSurveys: returning from cache', cached.length);
+      // Sync from Firestore in the background without blocking the UI, so
+      // a survey created on another device eventually shows up here too.
+      _syncSurveysFromFirestore();
       return Promise.all(cached.map(verifySurveySignature));
     }
 
@@ -464,6 +493,7 @@ export const Store = {
 
     if (localMatch) {
       console.log('Store.getActive: using idb cache for', activeId);
+      _syncSurveysFromFirestore();
       return await verifySurveySignature(localMatch);
     }
 
