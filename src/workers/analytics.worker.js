@@ -199,6 +199,7 @@ function calculateIndicesPayload(s) {
 }
 
 self.addEventListener('message', (e) => {
-  const result = calculateIndicesPayload(e.data);
-  self.postMessage(result);
+  const { survey, requestId } = e.data;
+  const result = calculateIndicesPayload(survey);
+  self.postMessage({ ...result, requestId, quadrats: (survey && survey.quadrats) || [] });
 });

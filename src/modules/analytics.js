@@ -3,6 +3,11 @@
 import { $, esc } from './ui.js';
 import { t } from './i18n.js';
 
+// Bumped on every refreshAnalytics() call so a stale worker response (from
+// a previous survey, still in flight when the user switches surveys) can
+// be detected and discarded instead of rendering a cross-survey mismatch.
+let analyticsRequestSeq = 0;
+
 export function calculateIndicesPayload(s) {
   if (!s || !s.quadrats || !s.quadrats.length) {
     return { S: 0, H: 0, D: 0, E: 0, margalef: 0, fisherAlpha: 0, chao1: 0, totalN: 0, totalBA: 0, totalArea: 0, iviData: [], dbhClasses: {} };
@@ -225,8 +230,11 @@ export function refreshAnalytics(s) {
     window.analyticsWorker = new Worker('./src/workers/analytics.worker.js');
   }
 
+  const requestId = ++analyticsRequestSeq;
+
   window.analyticsWorker.onmessage = function(e) {
-    const { S, H, D, E, margalef, fisherAlpha, chao1, totalN, totalBA, totalArea, iviData, dbhClasses, carbonHa, agbHa, qmd, sdi, regenCounts, transectCover, transectGap } = e.data;
+    if (e.data.requestId !== requestId) return; // stale response from a previous survey — discard
+    const { S, H, D, E, margalef, fisherAlpha, chao1, totalN, totalBA, totalArea, iviData, dbhClasses, carbonHa, agbHa, qmd, sdi, regenCounts, transectCover, transectGap, quadrats } = e.data;
 
     if ($('#analyticRichness')) $('#analyticRichness').textContent = S;
     if ($('#analyticShannon')) $('#analyticShannon').textContent = totalN > 0 ? H.toFixed(3) : '0.000';
@@ -290,7 +298,7 @@ export function refreshAnalytics(s) {
     }
 
     if ($('#speciesAccumChart')) {
-      const numQuads = s.quadrats.length;
+      const numQuads = quadrats.length;
       const rarefactionData = new Array(numQuads).fill(0);
       const permutations = 100;
 
@@ -304,7 +312,7 @@ export function refreshAnalytics(s) {
         const seenInPerm = new Set();
         for (let k = 0; k < numQuads; k++) {
           const qIdx = indices[k];
-          const q = s.quadrats[qIdx];
+          const q = quadrats[qIdx];
           if (q.species) q.species.forEach(sp => { if (sp.name) seenInPerm.add(sp.name); });
           rarefactionData[k] += seenInPerm.size;
         }
@@ -324,5 +332,5 @@ export function refreshAnalytics(s) {
     }
   };
 
-  window.analyticsWorker.postMessage(s);
+  window.analyticsWorker.postMessage({ survey: s, requestId });
 }

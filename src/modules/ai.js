@@ -601,6 +601,13 @@ async function handleOfflineMessage(text, requestSurveyId) {
   messageHistory.push({ role: 'user', parts: [{ text }] });
 
   const taxResults = await searchTaxonomy(text, 5);
+  if (requestSurveyId !== historyLoadedForSurveyId) {
+    // Switched surveys while the taxonomy lookup was in flight — same
+    // reasoning as the on-device-model branch below. Discard rather than
+    // write this survey's reply into whatever chat is open now.
+    console.warn('SylvX: offline taxonomy reply arrived after switching surveys — discarded');
+    return;
+  }
   if (taxResults.length) {
     const summary = '📴 Offline taxonomy lookup:\n' +
       taxResults.map(r => `• ${r.scientific}${r.common ? ` (${r.common})` : ''}${r.family ? ` — ${r.family}` : ''}`).join('\n');

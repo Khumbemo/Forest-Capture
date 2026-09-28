@@ -128,7 +128,7 @@ function exportCalculations() {
     ['Total Transect Length (m)', lastCalcResults.totalTransectLength]
   ];
 
-  const csvString = csvRows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+  const csvString = csvRows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
   const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   
