@@ -49,13 +49,13 @@ export function onScreenEnter() {
 }
 
 function handleAutoGPS() {
-  if (curPos.lat) {
+  if (curPos.lat != null) {
     if ($('#germ_icfre_latitude')) $('#germ_icfre_latitude').value = curPos.lat.toFixed(6);
     if ($('#germ_icfre_longitude')) $('#germ_icfre_longitude').value = curPos.lng.toFixed(6);
-    if ($('#germ_icfre_altitude') && curPos.alt) $('#germ_icfre_altitude').value = Math.round(curPos.alt);
+    if ($('#germ_icfre_altitude') && curPos.alt != null) $('#germ_icfre_altitude').value = Math.round(curPos.alt);
     if ($('#germ_nbpgr_latitude')) $('#germ_nbpgr_latitude').value = curPos.lat.toFixed(6);
     if ($('#germ_nbpgr_longitude')) $('#germ_nbpgr_longitude').value = curPos.lng.toFixed(6);
-    if ($('#germ_nbpgr_altitude') && curPos.alt) $('#germ_nbpgr_altitude').value = Math.round(curPos.alt);
+    if ($('#germ_nbpgr_altitude') && curPos.alt != null) $('#germ_nbpgr_altitude').value = Math.round(curPos.alt);
     toast('GPS coordinates filled');
   } else {
     toast('No GPS signal — enter coordinates manually', true);

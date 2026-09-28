@@ -31,7 +31,7 @@ export function fmtCoords(lat, lng, format = 'dd') {
  * @param {boolean} includeAlt Whether to append altitude in parentheses.
  */
 export async function fillGPSField(inputId, includeAlt = false) {
-  if (!curPos.lat) {
+  if (curPos.lat == null) {
     toast('No GPS signal', true);
     return;
   }
