@@ -125,7 +125,7 @@ export async function handlePhotoInput(file) {
         localUri: convertUrl,
         quadrat: parseInt($('#photoQuadratRef').value) || null,
         time: new Date().toISOString(),
-        gps: curPos.lat ? { lat: curPos.lat, lng: curPos.lng, acc: curPos.acc } : null
+        gps: curPos.lat != null ? { lat: curPos.lat, lng: curPos.lng, acc: curPos.acc } : null
       });
 
       await Store.update(s);
@@ -159,7 +159,7 @@ export async function handlePhotoInput(file) {
             path: finalPath,
             quadrat: parseInt($('#photoQuadratRef').value) || null,
             time: new Date().toISOString(),
-            gps: curPos.lat ? { lat: curPos.lat, lng: curPos.lng, acc: curPos.acc } : null
+            gps: curPos.lat != null ? { lat: curPos.lat, lng: curPos.lng, acc: curPos.acc } : null
           });
 
           await Store.update(s);

@@ -22,6 +22,13 @@ export function init() {
 
 let lastCalcResults = null;
 
+// Quotes a CSV cell, escaping any embedded double quotes per RFC 4180 so a
+// value containing a `"` (e.g. a survey name) doesn't produce a malformed
+// row that spreadsheet software splits into misaligned columns.
+export function csvQuoteCell(cell) {
+  return `"${String(cell).replace(/"/g, '""')}"`;
+}
+
 async function runCalculations() {
   const survey = await Store.getActive();
   if (!survey) {
@@ -128,7 +135,7 @@ function exportCalculations() {
     ['Total Transect Length (m)', lastCalcResults.totalTransectLength]
   ];
 
-  const csvString = csvRows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const csvString = csvRows.map(row => row.map(csvQuoteCell).join(',')).join('\n');
   const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   

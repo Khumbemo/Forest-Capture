@@ -55,7 +55,7 @@ export async function addNote() {
 
 export function init() {
   $('#btnGeocodeNotes')?.addEventListener('click', async () => {
-      if (!curPos.lat) { toast('No GPS', true); return; }
+      if (curPos.lat == null) { toast('No GPS', true); return; }
       toast('Fetching location...');
       const loc = await reverseGeocode(curPos.lat, curPos.lng);
       if (loc) {

@@ -715,7 +715,7 @@ function setupEventListeners() {
   // GPS auto-fill button for waypoint lat/lng fields
   $('#btnWaypointGPS')?.addEventListener('click', () => {
     import('./modules/gps.js').then(gps => {
-      if (gps.curPos.lat) {
+      if (gps.curPos.lat != null) {
         if ($('#waypointLat')) $('#waypointLat').value = gps.curPos.lat.toFixed(6);
         if ($('#waypointLng')) $('#waypointLng').value = gps.curPos.lng.toFixed(6);
         toast('GPS coordinates filled');
@@ -907,7 +907,7 @@ function setupEventListeners() {
     }
   }));
 
-  ['settingsGPSContinuous', 'settingLanguage', 'settingUnitSystem', 'settingMapTileUrl', 'settingGBIFEnabled', 'settingItalicSpecies', 'settingAutoSave', 'settingExportGPS', 'settingCoordFormat', 'settingsTaxonomyPack'].forEach(id => {
+  ['settingsGPSContinuous', 'settingLanguage', 'settingUnitSystem', 'settingMapTileUrl', 'settingGBIFEnabled', 'settingItalicSpecies', 'settingAutoSave', 'settingExportGPS', 'settingCoordFormat', 'settingsTaxonomyPack', 'settingsGeminiApiKey'].forEach(id => {
     const el = $('#' + id);
     if (!el) return;
     el.addEventListener('change', async () => {

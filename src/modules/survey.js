@@ -240,7 +240,7 @@ export async function createNewSurvey() {
       taxonomyPack: ($('#surveyTaxonomyPack') ? $('#surveyTaxonomyPack').value : '')
     };
 
-    if ($('#surveyAutoGPS') && $('#surveyAutoGPS').checked && curPos.lat) {
+    if ($('#surveyAutoGPS') && $('#surveyAutoGPS').checked && curPos.lat != null) {
       const fmtEl = document.getElementById('settingCoordFormat');
       const fmt = fmtEl ? fmtEl.value : 'dd';
       sv.gpsCoords = fmtCoords(curPos.lat, curPos.lng, fmt);
