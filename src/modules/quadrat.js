@@ -25,6 +25,7 @@ export function addSpeciesEntry() {
 <div class="form-row"><div class="form-group"><label>DBH (<span class="unit-diam">cm</span>)</label><input type="number" class="sp-dbh" min="0" step="0.1" placeholder="Diameter" /></div><div class="form-group"><label>GBH (<span class="unit-diam">cm</span>)</label><input type="number" class="sp-gbh" min="0" step="0.1" placeholder="Girth" /></div></div>
 <div class="form-row"><div class="form-group"><label>DBH Meas. Height (<span class="unit-dist">m</span>)</label><input type="number" class="sp-dbh-height" min="0" step="0.1" value="1.3" title="Standard: 1.3m. Adjust for buttressed trees." /></div><div class="form-group"><label>Crown Diameter (<span class="unit-dist">m</span>)</label><input type="number" class="sp-crown-diam" min="0" step="0.1" placeholder="Avg. of 2 axes" /></div></div>
 <div class="form-row"><div class="form-group"><label>Height (<span class="unit-dist">m</span>)</label><input type="number" class="sp-height" min="0" step="0.1" /></div><div class="form-group"><label>Crown Class</label><select class="sp-crown"><option value="">—</option><option value="dominant">Dominant</option><option value="codominant">Co-dominant</option><option value="intermediate">Intermediate</option><option value="suppressed">Suppressed</option></select></div></div>
+<div class="form-row"><div class="form-group"><label>Wood Density (g/cm³)</label><input type="number" class="sp-wood-density" min="0.1" max="1.5" step="0.01" placeholder="Leave blank for 0.65 default" title="Species-specific basic wood density, if known from a regional reference. Used in AGB/carbon calculations; left blank uses a generic 0.65 default and is flagged as an estimate." /></div><div class="form-group"></div></div>
 <div class="form-row"><div class="form-group"><label>Distance from Center (<span class="unit-dist">m</span>)</label><input type="number" class="sp-distance" min="0" step="0.1" placeholder="e.g., 5.2" title="Distance from plot center for re-measurement" /></div><div class="form-group"><label>Azimuth (°)</label><input type="number" class="sp-azimuth" min="0" max="360" step="1" placeholder="0–360" title="Bearing from plot center" /></div></div>
 <div class="form-row"><div class="form-group"><label>Phenology</label><select class="sp-phenology"><option value="">—</option><option value="flowering">Flowering</option><option value="fruiting">Fruiting</option><option value="leaf-flush">Leaf Flush</option><option value="leaf-fall">Leaf Fall</option><option value="dormant">Dormant</option><option value="vegetative">Vegetative</option></select></div><div class="form-group"><label>Health</label><select class="sp-health"><option value="">—</option><option value="healthy">Healthy</option><option value="stressed">Stressed</option><option value="diseased">Diseased</option><option value="dead-standing">Dead Standing</option><option value="fallen">Fallen</option><option value="cut-stump">Cut Stump</option></select></div></div>
 <div class="form-row"><div class="form-group"><label>Bark Condition</label><select class="sp-bark"><option value="">—</option><option value="intact">Intact</option><option value="partially-missing">Partially Missing</option><option value="mostly-missing">Mostly Missing</option><option value="absent">Absent</option></select></div><div class="form-group"><label>Decay Class (Dead only)</label><select class="sp-decay"><option value="">—</option><option value="1">1 — Recently Dead</option><option value="2">2 — Loose Bark</option><option value="3">3 — Soft Sapwood</option><option value="4">4 — Heartwood Decay</option><option value="5">5 — Fully Decomposed</option></select></div></div>`;
@@ -125,13 +126,13 @@ export async function saveQuadrat() {
 
   const q = {
     number: parseInt($('#quadratNumber').value) || 1,
-    size: parseFloat($('#quadratSize').value) || 0,
+    size: isImperial ? (toMetric(parseFloat($('#quadratSize').value), 'area') || 0) : (parseFloat($('#quadratSize').value) || 0),
     shape: $('#quadratShape').value,
     vegType: $('#quadratVegType') ? $('#quadratVegType').value : '',
     nestedEnabled: $('#quadratNestedToggle')?.checked || false,
-    nestedOverstory: parseFloat($('#quadratNestedOverstory')?.value) || 0,
-    nestedUnderstory: parseFloat($('#quadratNestedUnderstory')?.value) || 0,
-    nestedGroundCover: parseFloat($('#quadratNestedGroundCover')?.value) || 0,
+    nestedOverstory: isImperial ? (toMetric(parseFloat($('#quadratNestedOverstory')?.value), 'area') || 0) : (parseFloat($('#quadratNestedOverstory')?.value) || 0),
+    nestedUnderstory: isImperial ? (toMetric(parseFloat($('#quadratNestedUnderstory')?.value), 'area') || 0) : (parseFloat($('#quadratNestedUnderstory')?.value) || 0),
+    nestedGroundCover: isImperial ? (toMetric(parseFloat($('#quadratNestedGroundCover')?.value), 'area') || 0) : (parseFloat($('#quadratNestedGroundCover')?.value) || 0),
     measDate: $('#quadratDate')?.value || new Date().toISOString().split('T')[0],
     recordedAt: getLocalISO(),
     observer: $('#quadratObserver')?.value.trim() || '',
@@ -153,6 +154,7 @@ export async function saveQuadrat() {
       dbhMeasHeight: isImperial ? (toMetric(parseFloat(e.querySelector('.sp-dbh-height')?.value), 'dist') || 1.3) : (parseFloat(e.querySelector('.sp-dbh-height')?.value) || 1.3),
       crownDiameter: isImperial ? (toMetric(parseFloat(e.querySelector('.sp-crown-diam')?.value), 'dist') || 0) : (parseFloat(e.querySelector('.sp-crown-diam')?.value) || 0),
       height: isImperial ? (toMetric(parseFloat(e.querySelector('.sp-height').value), 'dist') || 0) : (parseFloat(e.querySelector('.sp-height').value) || 0),
+      woodDensity: parseFloat(e.querySelector('.sp-wood-density')?.value) || 0,
       crownClass: e.querySelector('.sp-crown').value,
       distance: isImperial ? (toMetric(parseFloat(e.querySelector('.sp-distance')?.value), 'dist') || 0) : (parseFloat(e.querySelector('.sp-distance')?.value) || 0),
       azimuth: parseFloat(e.querySelector('.sp-azimuth')?.value) || 0,
@@ -294,7 +296,7 @@ export async function refreshQuadratTable() {
           const idx = +b.dataset.i;
           const q = s.quadrats[idx];
           $('#quadratNumber').value = q.number;
-          $('#quadratSize').value = q.size;
+          $('#quadratSize').value = isImperial ? toImperial(q.size, 'area') : q.size;
           $('#quadratShape').value = q.shape;
           if (q.vegType && $('#quadratVegType')) $('#quadratVegType').value = q.vegType;
           if ($('#quadratNestedToggle')) {
@@ -302,9 +304,9 @@ export async function refreshQuadratTable() {
             const nestedPanel = $('#quadratNestedPanel');
             if (nestedPanel) nestedPanel.style.display = q.nestedEnabled ? 'block' : 'none';
           }
-          if (q.nestedOverstory && $('#quadratNestedOverstory')) $('#quadratNestedOverstory').value = q.nestedOverstory;
-          if (q.nestedUnderstory && $('#quadratNestedUnderstory')) $('#quadratNestedUnderstory').value = q.nestedUnderstory;
-          if (q.nestedGroundCover && $('#quadratNestedGroundCover')) $('#quadratNestedGroundCover').value = q.nestedGroundCover;
+          if (q.nestedOverstory && $('#quadratNestedOverstory')) $('#quadratNestedOverstory').value = isImperial ? toImperial(q.nestedOverstory, 'area') : q.nestedOverstory;
+          if (q.nestedUnderstory && $('#quadratNestedUnderstory')) $('#quadratNestedUnderstory').value = isImperial ? toImperial(q.nestedUnderstory, 'area') : q.nestedUnderstory;
+          if (q.nestedGroundCover && $('#quadratNestedGroundCover')) $('#quadratNestedGroundCover').value = isImperial ? toImperial(q.nestedGroundCover, 'area') : q.nestedGroundCover;
           if (q.measDate && $('#quadratDate')) $('#quadratDate').value = q.measDate;
           if (q.observer && $('#quadratObserver')) $('#quadratObserver').value = q.observer;
           $('#quadratGPS').value = q.gps;
@@ -331,6 +333,7 @@ export async function refreshQuadratTable() {
               if (last.querySelector('.sp-dbh-height')) last.querySelector('.sp-dbh-height').value = isImperial ? toImperial(sp.dbhMeasHeight, 'dist') : (sp.dbhMeasHeight || 1.3);
               if (last.querySelector('.sp-crown-diam')) last.querySelector('.sp-crown-diam').value = isImperial ? toImperial(sp.crownDiameter, 'dist') : (sp.crownDiameter || 0);
               last.querySelector('.sp-height').value = isImperial ? toImperial(sp.height, 'dist') : sp.height;
+              if (last.querySelector('.sp-wood-density')) last.querySelector('.sp-wood-density').value = sp.woodDensity || '';
               last.querySelector('.sp-crown').value = sp.crownClass || '';
               if (last.querySelector('.sp-distance')) last.querySelector('.sp-distance').value = isImperial ? toImperial(sp.distance, 'dist') : (sp.distance || 0);
               if (last.querySelector('.sp-azimuth')) last.querySelector('.sp-azimuth').value = sp.azimuth || 0;

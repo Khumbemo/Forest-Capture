@@ -1,14 +1,23 @@
 // src/workers/analytics.worker.js
 
+// Fallback wood density (g/cm3) used only when a species/tree has no
+// user-supplied value. This is a generic pantropical average, not a
+// species-specific figure — any AGB/carbon total that relied on it is
+// reported back via agbDefaultDensityCount so the UI can flag it as an
+// estimate rather than a measured value.
+const DEFAULT_WOOD_DENSITY = 0.65;
+
 function calculateIndicesPayload(s) {
   if (!s || !s.quadrats || !s.quadrats.length) {
-    return { S: 0, H: 0, D: 0, E: 0, margalef: 0, fisherAlpha: 0, chao1: 0, totalN: 0, totalBA: 0, totalArea: 0, iviData: [], dbhClasses: {} };
+    return { S: 0, H: 0, D: 0, E: 0, margalef: 0, fisherAlpha: 0, chao1: 0, totalN: 0, totalBA: 0, totalArea: 0, iviData: [], dbhClasses: {}, agbDefaultDensityCount: 0, agbExcludedNoHeight: 0 };
   }
 
   const speciesMap = {};
   const totalArea = s.quadrats.reduce((a, q) => a + (parseFloat(q.size) || 0), 0) / 10000;
   let totalN = 0;
   let totalAGB = 0;
+  let agbDefaultDensityCount = 0;
+  let agbExcludedNoHeight = 0;
   let regenCounts = { seedling: 0, sapling: 0, tree: 0 };
   let allDBH = [];
 
@@ -28,16 +37,23 @@ function calculateIndicesPayload(s) {
       
       let dbhVal = parseFloat(sp.dbh) || 0;
       let hVal = parseFloat(sp.height) || 0;
+      let rhoVal = parseFloat(sp.woodDensity) || 0;
       if (dbhVal > 0) {
         for(let i=0; i<abundance; i++) allDBH.push(dbhVal);
-        let treeAGB = 0;
-        const rho = 0.65;
+        // Chave et al. (2014) pantropical AGB model. Requires height, so a
+        // tree measured without height is excluded from AGB/carbon rather
+        // than substituted with a different (diameter-only) equation —
+        // mixing equations silently would make the total methodologically
+        // inconsistent. woodDensity is per-record when the surveyor
+        // supplies one; otherwise DEFAULT_WOOD_DENSITY is used and flagged.
         if (hVal > 0) {
-           treeAGB = 0.0673 * Math.pow((rho * dbhVal * dbhVal * hVal), 0.976);
+          const rho = rhoVal > 0 ? rhoVal : DEFAULT_WOOD_DENSITY;
+          if (rhoVal <= 0) agbDefaultDensityCount += abundance;
+          const treeAGB = 0.0673 * Math.pow((rho * dbhVal * dbhVal * hVal), 0.976);
+          totalAGB += (treeAGB * abundance);
         } else {
-           treeAGB = Math.exp(-2.289 + 2.649*Math.log(dbhVal) - 0.021*Math.pow(Math.log(dbhVal), 2));
+          agbExcludedNoHeight += abundance;
         }
-        totalAGB += (treeAGB * abundance);
       }
 
       if (parseFloat(sp.dbh) > 0) {
@@ -195,7 +211,7 @@ function calculateIndicesPayload(s) {
      }
   }
 
-  return { S, H, D, E, margalef, fisherAlpha, chao1, totalN, totalBA, totalArea, iviData, dbhClasses, speciesList, carbonHa, agbHa, qmd, sdi, regenCounts, transectCover, transectGap };
+  return { S, H, D, E, margalef, fisherAlpha, chao1, totalN, totalBA, totalArea, iviData, dbhClasses, speciesList, carbonHa, agbHa, qmd, sdi, regenCounts, transectCover, transectGap, agbDefaultDensityCount, agbExcludedNoHeight };
 }
 
 self.addEventListener('message', (e) => {
