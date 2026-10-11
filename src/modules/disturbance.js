@@ -3,6 +3,7 @@
 import { $, $$, toast } from './ui.js';
 import { Store } from './storage.js';
 import { getLocalISO } from './utils.js';
+import { ensureActiveSurvey } from './survey.js';
 
 export const cbiL = { substrate: ['cbiSubLitter', 'cbiSubDuff', 'cbiSubSoil'], herbaceous: ['cbiHerbFreq', 'cbiHerbMort'], shrub: ['cbiShrubMort', 'cbiShrubChar'], intermediate: ['cbiIntChar', 'cbiIntMort'], overstory: ['cbiOverScorch', 'cbiOverMort', 'cbiOverChar'] };
 
@@ -59,8 +60,8 @@ export function recalcCBI() {
 }
 
 export async function saveDisturbCBI() {
-  const s = await Store.getActive();
-  if (!s) { toast('Select survey', true); return; }
+  const s = await ensureActiveSurvey();
+  if (!s) { toast('Could not start a survey — try again.', true); return; }
   s.disturbance = {
     grazing: { present: $('#distGrazingPresent').checked, severity: +$('#distGrazingSeverity').value, type: $('#distGrazingType').value, recency: $('#distGrazingRecency')?$('#distGrazingRecency').value:'', extent: $('#distGrazingExtent')?$('#distGrazingExtent').value:'' },
     logging: { present: $('#distLoggingPresent').checked, severity: +$('#distLoggingSeverity').value, type: $('#distLoggingType').value, recency: $('#distLoggingRecency')?$('#distLoggingRecency').value:'', extent: $('#distLoggingExtent')?$('#distLoggingExtent').value:'' },

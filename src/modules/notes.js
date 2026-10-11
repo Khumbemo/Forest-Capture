@@ -3,6 +3,7 @@
 import { $, toast, esc } from './ui.js';
 import { Store } from './storage.js';
 import { curPos, reverseGeocode } from './gps.js';
+import { ensureActiveSurvey } from './survey.js';
 
 export async function refreshNotes() {
   const s = await Store.getActive();
@@ -27,8 +28,8 @@ export async function refreshNotes() {
 // natural-language note logging. Operates directly on the stored survey
 // object. Returns { ok: true } or { ok: false, error }.
 export async function addNoteRecord(text, category = 'general', quadrat = null) {
-  const s = await Store.getActive();
-  if (!s) return { ok: false, error: 'No active survey selected.' };
+  const s = await ensureActiveSurvey();
+  if (!s) return { ok: false, error: 'Could not start a survey.' };
   const t = (text || '').trim();
   if (!t) return { ok: false, error: 'Note text is required.' };
   if (!s.notes) s.notes = [];

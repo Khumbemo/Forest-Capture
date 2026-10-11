@@ -6,6 +6,53 @@ import { fmtCoords, curPos } from './gps.js';
 import { getLocalISO, getDeviceTimezone, getUTCOffsetMinutes } from './utils.js';
 
 /**
+ * Returns the active survey, auto-creating and activating a blank one
+ * first if none exists yet. Lets a tool (Quadrat, Transect, Environment,
+ * Media, etc.) be opened and saved directly, without going through
+ * "+ New Survey" first — the record still lands inside a survey, same
+ * as every other save path, just one the user didn't have to name.
+ */
+export async function ensureActiveSurvey() {
+  const existing = await Store.getActive();
+  if (existing) return existing;
+
+  const sv = {
+    id: Date.now().toString(36) + Math.random().toString(36).substring(2, 10),
+    name: `Quick Entry — ${new Date().toLocaleDateString()}`,
+    location: '',
+    investigator: '',
+    date: new Date().toISOString().split('T')[0],
+    createdAt: getLocalISO(),
+    deviceTimezone: getDeviceTimezone(),
+    utcOffsetMinutes: getUTCOffsetMinutes(),
+    quadrats: [],
+    transects: [],
+    environment: null,
+    disturbance: null,
+    cbi: null,
+    photos: [],
+    notes: [],
+    audioNotes: [],
+    waypoints: [],
+    taxonomyPack: ''
+  };
+
+  if (curPos.lat != null) {
+    sv.gpsCoords = fmtCoords(curPos.lat, curPos.lng, 'dd');
+    sv.location = sv.gpsCoords;
+  }
+
+  await Store.add(sv);
+  await Store.setActive(sv.id);
+  toast(`Recording under "${sv.name}" — rename it anytime from Tools`);
+
+  populateSurveySelector().catch(e => console.warn('Refresh selector failed', e));
+  refreshDataRecords().catch(e => console.warn('Refresh records failed', e));
+
+  return sv;
+}
+
+/**
  * Populates the survey selector dropdown with all available surveys.
  */
 export async function populateSurveySelector() {

@@ -3,6 +3,7 @@
 import { $, $$, toast, switchScreen, fcConfirm, esc } from './ui.js';
 import { Store } from './storage.js';
 import { curPos } from './gps.js';
+import { ensureActiveSurvey } from './survey.js';
 
 import { renderICFRE, renderNBPGR, renderISTA, emptyICFRE, emptyNBPGR, emptyISTA } from './germplasm-ui.js';
 
@@ -126,8 +127,8 @@ export async function refreshGermplasmUI() {
           console.log('species extracted:', spc);
           if (!spc) { toast('Scientific name is required.', true); return; }
 
-          const sv = await Store.getActive();
-          if (!sv) { toast('No active survey — select one in the Tools tab.', true); return; }
+          const sv = await ensureActiveSurvey();
+          if (!sv) { toast('Could not start a survey — try again.', true); return; }
 
           const keys = currentBody === 'icfre' ? emptyICFRE : currentBody === 'nbpgr' ? emptyNBPGR : emptyISTA;
           const rec = { id: Date.now(), bodyId: currentBody };

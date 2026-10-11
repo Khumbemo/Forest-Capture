@@ -5,6 +5,7 @@ import { Store, MediaStore } from './storage.js';
 import { ensureAuth, loadSDK } from './firebase.js';
 import { compress } from './utils.js';
 import { curPos } from './gps.js';
+import { ensureActiveSurvey } from './survey.js';
 
 // Capacitor is not imported via ES modules to maintain browser compatibility without a bundler.
 // Android WebView injects Capacitor onto the window object globally.
@@ -78,8 +79,8 @@ export async function refreshPhotos() {
 }
 
 export async function handlePhotoInput(file) {
-  const s = await Store.getActive();
-  if (!s) { toast('Select survey', true); return; }
+  const s = await ensureActiveSurvey();
+  if (!s) { toast('Could not start a survey — try again.', true); return; }
 
   toast('Saving photo...', false);
 
@@ -197,7 +198,7 @@ export async function startRecording(onStart) {
     mediaRec.ondataavailable = e => audioChunks.push(e.data);
     mediaRec.onstop = async () => {
       const blob = new Blob(audioChunks, { type: 'audio/webm' });
-      const s = await Store.getActive();
+      const s = await ensureActiveSurvey();
       if (!s) return;
       if (!s.audioNotes) s.audioNotes = [];
 

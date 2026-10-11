@@ -5,6 +5,7 @@ import { Store, loadSettings } from './storage.js';
 import { attachAutocomplete } from './species-autocomplete.js';
 import { fillGPSField } from './gps.js';
 import { toMetric, toImperial, getLocalISO } from './utils.js';
+import { ensureActiveSurvey } from './survey.js';
 
 let intCount = 0;
 
@@ -34,8 +35,8 @@ export async function saveTransect() {
   if (isSavingTransect) return;
   isSavingTransect = true;
   try {
-    const s = await Store.getActive();
-  if (!s) { toast('Select survey', true); return; }
+    const s = await ensureActiveSurvey();
+  if (!s) { toast('Could not start a survey — try again.', true); return; }
   const sysSettings = await loadSettings();
   const isImperial = sysSettings.settingUnitSystem === 'imperial';
   const t = {

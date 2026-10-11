@@ -28,6 +28,7 @@ import { init as initForestExport } from './modules/forest-capture-export.js';
 import { ensureAuth, EmailLogin, EmailSignup, AppSignOut, AppDeleteAccount } from './modules/firebase.js';
 import { initAI, onChatScreenEnter } from './modules/ai.js';
 import { start as startCompass, stop as stopCompass } from './modules/compass.js';
+import { renderEditDataList, init as initEditData } from './modules/edit-data.js';
 
 
 // ===== GLOBAL CRASH PROTECTION =====
@@ -329,6 +330,7 @@ const screenCallbacks = {
   screenDashboard: () => { updateBars(); startCompass(); },
   screenToolbar: () => { updateBars(); stopCompass(); }, // Added callback for Toolbar to refresh data
   screenData: () => { refreshDataRecords(); stopCompass(); },
+  screenEditData: () => { renderEditDataList(); stopCompass(); },
   screenMap: () => { setTimeout(initMap, 100); refreshWpList(); stopCompass(); },
   screenQuadrat: () => { refreshQuadratTable(); stopCompass(); },
   screenTransect: () => { refreshTransectTable(); stopCompass(); },
@@ -499,6 +501,12 @@ function setupEventListeners() {
   document.getElementById('teleCardTemp')?.addEventListener('click', () => switchScreen('screenEnvironment', screenCallbacks));
   document.getElementById('teleCardHumidity')?.addEventListener('click', () => switchScreen('screenEnvironment', screenCallbacks));
   document.getElementById('teleCardAspect')?.addEventListener('click', () => {
+    // If it's a non-touch screen (desktop), we let the manual click simulation run in compass.js
+    if ('ontouchstart' in window) {
+      switchScreen('screenClinometer', screenCallbacks);
+    }
+  });
+  document.getElementById('teleCardSlope')?.addEventListener('click', () => {
     // If it's a non-touch screen (desktop), we let the manual click simulation run in compass.js
     if ('ontouchstart' in window) {
       switchScreen('screenClinometer', screenCallbacks);
@@ -751,6 +759,9 @@ function setupEventListeners() {
 
   // Germplasm
   initGermplasm();
+
+  // Edit Data
+  initEditData();
 
   // Analytics Compare
   initCompare();
