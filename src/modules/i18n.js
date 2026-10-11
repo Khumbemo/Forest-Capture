@@ -471,41 +471,59 @@ export function t(string) {
     return dicts[activeLang][string] || string;
 }
 
-export function walkDOMAndTranslate() {
-    if (activeLang === 'en' || !dicts[activeLang]) return;
+// Caches the first-seen (English-source) value for every text node and
+// translatable attribute walkDOMAndTranslate() touches, keyed by the node
+// itself. Without this, translating in place would mutate the DOM's text
+// directly — so switching from French to Spanish (or back to English)
+// would try to look up already-French text in the Spanish dictionary
+// (keyed by English source strings) and find nothing, leaving stale text
+// stuck on screen. Re-translating from the cached original instead makes
+// a language switch correct no matter how many times, or which languages,
+// the user switches between — which is what lets changing the Settings
+// language apply immediately instead of requiring a full app reload.
+const _originalText = new WeakMap();
+const _originalAttr = new WeakMap();
 
-    const dict = dicts[activeLang];
+export function walkDOMAndTranslate() {
+    const dict = (activeLang !== 'en' && dicts[activeLang]) ? dicts[activeLang] : null;
 
     // 1. Walk Text Nodes
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
     let node;
-    const textNodesToTranslate = [];
+    const updates = [];
     while (node = walker.nextNode()) {
-        const str = node.nodeValue.trim();
-        if (str && dict[str]) {
-             textNodesToTranslate.push({ node, str });
+        let original = _originalText.get(node);
+        if (original === undefined) {
+            original = node.nodeValue;
+            _originalText.set(node, original);
         }
+        const trimmed = original.trim();
+        if (!trimmed) continue;
+        const translated = (dict && dict[trimmed]) ? original.replace(trimmed, dict[trimmed]) : original;
+        if (node.nodeValue !== translated) updates.push({ node, translated });
     }
     // Update them all safely
-    textNodesToTranslate.forEach(({ node, str }) => {
-        node.nodeValue = node.nodeValue.replace(str, dict[str]);
-    });
+    updates.forEach(({ node, translated }) => { node.nodeValue = translated; });
 
     // 2. Walk Input Placeholders
     const inputs = document.querySelectorAll('input[placeholder], textarea[placeholder]');
     inputs.forEach(input => {
-        const ph = input.getAttribute('placeholder');
-        if (ph && dict[ph]) {
-            input.setAttribute('placeholder', dict[ph]);
-        }
+        let orig = _originalAttr.get(input);
+        if (!orig) { orig = {}; _originalAttr.set(input, orig); }
+        if (orig.placeholder === undefined) orig.placeholder = input.getAttribute('placeholder');
+        const ph = orig.placeholder;
+        if (ph == null) return;
+        input.setAttribute('placeholder', (dict && dict[ph]) ? dict[ph] : ph);
     });
 
     // 3. Walk specific Title / tooltips if needed
     const titles = document.querySelectorAll('[title]');
     titles.forEach(el => {
-        const t = el.getAttribute('title');
-        if (t && dict[t]) {
-            el.setAttribute('title', dict[t]);
-        }
+        let orig = _originalAttr.get(el);
+        if (!orig) { orig = {}; _originalAttr.set(el, orig); }
+        if (orig.title === undefined) orig.title = el.getAttribute('title');
+        const t = orig.title;
+        if (t == null) return;
+        el.setAttribute('title', (dict && dict[t]) ? dict[t] : t);
     });
 }
