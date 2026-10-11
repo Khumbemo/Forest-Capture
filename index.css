@@ -29,7 +29,7 @@
 
   --text-primary:   #e5e5e5;
   --text-secondary: #a3a3a3;
-  --text-muted:     #666666;
+  --text-muted:     #808080;
   --text-inverse:   #0a0a0a;
 
   --sp-xs: 4px; --sp-sm: 8px; --sp-md: 12px; --sp-lg: 16px; --sp-xl: 24px; --sp-2xl: 32px;
@@ -58,7 +58,7 @@
   --bg-input:#f0ebe3;--bg-hover:#e8e0d4;--border:#d4c9b8;--border-light:#c4b8a4;
   --emerald:#0284c7;--emerald-dim:#0369a1;--emerald-glow:#0284c720;
   --amber:#d97706;--red:#dc2626;--red-dim:#b91c1c;--sky:#0284c7;--cyan:#0891b2;--violet:#7c3aed;
-  --text-primary:#1c1917;--text-secondary:#57534e;--text-muted:#a8a29e;--text-inverse:#ffffff;
+  --text-primary:#1c1917;--text-secondary:#57534e;--text-muted:#666666;--text-inverse:#ffffff;
   --glass:rgba(255,255,255,.7);--neon-glow:0 0 20px rgba(22,163,74,.1);
 }
 
@@ -69,6 +69,15 @@
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 html{font-size:15px;-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
 body{font-family:'Roboto',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg-deep);color:var(--text-primary);min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
+
+/* Visible keyboard-focus indicator for every interactive element. Previously
+   only form inputs had a focus style (see .form-group input:focus etc.
+   below), so buttons, nav tabs, and other controls were invisible to
+   keyboard-only users tabbing through the app. :focus-visible (not :focus)
+   keeps this from appearing on mouse/touch taps, matching native browser
+   behavior, and doesn't fight the inputs' own :focus box-shadow since that
+   selector is more specific and comes later in the cascade. */
+:focus-visible{outline:2px solid var(--emerald);outline-offset:2px;border-radius:var(--radius-sm);}
 
 /* =========== SPLASH SCREEN =========== */
 .splash-screen{
