@@ -920,10 +920,8 @@ function setupEventListeners() {
         import('./modules/map.js').then(m => m.setMapLayer(el.value));
       }
       if (id === 'settingLanguage') {
-        const confirmed = await fcConfirm('Language changed. The app must restart to apply changes completely. Restart now?');
-        if (confirmed) {
-          window.location.reload();
-        }
+        setLanguage(el.value);
+        walkDOMAndTranslate();
       }
       if (id === 'settingUnitSystem') {
         import('./modules/ui.js').then(ui => ui.applyUnitSystem(el.value));
