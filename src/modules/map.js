@@ -7,7 +7,33 @@ import { initOfflineMapUI } from './map-offline.js';
 
 let map = null, userMarker = null, wpMarkers = [], satLayer, terLayer, hybLayer, boundaryPolygon = null;
 
+// Leaflet (~1MB JS + CSS, bundled locally) is only needed on the Map
+// screen, so it's loaded on demand the first time a user opens it rather
+// than on every app boot. Memoized so repeat visits to the Map screen
+// don't re-inject the tags; a failed load (offline on first run, before
+// the files are cached) is swallowed here and caught by initMap()'s own
+// `typeof L === 'undefined'` guard below, same as before this was lazy.
+let _leafletLoadPromise = null;
+function _loadLeaflet() {
+  if (typeof L !== 'undefined') return Promise.resolve();
+  if (_leafletLoadPromise) return _leafletLoadPromise;
+  _leafletLoadPromise = new Promise((resolve) => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = './vendor/leaflet/leaflet.css';
+    document.head.appendChild(link);
+
+    const script = document.createElement('script');
+    script.src = './vendor/leaflet/leaflet.js';
+    script.onload = () => resolve();
+    script.onerror = () => { console.warn('map.js: Leaflet failed to load'); resolve(); };
+    document.body.appendChild(script);
+  });
+  return _leafletLoadPromise;
+}
+
 export async function initMap() {
+  await _loadLeaflet();
   if (typeof L === 'undefined') return;
   if (map) {
     map.invalidateSize();
