@@ -4,3 +4,7 @@ A forest survey app streamlines fieldwork by guiding users through structured da
 ## Building
 
 `www/` is a generated build artifact (not tracked in git) — run `npm run prep` (or `npm run cap:sync` to also sync the Android project) to regenerate it from `index.html`, `src/`, `vendor/`, and `data/` before opening the Android project or serving locally with `npm start`.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, testing, and PR conventions, and [CHANGELOG.md](CHANGELOG.md) for release history.
