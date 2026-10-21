@@ -110,9 +110,15 @@ export const idb = {
       return new Promise((resolve, reject) => {
         const transaction = db.transaction(STORE_NAME, 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
-        const request = store.put(val, key);
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(request.error);
+        store.put(val, key);
+        // Resolve on the transaction's oncomplete, not the put request's
+        // onsuccess: the request succeeding only means the write was
+        // accepted into the transaction, not that it's durably committed.
+        // Resolving early let a reload/navigation right after an awaited
+        // set() race ahead of the actual commit and silently lose the
+        // write — reproduced as a just-created survey vanishing on reload.
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
       });
     } catch (e) {
       console.warn(`idb: set(${key}) failed`, e.message);
@@ -125,9 +131,9 @@ export const idb = {
       return await new Promise((resolve, reject) => {
         const transaction = db.transaction(STORE_NAME, 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
-        const request = store.delete(key);
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(request.error);
+        store.delete(key);
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
       });
     } catch (e) {
       console.warn(`idb: remove(${key}) failed`, e.message);

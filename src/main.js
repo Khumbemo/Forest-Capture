@@ -624,6 +624,16 @@ function setupEventListeners() {
       const anonId = 'anon_' + Date.now();
       localStorage.setItem('fc_user', JSON.stringify({ uid: anonId, email: null, anonymous: true, time: Date.now() }));
     }
+    // storage.js's getCurrentUidValue() memoizes its uid on first call and
+    // never re-reads localStorage after that. If anything resolved it
+    // before this point (e.g. an early loadSettings()/getSurveys() call
+    // during boot), it would have run before fc_user existed and cached
+    // the literal fallback string 'anonymous' for the rest of this page's
+    // life — every save/read this session would then silently use a
+    // different storage key than the anon_<id> one just established here,
+    // making the data appear to vanish on the next reload. Clearing the
+    // cache forces the next call to pick up the now-valid fc_user.uid.
+    resetUserRef();
     hideLogin();
     toast('Working offline — data saved locally');
   });
