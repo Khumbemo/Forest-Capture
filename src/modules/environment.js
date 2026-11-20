@@ -35,6 +35,7 @@ export async function saveEnv() {
     elevation: isImperial ? toMetric(numOrNull($('#envElevation').value), 'dist') : numOrNull($('#envElevation').value),
     topoPosition: $('#envTopoPosition') ? $('#envTopoPosition').value : '',
     canopyCover: numOrNull($('#envCanopyCover').value),
+    lai: numOrNull($('#envLAI') ? $('#envLAI').value : ''),
     hydrology: $('#envHydrology') ? $('#envHydrology').value : '',
     forestType: $('#envForestType') ? $('#envForestType').value : '',
     soilType: $('#envSoilType').value,
@@ -85,6 +86,8 @@ export async function loadEnvData() {
   if (e.elevation != null) $('#envElevation').value = isImperial ? toImperial(e.elevation, 'dist') : e.elevation;
   if (e.topoPosition && $('#envTopoPosition')) $('#envTopoPosition').value = e.topoPosition;
   if (e.canopyCover != null) $('#envCanopyCover').value = e.canopyCover;
+  if (e.lai != null && $('#envLAI')) $('#envLAI').value = e.lai;
+  if (e.lai != null && $('#canopyEstimate')) $('#canopyEstimate').textContent = `≈ ${e.canopyCover ?? '—'}% cover | LAI: ${e.lai}`;
   if (e.hydrology && $('#envHydrology')) $('#envHydrology').value = e.hydrology;
   if (e.forestType && $('#envForestType')) $('#envForestType').value = e.forestType;
   if (e.soilType) $('#envSoilType').value = e.soilType;

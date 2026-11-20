@@ -1,10 +1,10 @@
 // src/modules/prism.js — Variable-Radius Point Sampling (Prism Sweep)
 
 import { $, $$, toast, fcConfirm } from './ui.js';
-import { Store } from './storage.js';
+import { Store, loadSettings } from './storage.js';
 import { fillGPSField } from './gps.js';
 import { attachAutocomplete } from './species-autocomplete.js';
-import { getLocalISO } from './utils.js';
+import { getLocalISO, toMetric, toImperial } from './utils.js';
 import { ensureActiveSurvey } from './survey.js';
 
 let tallyCount = 0;
@@ -33,6 +33,9 @@ export async function savePrismPoint() {
   const entries = $$('#prismTallyList .species-entry');
   if (!entries.length) { toast('Add at least one tree tally', true); return; }
 
+  const sysSettings = await loadSettings();
+  const isImperial = sysSettings.settingUnitSystem === 'imperial';
+
   const baf = parseFloat($('#prismBAF').value) || 4;
   const point = {
     number: parseInt($('#prismPointNumber').value) || 1,
@@ -41,11 +44,14 @@ export async function savePrismPoint() {
     recordedAt: getLocalISO(),
     observer: $('#prismObserver')?.value.trim() || '',
     gps: $('#prismGPS')?.value || '',
-    tallies: Array.from(entries).map(e => ({
-      species: e.querySelector('.prism-sp').value.trim(),
-      dbh: parseFloat(e.querySelector('.prism-dbh')?.value) || 0,
-      status: e.querySelector('.prism-status')?.value || 'live'
-    }))
+    tallies: Array.from(entries).map(e => {
+      const rawDbh = parseFloat(e.querySelector('.prism-dbh')?.value) || 0;
+      return {
+        species: e.querySelector('.prism-sp').value.trim(),
+        dbh: isImperial ? toMetric(rawDbh, 'diam') : rawDbh,
+        status: e.querySelector('.prism-status')?.value || 'live'
+      };
+    })
   };
 
   // Calculate BA/ha = tally count × BAF
@@ -96,6 +102,8 @@ export async function refreshPrismTable() {
     b.onclick = async () => {
       const idx = +b.dataset.i;
       const p = s.prismPoints[idx];
+      const sysSettings = await loadSettings();
+      const isImperial = sysSettings.settingUnitSystem === 'imperial';
       $('#prismBAF').value = p.baf;
       $('#prismPointNumber').value = p.number;
       if ($('#prismDate') && p.measDate) $('#prismDate').value = p.measDate;
@@ -107,7 +115,7 @@ export async function refreshPrismTable() {
         addPrismTally();
         const last = $('#prismTallyList').lastElementChild;
         last.querySelector('.prism-sp').value = t.species;
-        last.querySelector('.prism-dbh').value = t.dbh || 0;
+        last.querySelector('.prism-dbh').value = isImperial ? toImperial(t.dbh || 0, 'diam') : (t.dbh || 0);
         if (last.querySelector('.prism-status')) last.querySelector('.prism-status').value = t.status || 'live';
       });
       $('#btnSavePrism').textContent = 'Update Prism Point';
