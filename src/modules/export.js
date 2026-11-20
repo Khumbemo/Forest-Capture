@@ -257,7 +257,7 @@ export async function generateReport() {
     const envLabels = {
       date: 'Measurement Date', observer: 'Observer / Team ID',
       slope: 'Slope (°)', aspect: 'Aspect', elevation: 'Elevation (m)', topoPosition: 'Topographic Position',
-      canopyCover: 'Canopy Cover (%)', hydrology: 'Drainage / Hydrology', forestType: 'Forest Type',
+      canopyCover: 'Canopy Cover (%)', lai: 'Leaf Area Index (LAI)', hydrology: 'Drainage / Hydrology', forestType: 'Forest Type',
       soilType: 'Soil Type', soilMoisture: 'Soil Moisture', soilColor: 'Soil Color', soilPH: 'Soil pH',
       litter_depth: 'Litter Depth (cm)', humus_depth: 'Humus Depth (cm)', bedrock_depth: 'Depth to Bedrock (cm)',
       temperature: 'Temperature (°C)', humidity: 'Humidity (%)', windSpeed: 'Wind Speed (km/h)',

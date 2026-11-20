@@ -9,7 +9,23 @@ changelog kept live during that work.
 
 ## [Unreleased]
 
-Nothing yet.
+### Fixed
+- Three more scientific-accuracy/data-integrity bugs found during a full
+  audit of every tool's formulas and protocols against forestry/ecology
+  conventions: the Prism Sweep tool's DBH field was labeled unit-aware
+  (cm/in) but never actually converted, so an imperial-mode entry was
+  stored as if it were metric; the Clinometer's distance field had the
+  same gap, and its height result was always suffixed "m" regardless of
+  the active unit system; and the canopy-cover photo tool's computed Leaf
+  Area Index (LAI) was calculated but had no field to be saved into, so it
+  was silently discarded on every save instead of persisting with the
+  survey. Also fixed the Clinometer's "Apply to Species" button, which
+  reported success without ever writing the computed height anywhere.
+  Every other audited formula and protocol (Shannon-Wiener, Simpson's,
+  Pielou's, Margalef's, Fisher's alpha, Chao1, Chave et al. 2014 AGB,
+  Reineke's SDI, basal-area-factor prism sampling, line-intercept cover,
+  two-angle clinometer trigonometry, CBI scoring, herbarium voucher
+  fields) checked out against the published methods. (#24)
 
 ## [3.1.0]
 

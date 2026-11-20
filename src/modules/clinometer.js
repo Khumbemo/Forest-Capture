@@ -9,7 +9,8 @@
  */
 
 import { $, $$, toast } from './ui.js';
-import { Store } from './storage.js';
+import { Store, loadSettings } from './storage.js';
+import { toMetric, toImperial } from './utils.js';
 
 /* ── State ─────────────────────────────────────────────────────────── */
 
@@ -19,6 +20,8 @@ let currentPitch   = 0;      // raw real-time pitch from sensor
 let smoothPitch    = 0;      // low-pass filtered pitch
 let sensorAvailable = false;
 let animFrameId    = null;
+let isImperial     = false;  // refreshed each time the screen is entered
+let _speciesIndexMap = [];   // flat dropdown index -> {qIdx, spIdx}
 
 /** Low-pass filter coefficient (0 < α < 1). Smaller = smoother. */
 const ALPHA = 0.15;
@@ -133,13 +136,9 @@ function _updateGauge() {
     if (topEl) topEl.textContent = `${topAngle.toFixed(1)}°`;
   }
 
-  // Auto-compute height when both angles are locked
+  // Auto-compute height when both angles are locked (display handled inside)
   if (baseAngle !== null && topAngle !== null) {
-    const height = _computeHeight();
-    const resultEl = $('#clinoHeightResult');
-    if (resultEl && typeof height === 'number') {
-      resultEl.textContent = `${height.toFixed(2)} m`;
-    }
+    _computeHeight();
   }
 
   // Schedule next frame
@@ -209,25 +208,36 @@ function resetAngles() {
  *
  *   height = distance × |tan(top°) − tan(base°)|
  *
+ * The input distance is entered in whichever unit system is active
+ * (its label switches between m/ft) but the formula itself, and the
+ * returned value, always operate in metres — matching how height is
+ * stored everywhere else in the app. Only the on-screen result text is
+ * converted back to the active unit for display.
+ *
  * @returns {number|undefined} Computed height in metres, or undefined
  *          if inputs are invalid.
  */
 function _computeHeight() {
   const distanceInput = $('#clinoDistance');
-  const distance = distanceInput ? parseFloat(distanceInput.value) : NaN;
+  const rawDistance = distanceInput ? parseFloat(distanceInput.value) : NaN;
   const resultEl = $('#clinoHeightResult');
 
-  if (!distance || distance <= 0 || isNaN(distance)) {
+  if (!rawDistance || rawDistance <= 0 || isNaN(rawDistance)) {
     if (resultEl) resultEl.textContent = '--';
     return undefined;
   }
+
+  const distance = isImperial ? toMetric(rawDistance, 'dist') : rawDistance;
 
   const topRad  = topAngle  * Math.PI / 180;
   const baseRad = baseAngle * Math.PI / 180;
   let height = distance * (Math.tan(topRad) - Math.tan(baseRad));
   height = Math.abs(height);
 
-  if (resultEl) resultEl.textContent = `${height.toFixed(2)} m`;
+  if (resultEl) {
+    const displayHeight = isImperial ? toImperial(height, 'dist') : height;
+    resultEl.textContent = `${displayHeight.toFixed(2)} ${isImperial ? 'ft' : 'm'}`;
+  }
 
   return height;
 }
@@ -235,7 +245,8 @@ function _computeHeight() {
 /* ── Species Integration ───────────────────────────────────────────── */
 
 /**
- * Apply the computed height to the currently selected species entry.
+ * Apply the computed height (in metres, matching how height is stored
+ * elsewhere) to the currently selected species entry and persist it.
  */
 async function applyToSpecies() {
   const height = _computeHeight();
@@ -252,10 +263,17 @@ async function applyToSpecies() {
 
   const speciesSelect = $('#clinoSpeciesSelect');
   const selectedIndex = speciesSelect ? parseInt(speciesSelect.value, 10) : -1;
+  const target = selectedIndex >= 0 ? _speciesIndexMap[selectedIndex] : undefined;
+  const sp = target && survey.quadrats?.[target.qIdx]?.species?.[target.spIdx];
 
-  if (selectedIndex >= 0) {
-    toast('Height applied to species');
+  if (!sp) {
+    toast('Select a species first');
+    return;
   }
+
+  sp.height = Number(height.toFixed(2));
+  await Store.update(survey);
+  toast('Height applied to species');
 }
 
 /**
@@ -267,6 +285,7 @@ async function _populateSpeciesDropdown() {
 
   // Clear existing options
   select.innerHTML = '';
+  _speciesIndexMap = [];
 
   const survey = await Store.getActive();
   if (!survey) return;
@@ -276,11 +295,12 @@ async function _populateSpeciesDropdown() {
 
   quadrats.forEach((quadrat, qIdx) => {
     const species = quadrat.species || [];
-    species.forEach((sp) => {
+    species.forEach((sp, spIdx) => {
       const option = document.createElement('option');
       option.value = optionIndex;
       option.textContent = sp.name || `Quadrat ${qIdx + 1} – Species ${optionIndex + 1}`;
       select.appendChild(option);
+      _speciesIndexMap.push({ qIdx, spIdx });
       optionIndex++;
     });
   });
@@ -292,7 +312,9 @@ async function _populateSpeciesDropdown() {
  * Called when the clinometer screen becomes visible.
  * Starts the sensor, populates species list, and begins the render loop.
  */
-export function onScreenEnter() {
+export async function onScreenEnter() {
+  const sysSettings = await loadSettings();
+  isImperial = sysSettings.settingUnitSystem === 'imperial';
   startSensor();
   _populateSpeciesDropdown();
   animFrameId = requestAnimationFrame(_updateGauge);
