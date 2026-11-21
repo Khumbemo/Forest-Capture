@@ -297,7 +297,7 @@ export async function refreshGermplasmUI() {
                     <div style="font-size:0.85rem; color:var(--text-muted);">${esc(r.speciesCommon || '')}</div>
                   </div>
                 </div>
-                <button class="btn-ghost btn-g-del" data-id="${esc(r.id)}" style="color:var(--red); padding:4px;">✕</button>
+                <button class="btn-ghost btn-g-del" data-id="${esc(r.id)}" style="color:var(--red); padding:4px;" aria-label="Delete record">✕</button>
               </div>
               <div style="font-size:0.75rem; color:var(--text-muted); margin-top:12px; display:flex; gap:12px; flex-wrap:wrap; font-weight:500;">
                 ${r.collectionDate||r.acquisitionDate||r.samplingDate ? `<span>${esc(r.collectionDate||r.acquisitionDate||r.samplingDate)}</span>` : ''}

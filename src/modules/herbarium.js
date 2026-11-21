@@ -191,9 +191,9 @@ export async function refreshHerbariumTable() {
       <td>${esc(h.family || '—')}</td>
       <td>${h.date || '—'}</td>
       <td class="action-btns">
-        <button data-action="eh" data-i="${i}" title="Edit">✏️</button>
-        <button data-action="dw" data-doc="${i}" title="Download Word">📄</button>
-        <button data-action="dh" data-i="${i}" title="Delete">🗑️</button>
+        <button data-action="eh" data-i="${i}" title="Edit" aria-label="Edit voucher">✏️</button>
+        <button data-action="dw" data-doc="${i}" title="Download Word" aria-label="Download voucher as Word document">📄</button>
+        <button data-action="dh" data-i="${i}" title="Delete" aria-label="Delete voucher">🗑️</button>
       </td>
     </tr>`;
   });

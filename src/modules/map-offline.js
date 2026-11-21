@@ -148,7 +148,7 @@ function _injectDownloadPanel(map) {
     <div class="offline-panel-body" id="offlinePanelBody" style="display:none">
       <div class="offline-panel-header">
         <span class="offline-panel-title">Offline map area</span>
-        <button class="offline-panel-close" id="offlinePanelClose">✕</button>
+        <button class="offline-panel-close" id="offlinePanelClose" aria-label="Close offline map panel">✕</button>
       </div>
 
       <div class="offline-panel-section">

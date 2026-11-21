@@ -14,7 +14,7 @@ export function addPrismTally() {
   const d = document.createElement('div');
   d.className = 'species-entry';
   const inputId = `prism-spname-${tallyCount}`;
-  d.innerHTML = `<div class="species-entry-header"><span class="species-entry-num">Tree #${tallyCount}</span><button class="species-remove" type="button">✕</button></div>
+  d.innerHTML = `<div class="species-entry-header"><span class="species-entry-num">Tree #${tallyCount}</span><button class="species-remove" type="button" aria-label="Remove tree tally">✕</button></div>
 <div class="form-group"><label>Species</label><input type="text" class="prism-sp" id="${inputId}" placeholder="e.g., Shorea robusta" /></div>
 <div class="form-row"><div class="form-group"><label>DBH (<span class="unit-diam">cm</span>)</label><input type="number" class="prism-dbh" min="0" step="0.1" placeholder="Optional for V-BAR" /></div><div class="form-group"><label>Status</label><select class="prism-status"><option value="live">Live</option><option value="dead">Dead</option></select></div></div>`;
   d.querySelector('.species-remove').addEventListener('click', () => d.remove());
@@ -93,7 +93,7 @@ export async function refreshPrismTable() {
   }
   let r = '';
   s.prismPoints.forEach((p, pi) => {
-    r += `<tr><td>${p.number}</td><td>${p.baf}</td><td>${p.treeCount}</td><td>${p.basalAreaPerHa} m²/ha</td><td class="action-btns"><button data-action="ep" data-i="${pi}" title="Edit">✏️</button><button data-action="dp" data-i="${pi}" title="Delete">🗑️</button></td></tr>`;
+    r += `<tr><td>${p.number}</td><td>${p.baf}</td><td>${p.treeCount}</td><td>${p.basalAreaPerHa} m²/ha</td><td class="action-btns"><button data-action="ep" data-i="${pi}" title="Edit" aria-label="Edit prism point">✏️</button><button data-action="dp" data-i="${pi}" title="Delete" aria-label="Delete prism point">🗑️</button></td></tr>`;
   });
   tb.innerHTML = r;
 
