@@ -9,6 +9,15 @@ changelog kept live during that work.
 
 ## [Unreleased]
 
+### Added
+- Soft data-validation warnings on the Germplasm tool (ICFRE/NBPGR/ISTA),
+  surfaced as a confirm-to-proceed prompt rather than a hard block: ISTA
+  purity components (Pure Seed + Other Crop + Weed + Inert) not summing to
+  ~100% as ISTA Rules require, ISTA germination categories exceeding 100%
+  combined, any percentage field outside 0–100%, an out-of-range
+  latitude/longitude, and a seed-lot/accession/label number that duplicates
+  an existing record for the same body. (#25)
+
 ### Fixed
 - Three more scientific-accuracy/data-integrity bugs found during a full
   audit of every tool's formulas and protocols against forestry/ecology

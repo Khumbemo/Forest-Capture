@@ -34,6 +34,75 @@ const BODIES = {
 let currentBody = null;
 let currentView = 'home'; // home, form, list
 
+// The unique-identifier field per regulatory body, used to flag likely
+// duplicate records (e.g. the same ISTA seed lot logged twice).
+const BODY_ID_FIELD = { icfre: 'labelNo', nbpgr: 'accessionNo', ista: 'seedLotNo' };
+
+const PCT_FIELD_LABELS = {
+  pureSeedPct: 'Pure Seed %', otherCropPct: 'Other Crop Seeds %', weedSeedPct: 'Weed Seeds %', inertMatterPct: 'Inert Matter %',
+  germNormalPct: 'Normal Germination %', germAbnormalPct: 'Abnormal Seedlings %', freshUngermPct: 'Fresh/Ungerminated %', hardSeedPct: 'Hard Seeds %',
+  moistureContent: 'Moisture Content %', viabilityInitial: 'Initial Viability %'
+};
+// Percentage fields present on each body's form, range-checked to 0–100%.
+const PCT_FIELDS = {
+  icfre: [],
+  nbpgr: ['moistureContent', 'viabilityInitial'],
+  ista: ['pureSeedPct', 'otherCropPct', 'weedSeedPct', 'inertMatterPct', 'germNormalPct', 'germAbnormalPct', 'freshUngermPct', 'hardSeedPct', 'moistureContent']
+};
+
+function numOrNull(v) {
+  const n = parseFloat(v);
+  return isNaN(n) ? null : n;
+}
+
+/**
+ * Soft, non-blocking checks against the real ISTA/NBPGR/ICFRE conventions:
+ * percentage fields in range, ISTA purity components summing to ~100%
+ * (Pure Seed + Other Crop + Weed + Inert is a closed partition per ISTA
+ * Rules), ISTA germination categories not exceeding 100% combined (these
+ * four don't include "dead seeds", so they may legitimately total less
+ * than 100%, but never more), plausible lat/long, and a likely-duplicate
+ * check on the body's unique identifier. Returns true if the record
+ * should be saved as-is, false if the user chose to go back and fix it.
+ */
+async function validateGermplasmRecord(rec, body, existingRecords) {
+  const warnings = [];
+
+  (PCT_FIELDS[body] || []).forEach(f => {
+    const v = numOrNull(rec[f]);
+    if (v !== null && (v < 0 || v > 100)) warnings.push(`${PCT_FIELD_LABELS[f] || f} is ${v}, expected 0–100`);
+  });
+
+  if (body === 'icfre' || body === 'nbpgr') {
+    const lat = numOrNull(rec.latitude), lng = numOrNull(rec.longitude);
+    if (lat !== null && (lat < -90 || lat > 90)) warnings.push(`Latitude ${lat} is outside -90..90`);
+    if (lng !== null && (lng < -180 || lng > 180)) warnings.push(`Longitude ${lng} is outside -180..180`);
+  }
+
+  if (body === 'ista') {
+    const purityParts = ['pureSeedPct', 'otherCropPct', 'weedSeedPct', 'inertMatterPct'].map(f => numOrNull(rec[f]));
+    if (purityParts.every(v => v !== null)) {
+      const sum = purityParts.reduce((a, b) => a + b, 0);
+      if (Math.abs(sum - 100) > 1) warnings.push(`Purity components sum to ${sum.toFixed(1)}%, expected ≈100%`);
+    }
+
+    const germParts = ['germNormalPct', 'germAbnormalPct', 'freshUngermPct', 'hardSeedPct'].map(f => numOrNull(rec[f])).filter(v => v !== null);
+    if (germParts.length) {
+      const gSum = germParts.reduce((a, b) => a + b, 0);
+      if (gSum > 100.5) warnings.push(`Germination categories sum to ${gSum.toFixed(1)}%, which exceeds 100%`);
+    }
+  }
+
+  const idField = BODY_ID_FIELD[body];
+  const idVal = (rec[idField] || '').trim();
+  if (idVal && existingRecords.some(r => r.bodyId === body && (r[idField] || '').trim() === idVal)) {
+    warnings.push(`Another ${BODIES[body].name} record already uses ${idField} "${idVal}"`);
+  }
+
+  if (!warnings.length) return true;
+  return await fcConfirm(`Possible data issues — ${warnings.join(' · ')}. Save anyway?`);
+}
+
 // ─── LOGIC ────────────────────────────────────────────────────────
 export function init() {
   renderHome();
@@ -138,6 +207,8 @@ export async function refreshGermplasmUI() {
           });
 
           sv.germplasm = sv.germplasm || [];
+          const proceed = await validateGermplasmRecord(rec, currentBody, sv.germplasm);
+          if (!proceed) return;
           sv.germplasm.unshift(rec);
           await Store.update(sv);
 
