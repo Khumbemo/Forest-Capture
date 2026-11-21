@@ -10,6 +10,18 @@ changelog kept live during that work.
 ## [Unreleased]
 
 ### Added
+- Accessibility pass on the app's shared interaction primitives: the
+  toast notification region now announces to screen readers
+  (`role="status"`/`aria-live="polite"`); the custom confirm/prompt/alert
+  dialogs (used everywhere `window.confirm`/`prompt`/`alert` would
+  otherwise appear) now expose `role="alertdialog"`/`aria-modal="true"`
+  with their message wired via `aria-describedby`, trap Tab focus inside
+  the dialog while open, and restore focus to whatever triggered them on
+  close; and roughly two dozen icon-only buttons across the app (Settings,
+  map layer/locate/waypoint controls, GPS-fill, edit/delete/remove icons
+  in Quadrat, Transect, Prism, Herbarium, Germplasm, Media and Waypoints)
+  now have `aria-label`s, where previously only a mouse-hover `title` (or
+  nothing) identified them. (#26)
 - Soft data-validation warnings on the Germplasm tool (ICFRE/NBPGR/ISTA),
   surfaced as a confirm-to-proceed prompt rather than a hard block: ISTA
   purity components (Pure Seed + Other Crop + Weed + Inert) not summing to

@@ -21,7 +21,7 @@ export async function refreshWpList() {
         <div class="wp-name">${esc(w.name || 'Waypoint')}</div>
         <div class="wp-coords">${cord}</div>
       </div>
-      <button class="wp-delete" data-i="${i}">✕</button>
+      <button class="wp-delete" data-i="${i}" aria-label="Delete waypoint">✕</button>
     </div>`;
   }).join('');
   list.querySelectorAll('.wp-delete').forEach(b => {

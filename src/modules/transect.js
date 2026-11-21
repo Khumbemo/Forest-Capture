@@ -14,7 +14,7 @@ export function addIntercept() {
   const d = document.createElement('div');
   d.className = 'species-entry';
   const inputId = `transect-intname-${intCount}`;
-  d.innerHTML = `<div class="species-entry-header"><span class="species-entry-num">Intercept #${intCount}</span><button class="species-remove" type="button">✕</button></div>
+  d.innerHTML = `<div class="species-entry-header"><span class="species-entry-num">Intercept #${intCount}</span><button class="species-remove" type="button" aria-label="Remove intercept entry">✕</button></div>
 <div class="form-group"><label>Species / Feature</label><input type="text" class="int-name" id="${inputId}" placeholder="Species name or substrate" /></div>
 <div class="form-row"><div class="form-group"><label>Life Form</label><select class="int-lifeform"><option value="">—</option><option value="tree">Tree</option><option value="shrub">Shrub</option><option value="herb">Herb</option><option value="grass">Grass</option><option value="liana">Liana</option><option value="epiphyte">Epiphyte</option><option value="moss-lichen">Moss/Lichen</option><option value="fern">Fern</option></select></div><div class="form-group"><label>Intercept Type</label><select class="int-type"><option value="canopy">Canopy</option><option value="basal">Basal</option><option value="foliar">Foliar</option></select></div></div>
 <div class="form-row"><div class="form-group"><label>Start Distance (<span class="unit-dist">m</span>)</label><input type="number" class="int-start" min="0" step="0.01" placeholder="Canfield start" title="Where species intercept begins along the tape" /></div><div class="form-group"><label>End Distance (<span class="unit-dist">m</span>)</label><input type="number" class="int-end" min="0" step="0.01" placeholder="Canfield end" title="Where species intercept ends along the tape" /></div></div>
@@ -126,7 +126,7 @@ export async function refreshTransectTable() {
   s.transects.forEach((t, ti) => {
     const ints = t.intercepts && t.intercepts.length ? t.intercepts : [{ name: '—', distance: '—', cover: '—' }];
     ints.forEach((n, ni) => {
-      r += `<tr>${ni === 0 ? `<td>${t.number}</td><td>${t.length}</td><td>${t.width}</td>` : '<td></td><td></td><td></td>'}<td class="species-name-cell">${esc(n.name || '—')}</td><td>${n.distance || n.startDist || '—'}</td><td>${n.cover || '—'}</td>${ni === 0 ? `<td class="action-btns"><button data-action="et" data-i="${ti}" title="Edit">✏️</button><button data-action="del-t" data-i="${ti}" title="Delete">🗑️</button></td>` : '<td></td>'}</tr>`;
+      r += `<tr>${ni === 0 ? `<td>${t.number}</td><td>${t.length}</td><td>${t.width}</td>` : '<td></td><td></td><td></td>'}<td class="species-name-cell">${esc(n.name || '—')}</td><td>${n.distance || n.startDist || '—'}</td><td>${n.cover || '—'}</td>${ni === 0 ? `<td class="action-btns"><button data-action="et" data-i="${ti}" title="Edit" aria-label="Edit transect">✏️</button><button data-action="del-t" data-i="${ti}" title="Delete" aria-label="Delete transect">🗑️</button></td>` : '<td></td>'}</tr>`;
     });
   });
   tb.innerHTML = r;

@@ -240,14 +240,57 @@ function _createModalOverlay() {
   return overlay;
 }
 
+let _modalMsgIdSeq = 0;
+
 function _createModalBox(message, type = 'confirm') {
   const modal = document.createElement('div');
   modal.className = 'fc-modal';
+  modal.setAttribute('role', 'alertdialog');
+  modal.setAttribute('aria-modal', 'true');
+  const msgId = `fc-modal-msg-${++_modalMsgIdSeq}`;
+  modal.setAttribute('aria-describedby', msgId);
   const iconMap = { confirm: '⚠️', prompt: '✏️', alert: 'ℹ️', delete: '🗑️' };
   const icon = iconMap[type] || iconMap.confirm;
-  modal.innerHTML = `<div class="fc-modal-icon">${icon}</div><div class="fc-modal-body"><p class="fc-modal-message"></p></div><div class="fc-modal-actions"></div>`;
+  modal.innerHTML = `<div class="fc-modal-icon" aria-hidden="true">${icon}</div><div class="fc-modal-body"><p class="fc-modal-message" id="${msgId}"></p></div><div class="fc-modal-actions"></div>`;
   modal.querySelector('.fc-modal-message').textContent = message;
   return modal;
+}
+
+const _MODAL_FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Appends `modal` into `overlay` and `overlay` into the document, traps
+ * Tab/Shift+Tab focus within the modal while it's open, and returns a
+ * `restoreFocus()` callback that each dialog's cleanup should call: it
+ * releases the trap and returns focus to whatever triggered the dialog,
+ * so a keyboard/screen-reader user lands back where they were instead of
+ * on <body>.
+ */
+function _presentModal(overlay, modal) {
+  const triggerEl = document.activeElement;
+
+  function trapHandler(e) {
+    if (e.key !== 'Tab') return;
+    const focusables = Array.from(modal.querySelectorAll(_MODAL_FOCUSABLE)).filter(el => !el.disabled);
+    if (!focusables.length) return;
+    const first = focusables[0], last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault(); last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault(); first.focus();
+    }
+  }
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  overlay.addEventListener('keydown', trapHandler);
+
+  return function restoreFocus() {
+    overlay.removeEventListener('keydown', trapHandler);
+    if (triggerEl && typeof triggerEl.focus === 'function' && document.contains(triggerEl)) {
+      triggerEl.focus();
+    }
+  };
 }
 
 /**
@@ -270,8 +313,7 @@ export function fcConfirm(message) {
 
     actions.appendChild(cancelBtn);
     actions.appendChild(okBtn);
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
+    const restoreFocus = _presentModal(overlay, modal);
 
     requestAnimationFrame(() => { overlay.classList.add('show'); okBtn.focus(); });
 
@@ -283,6 +325,7 @@ export function fcConfirm(message) {
     const cleanup = (result) => {
       document.removeEventListener('keydown', keyHandler);
       overlay.classList.remove('show');
+      restoreFocus();
       setTimeout(() => overlay.remove(), 200);
       resolve(result);
     };
@@ -319,13 +362,13 @@ export function fcPrompt(message, defaultValue = '') {
 
     actions.appendChild(cancelBtn);
     actions.appendChild(okBtn);
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
+    const restoreFocus = _presentModal(overlay, modal);
 
     requestAnimationFrame(() => { overlay.classList.add('show'); input.focus(); input.select(); });
 
     const cleanup = (result) => {
       overlay.classList.remove('show');
+      restoreFocus();
       setTimeout(() => overlay.remove(), 200);
       resolve(result);
     };
@@ -354,13 +397,13 @@ export function fcAlert(message) {
     okBtn.textContent = t('OK');
 
     actions.appendChild(okBtn);
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
+    const restoreFocus = _presentModal(overlay, modal);
 
     requestAnimationFrame(() => { overlay.classList.add('show'); okBtn.focus(); });
 
     const cleanup = () => {
       overlay.classList.remove('show');
+      restoreFocus();
       setTimeout(() => overlay.remove(), 200);
       resolve();
     };

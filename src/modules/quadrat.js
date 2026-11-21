@@ -15,7 +15,7 @@ export function addSpeciesEntry() {
   d.className = 'species-entry';
   const inputId = `quadrat-spname-${spCount}`;
   const photoInputId = `quadrat-photo-${spCount}`;
-  d.innerHTML = `<div class="species-entry-header"><span class="species-entry-num">Species #${spCount}</span><button class="species-remove" type="button">✕</button></div>
+  d.innerHTML = `<div class="species-entry-header"><span class="species-entry-num">Species #${spCount}</span><button class="species-remove" type="button" aria-label="Remove species entry">✕</button></div>
 <div class="form-group"><label>Species Name</label><input type="text" class="sp-name" id="${inputId}" placeholder="e.g., Shorea robusta" /></div>
 <div class="form-row" style="align-items:center;"><div class="form-group" style="flex:1;"><label class="morpho-label" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" class="sp-morpho" style="width:16px;height:16px;" /> Unknown (Morphospecies)</label></div><div style="flex:0 0 auto;"><label class="btn btn-ghost btn-sm sp-photo-btn" for="${photoInputId}" style="font-size:0.75rem;padding:4px 10px;border:1px solid var(--border);cursor:pointer;">📷 Photo</label><input type="file" id="${photoInputId}" class="sp-photo-input hidden-input" accept="image/*" capture="environment" style="display:none;" /></div></div>
 <div class="sp-photo-preview" style="display:none;margin-bottom:8px;text-align:center;"><img class="sp-photo-img" src="" style="max-width:100%;max-height:120px;border-radius:6px;border:1px solid var(--border);" /><div class="sp-photo-ref" style="font-size:0.65rem;color:var(--text-muted);margin-top:2px;"></div></div>
@@ -286,7 +286,7 @@ export async function refreshQuadratTable() {
       const dbh = esc(x.dbh || '—');
       const hgt = esc(x.height || '—');
       
-      r += `<tr>${first ? `<td>${qNum}</td><td>${qSize}</td>` : '<td></td><td></td>'}<td class="species-name-cell">${spName}</td><td>${badge}</td><td>${phen}</td><td>${abun}</td><td>${dbh}</td><td>${hgt}</td>${first ? `<td class="action-btns"><button data-action="eq" data-i="${qi}" title="Edit">✏️</button><button data-action="dq" data-i="${qi}" title="Delete">🗑️</button></td>` : '<td></td>'}</tr>`;
+      r += `<tr>${first ? `<td>${qNum}</td><td>${qSize}</td>` : '<td></td><td></td>'}<td class="species-name-cell">${spName}</td><td>${badge}</td><td>${phen}</td><td>${abun}</td><td>${dbh}</td><td>${hgt}</td>${first ? `<td class="action-btns"><button data-action="eq" data-i="${qi}" title="Edit" aria-label="Edit quadrat">✏️</button><button data-action="dq" data-i="${qi}" title="Delete" aria-label="Delete quadrat">🗑️</button></td>` : '<td></td>'}</tr>`;
     });
   });
   tb.innerHTML = r;
