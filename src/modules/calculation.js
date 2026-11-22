@@ -1,6 +1,7 @@
 // src/modules/calculation.js
 
 import { $, toast } from './ui.js';
+import { t } from './i18n.js';
 import { Store } from './storage.js';
 
 export function init() {
@@ -32,7 +33,7 @@ export function csvQuoteCell(cell) {
 async function runCalculations() {
   const survey = await Store.getActive();
   if (!survey) {
-    toast('No active survey selected', true);
+    toast(t('No active survey selected'), true);
     return;
   }
 
@@ -115,12 +116,12 @@ async function runCalculations() {
     totalTransectLength: totalTransectLength.toFixed(1)
   };
 
-  toast('Calculations complete');
+  toast(t('Calculations complete'));
 }
 
 function exportCalculations() {
   if (!lastCalcResults) {
-    toast('Run calculations first', true);
+    toast(t('Run calculations first'), true);
     return;
   }
 
@@ -145,5 +146,5 @@ function exportCalculations() {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  toast('Calculations exported');
+  toast(t('Calculations exported'));
 }

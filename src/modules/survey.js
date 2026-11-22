@@ -1,6 +1,7 @@
 // src/modules/survey.js
 
 import { $, toast, esc, switchScreen } from './ui.js';
+import { t } from './i18n.js';
 import { Store } from './storage.js';
 import { fmtCoords, curPos } from './gps.js';
 import { getLocalISO, getDeviceTimezone, getUTCOffsetMinutes } from './utils.js';
@@ -44,7 +45,7 @@ export async function ensureActiveSurvey() {
 
   await Store.add(sv);
   await Store.setActive(sv.id);
-  toast(`Recording under "${sv.name}" — rename it anytime from Tools`);
+  toast(t('Recording under "{name}" — rename it anytime from Tools', { name: sv.name }));
 
   populateSurveySelector().catch(e => console.warn('Refresh selector failed', e));
   refreshDataRecords().catch(e => console.warn('Refresh records failed', e));
@@ -210,7 +211,7 @@ function _renderPagedRecords(isReset = false) {
       card.addEventListener('click', async () => {
         await Store.setActive(card.dataset.sid);
         await populateSurveySelector();
-        toast('Survey selected — Session updated', false);
+        toast(t('Survey selected — Session updated'), false);
         
         // Navigate to the respective screen
         let tgt = '';
@@ -254,7 +255,7 @@ export async function createNewSurvey() {
   }
   const name = nameInput.value.trim();
   if (!name) {
-    toast('Name required', true);
+    toast(t('Name required'), true);
     return false;
   }
 
@@ -306,7 +307,7 @@ export async function createNewSurvey() {
         if (el) el.value = '';
     });
 
-    toast(`"${name}" created`);
+    toast(t('"{name}" created', { name }));
 
     // Auto-select the newly created survey
     await Store.setActive(sv.id);
@@ -319,11 +320,11 @@ export async function createNewSurvey() {
             const packData = await packRes.json();
             const { idb } = await import('./storage.js');
             await idb.set(`taxpack_${sv.taxonomyPack}`, JSON.stringify(packData));
-            toast(`Downloaded ${sv.taxonomyPack} offline dictionary`);
+            toast(t('Downloaded {pack} offline dictionary', { pack: sv.taxonomyPack }));
          }
       } catch(e) {
          console.warn('Taxonomy pack download failed', e);
-         toast('Taxonomy download failed (offline?)', true);
+         toast(t('Taxonomy download failed (offline?)'), true);
       }
     }
 
@@ -334,7 +335,7 @@ export async function createNewSurvey() {
     return true;
   } catch (err) {
       console.error('createNewSurvey error:', err);
-      toast('Creation failed: ' + err.message, true);
+      toast(t('Creation failed: ') + err.message, true);
       return false;
   }
 }
@@ -399,7 +400,7 @@ async function generateMockSurvey() {
     const nameInput = $('#surveyName');
     if (nameInput) nameInput.value = '';
 
-    toast("Mock Survey Generated!");
+    toast(t('Mock Survey Generated!'));
 
     populateSurveySelector().catch(e => console.warn(e));
     refreshDataRecords().catch(e => console.warn(e));
@@ -413,7 +414,7 @@ async function generateMockSurvey() {
     }
   } catch (e) {
     console.error('Failed to generate mock survey', e);
-    toast('Mock generation failed: ' + e.message, true);
+    toast(t('Mock generation failed: ') + e.message, true);
   }
 }
 // _getLocalISOString replaced by shared getLocalISO() in utils.js

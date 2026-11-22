@@ -103,7 +103,7 @@ export async function exportAllSurveysCSV() {
     // Chunked processing for Excel rows
     for (let i = 0; i < sv.length; i++) {
       const s = sv[i];
-      if (i % 5 === 0) toast(`Processing: ${i}/${sv.length}`, false);
+      if (i % 5 === 0) toast(t('Processing: {i}/{total}', { i, total: sv.length }), false);
       
       if (s.quadrats) s.quadrats.forEach(q => {
         if (q.species) q.species.forEach(sp => {
@@ -141,7 +141,7 @@ export async function exportAllSurveysCSV() {
     
     for (let i = 0; i < sv.length; i++) {
       const s = sv[i];
-      if (i % 5 === 0) toast(`Processing: ${i}/${sv.length}`, false);
+      if (i % 5 === 0) toast(t('Processing: {i}/{total}', { i, total: sv.length }), false);
       
       if (s.quadrats) s.quadrats.forEach(q => {
         if (q.species) q.species.forEach(sp => {
@@ -383,7 +383,7 @@ export async function restoreData(file) {
 
   // 5. Success
   toast(
-    `Restore complete — ${totalRecords} record${totalRecords !== 1 ? 's' : ''} imported from backup.`,
+    t('Restore complete — {n} record(s) imported from backup.', { n: totalRecords }),
     false
   );
   setTimeout(() => location.reload(), 1200);

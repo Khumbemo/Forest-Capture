@@ -1,6 +1,7 @@
 // src/modules/notes.js
 
 import { $, toast, esc } from './ui.js';
+import { t as translate } from './i18n.js';
 import { Store } from './storage.js';
 import { curPos, reverseGeocode } from './gps.js';
 import { ensureActiveSurvey } from './survey.js';
@@ -19,7 +20,7 @@ export async function refreshNotes() {
       s.notes = s.notes.filter(n => n.uid !== id);
       await Store.update(s);
       refreshNotes();
-      toast('Deleted');
+      toast(translate('Deleted'));
     });
   });
 }
@@ -29,15 +30,15 @@ export async function refreshNotes() {
 // object. Returns { ok: true } or { ok: false, error }.
 export async function addNoteRecord(text, category = 'general', quadrat = null) {
   const s = await ensureActiveSurvey();
-  if (!s) return { ok: false, error: 'Could not start a survey.' };
-  const t = (text || '').trim();
-  if (!t) return { ok: false, error: 'Note text is required.' };
+  if (!s) return { ok: false, error: translate('Could not start a survey.') };
+  const noteText = (text || '').trim();
+  if (!noteText) return { ok: false, error: translate('Note text is required.') };
   if (!s.notes) s.notes = [];
   s.notes.push({
     uid: Date.now().toString(36) + Math.random().toString(36).substring(2, 6),
     quadrat: quadrat != null ? parseInt(quadrat) || null : null,
     category: category || 'general',
-    text: t,
+    text: noteText,
     time: new Date().toISOString()
   });
   await Store.update(s);
@@ -45,26 +46,26 @@ export async function addNoteRecord(text, category = 'general', quadrat = null) 
 }
 
 export async function addNote() {
-  const t = $('#noteContent').value.trim();
-  if (!t) { toast('Enter text', true); return; }
-  const result = await addNoteRecord(t, $('#noteCategory').value, $('#noteQuadratRef').value);
+  const noteText = $('#noteContent').value.trim();
+  if (!noteText) { toast(translate('Enter text'), true); return; }
+  const result = await addNoteRecord(noteText, $('#noteCategory').value, $('#noteQuadratRef').value);
   if (!result.ok) { toast(result.error, true); return; }
   $('#noteContent').value = '';
   refreshNotes();
-  toast('Note saved');
+  toast(translate('Note saved'));
 }
 
 export function init() {
   $('#btnGeocodeNotes')?.addEventListener('click', async () => {
-      if (curPos.lat == null) { toast('No GPS', true); return; }
-      toast('Fetching location...');
+      if (curPos.lat == null) { toast(translate('No GPS'), true); return; }
+      toast(translate('Fetching location...'));
       const loc = await reverseGeocode(curPos.lat, curPos.lng);
       if (loc) {
           const el = $('#noteContent');
           el.value = (el.value + (el.value ? '\n\n' : '') + 'Location: ' + loc).trim();
-          toast('Location auto-filled');
+          toast(translate('Location auto-filled'));
       } else {
-          toast('Failed to reverse geocode', true);
+          toast(translate('Failed to reverse geocode'), true);
       }
   });
   $('#btnAddNote')?.addEventListener('click', async () => {

@@ -1,4 +1,5 @@
 import { $, $$, toast, esc, fcConfirm } from './ui.js';
+import { t } from './i18n.js';
 import { Store, loadSettings } from './storage.js';
 import { fillGPSField } from './gps.js';
 import { toMetric, toImperial, getLocalISO } from './utils.js';
@@ -119,9 +120,9 @@ export async function saveQuadrat() {
   isSavingQuadrat = true;
   try {
     const s = await ensureActiveSurvey();
-  if (!s) { toast('Could not start a survey — try again.', true); return; }
+  if (!s) { toast(t('Could not start a survey — try again.'), true); return; }
   const entries = $$('#speciesList .species-entry');
-  if (!entries.length) { toast('Add species', true); return; }
+  if (!entries.length) { toast(t('Add species'), true); return; }
   const sysSettings = await loadSettings();
   const isImperial = sysSettings.settingUnitSystem === 'imperial';
 
@@ -190,12 +191,12 @@ export async function saveQuadrat() {
   const editIdx = $('#btnSaveQuadrat').dataset.editIdx;
   if (editIdx !== undefined && editIdx !== "") {
       s.quadrats[parseInt(editIdx)] = q;
-      toast(`Quadrat #${q.number} updated`);
+      toast(t('Quadrat #{n} updated', { n: q.number }));
       delete $('#btnSaveQuadrat').dataset.editIdx;
       $('#btnSaveQuadrat').textContent = 'Save Quadrat Data';
   } else {
       s.quadrats.push(q);
-      toast(`Quadrat #${q.number} saved`);
+      toast(t('Quadrat #{n} saved', { n: q.number }));
       $('#quadratNumber').value = q.number + 1;
   }
 
@@ -347,7 +348,7 @@ export async function refreshQuadratTable() {
           $('#btnSaveQuadrat').textContent = 'Update Quadrat Data';
           $('#btnSaveQuadrat').dataset.editIdx = idx;
           $('#screenQuadrat').scrollTo({ top: 0, behavior: 'smooth' });
-          toast('Quadrat loaded for editing');
+          toast(t('Quadrat loaded for editing'));
       };
   });
 
@@ -359,7 +360,7 @@ export async function refreshQuadratTable() {
       s.quadrats.splice(idx, 1);
       await Store.update(s);
       refreshQuadratTable();
-      toast('Quadrat deleted');
+      toast(t('Quadrat deleted'));
     };
   });
 }

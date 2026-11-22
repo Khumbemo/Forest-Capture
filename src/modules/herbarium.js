@@ -1,6 +1,7 @@
 // src/modules/herbarium.js
 
 import { $, toast, esc, fcConfirm } from './ui.js';
+import { t } from './i18n.js';
 import { Store, MediaStore } from './storage.js';
 import { fillGPSField } from './gps.js';
 import { ensureActiveSurvey } from './survey.js';
@@ -84,7 +85,7 @@ export async function handleHerbariumPhoto(file) {
       const imgEl = document.getElementById('herbImgEl');
       imgEl.src = currentImageUrl;
       $('#herbPhotoPreview').style.display = 'flex';
-      toast('Photo captured');
+      toast(t('Photo captured'));
     };
     img.src = ev.target.result;
   };
@@ -126,11 +127,11 @@ function getFormData() {
 
 export async function saveHerbarium(exportDoc = false) {
   const s = await ensureActiveSurvey();
-  if (!s) { toast('Could not start a survey — try again.', true); return; }
+  if (!s) { toast(t('Could not start a survey — try again.'), true); return; }
   
   const data = getFormData();
   if (!data.scientific && !data.family) {
-    toast('Scientific name or Family is required', true);
+    toast(t('Scientific name or Family is required'), true);
     return;
   }
 
@@ -144,13 +145,13 @@ export async function saveHerbarium(exportDoc = false) {
   const editIdx = $('#btnSaveHerbarium').dataset.editIdx;
   if (editIdx !== undefined && editIdx !== "") {
     s.herbariums[parseInt(editIdx)] = data;
-    toast(`Voucher #${data.voucherNo} updated`);
+    toast(t('Voucher #{id} updated', { id: data.voucherNo }));
     delete $('#btnSaveHerbarium').dataset.editIdx;
     $('#btnSaveHerbarium').textContent = 'Save to Survey';
     $('#btnExportHerbarium').textContent = 'Save & Export (.doc)';
   } else {
     s.herbariums.push(data);
-    toast(`Voucher #${data.voucherNo} saved`);
+    toast(t('Voucher #{id} saved', { id: data.voucherNo }));
   }
 
   await Store.update(s);
@@ -241,7 +242,7 @@ export async function refreshHerbariumTable() {
       $('#btnExportHerbarium').textContent = 'Update & Export';
       $('#btnSaveHerbarium').dataset.editIdx = idx;
       $('#screenHerbarium').scrollTo({ top: 0, behavior: 'smooth' });
-      toast('Voucher loaded for editing');
+      toast(t('Voucher loaded for editing'));
     };
   });
 
@@ -249,7 +250,7 @@ export async function refreshHerbariumTable() {
   tb.querySelectorAll('[data-action="dw"]').forEach(b => {
     b.onclick = () => {
       exportHerbariumWord(s.herbariums[+b.dataset.doc]);
-      toast('Exporting...');
+      toast(t('Exporting...'));
     };
   });
 
@@ -261,7 +262,7 @@ export async function refreshHerbariumTable() {
       s.herbariums.splice(idx, 1);
       await Store.update(s);
       refreshHerbariumTable();
-      toast('Voucher deleted');
+      toast(t('Voucher deleted'));
     };
   });
 }

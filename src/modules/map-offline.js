@@ -13,6 +13,7 @@ const TILE_BATCH_SIZE = 8;    // Concurrent tile fetches (be kind to tile server
 const REQUEST_DELAY_MS = 50;   // Delay between batches (avoid rate limiting)
 
 import { toast, fcConfirm } from './ui.js';
+import { t } from './i18n.js';
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
@@ -246,9 +247,9 @@ function _bindPanelEvents(map) {
     downloadBtn.disabled = false;
 
     if (!_cancelDownload) {
-      const msg = `Downloaded ${result.cached} new tiles` +
-        (result.skipped > 0 ? ` (${result.skipped} already cached)` : '') +
-        (result.failed  > 0 ? `. ${result.failed} failed.` : '.');
+      const msg = t('Downloaded {n} new tiles', { n: result.cached }) +
+        (result.skipped > 0 ? t(' ({n} already cached)', { n: result.skipped }) : '') +
+        (result.failed  > 0 ? t('. {n} failed.', { n: result.failed }) : '.');
       // Use your app's toast function
       if (typeof toast !== 'undefined') toast(msg, result.failed > 0);
       _loadCacheStats();
@@ -266,7 +267,7 @@ function _bindPanelEvents(map) {
     if (!await fcConfirm('Delete all cached map tiles?')) return;
     await clearTileCache();
     _loadCacheStats();
-    if (typeof toast !== 'undefined') toast('Tile cache cleared.', false);
+    if (typeof toast !== 'undefined') toast(t('Tile cache cleared.'), false);
   });
 }
 

@@ -10,6 +10,25 @@ changelog kept live during that work.
 ## [Unreleased]
 
 ### Added
+- i18n coverage for dynamically-generated content. Every `toast()` call
+  across the app (~140 call sites, ~100 distinct messages) now routes
+  through the translation layer and has real dictionary entries in all
+  9 supported languages — previously toast messages were raw JS string/
+  template literals that bypassed `t()` entirely, so switching languages
+  translated static labels but left every save/delete/error/export
+  notification in English. The `t()` engine itself gained `{placeholder}`
+  substitution (`t('Quadrat #{n} saved', { n: q.number })`) so a message
+  built from a live value — a record number, a filename, a percentage —
+  can be translated without translating the value itself. Also found
+  and fixed ~10 pre-existing `t()` calls (in export.js, analytics.js's
+  regen-status chart, the connectivity banner) that were silently
+  non-functional because no dictionary entry existed for them, and
+  extended `walkDOMAndTranslate()` to translate `aria-label` the same
+  way it already does `title`/`placeholder`, so the accessible names
+  added in the accessibility pass are translatable too. Confirm/prompt/
+  alert dialog body text (the Germplasm validation warnings, delete
+  confirmations, etc.) is a deliberately separate scope boundary not
+  covered here. (#27)
 - Accessibility pass on the app's shared interaction primitives: the
   toast notification region now announces to screen readers
   (`role="status"`/`aria-live="polite"`); the custom confirm/prompt/alert

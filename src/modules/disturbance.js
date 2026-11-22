@@ -1,6 +1,7 @@
 // src/modules/disturbance.js
 
 import { $, $$, toast } from './ui.js';
+import { t } from './i18n.js';
 import { Store } from './storage.js';
 import { getLocalISO } from './utils.js';
 import { ensureActiveSurvey } from './survey.js';
@@ -61,7 +62,7 @@ export function recalcCBI() {
 
 export async function saveDisturbCBI() {
   const s = await ensureActiveSurvey();
-  if (!s) { toast('Could not start a survey — try again.', true); return; }
+  if (!s) { toast(t('Could not start a survey — try again.'), true); return; }
   s.disturbance = {
     grazing: { present: $('#distGrazingPresent').checked, severity: +$('#distGrazingSeverity').value, type: $('#distGrazingType').value, recency: $('#distGrazingRecency')?$('#distGrazingRecency').value:'', extent: $('#distGrazingExtent')?$('#distGrazingExtent').value:'' },
     logging: { present: $('#distLoggingPresent').checked, severity: +$('#distLoggingSeverity').value, type: $('#distLoggingType').value, recency: $('#distLoggingRecency')?$('#distLoggingRecency').value:'', extent: $('#distLoggingExtent')?$('#distLoggingExtent').value:'' },
@@ -84,7 +85,7 @@ export async function saveDisturbCBI() {
     ids.forEach(id => s.cbi[l][id] = parseFloat(document.getElementById(id).value) || 0);
   });
   await Store.update(s);
-  toast('Disturbance & CBI saved');
+  toast(t('Disturbance & CBI saved'));
 }
 
 export async function loadDistData() {

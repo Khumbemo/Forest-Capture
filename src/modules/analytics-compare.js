@@ -15,6 +15,7 @@
 
 import { Store } from './storage.js';
 import { toast, $, esc } from './ui.js';
+import { t } from './i18n.js';
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let _allSurveys      = [];
@@ -40,7 +41,7 @@ export async function initCompareScreen() {
   try {
     _allSurveys = await Store.getSurveys();
   } catch (err) {
-    toast('Could not load surveys: ' + err.message, 'error');
+    toast(t('Could not load surveys: ') + err.message, 'error');
     return;
   }
 
@@ -91,7 +92,7 @@ function _toggleSurvey(id, chipEl) {
     chipEl.classList.remove('compare-chip--selected');
   } else {
     if (_selectedIds.size >= MAX_COMPARE) {
-      toast(`Maximum ${MAX_COMPARE} surveys can be compared at once.`, 'info');
+      toast(t('Maximum {max} surveys can be compared at once.', { max: MAX_COMPARE }), 'info');
       return;
     }
     _selectedIds.add(id);
@@ -118,7 +119,7 @@ function _updateCompareButton() {
  */
 export async function runComparison() {
   if (typeof Chart === 'undefined') {
-    toast('Analytics engine (Chart.js) is still loading or failed to load. Please check your connection.', 'error');
+    toast(t('Analytics engine (Chart.js) is still loading or failed to load. Please check your connection.'), 'error');
     return;
   }
   if (_selectedIds.size < 2) return;
@@ -567,7 +568,7 @@ function _renderRichnessANOVA(data) {
 // ─── Export comparison ────────────────────────────────────────────────────────
 
 export function exportComparisonJSON() {
-  if (_selectedIds.size < 2) { toast('Select surveys to compare first.', 'info'); return; }
+  if (_selectedIds.size < 2) { toast(t('Select surveys to compare first.'), 'info'); return; }
 
   const selected = _allSurveys.filter(s => _selectedIds.has(s.id));
   const output   = {

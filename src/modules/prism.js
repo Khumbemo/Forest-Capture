@@ -1,6 +1,7 @@
 // src/modules/prism.js — Variable-Radius Point Sampling (Prism Sweep)
 
 import { $, $$, toast, fcConfirm } from './ui.js';
+import { t } from './i18n.js';
 import { Store, loadSettings } from './storage.js';
 import { fillGPSField } from './gps.js';
 import { attachAutocomplete } from './species-autocomplete.js';
@@ -29,9 +30,9 @@ export async function savePrismPoint() {
   isSavingPrism = true;
   try {
     const s = await ensureActiveSurvey();
-  if (!s) { toast('Could not start a survey — try again.', true); return; }
+  if (!s) { toast(t('Could not start a survey — try again.'), true); return; }
   const entries = $$('#prismTallyList .species-entry');
-  if (!entries.length) { toast('Add at least one tree tally', true); return; }
+  if (!entries.length) { toast(t('Add at least one tree tally'), true); return; }
 
   const sysSettings = await loadSettings();
   const isImperial = sysSettings.settingUnitSystem === 'imperial';
@@ -63,12 +64,12 @@ export async function savePrismPoint() {
   const editIdx = $('#btnSavePrism').dataset.editIdx;
   if (editIdx !== undefined && editIdx !== "") {
     s.prismPoints[parseInt(editIdx)] = point;
-    toast(`Prism Point #${point.number} updated`);
+    toast(t('Prism Point #{n} updated', { n: point.number }));
     delete $('#btnSavePrism').dataset.editIdx;
     $('#btnSavePrism').textContent = 'Save Prism Point';
   } else {
     s.prismPoints.push(point);
-    toast(`Prism Point #${point.number} saved — BA/ha: ${point.basalAreaPerHa} m²/ha`);
+    toast(t('Prism Point #{n} saved — BA/ha: {ba} m²/ha', { n: point.number, ba: point.basalAreaPerHa }));
     $('#prismPointNumber').value = point.number + 1;
   }
 
@@ -121,7 +122,7 @@ export async function refreshPrismTable() {
       $('#btnSavePrism').textContent = 'Update Prism Point';
       $('#btnSavePrism').dataset.editIdx = idx;
       $('#screenPrism').scrollTo({ top: 0, behavior: 'smooth' });
-      toast('Prism point loaded for editing');
+      toast(t('Prism point loaded for editing'));
     };
   });
 
@@ -133,7 +134,7 @@ export async function refreshPrismTable() {
       s.prismPoints.splice(idx, 1);
       await Store.update(s);
       refreshPrismTable();
-      toast('Prism point deleted');
+      toast(t('Prism point deleted'));
     };
   });
 }

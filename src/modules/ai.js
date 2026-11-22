@@ -1,5 +1,6 @@
 // src/modules/ai.js
 import { $, $$, toast, fcConfirm } from './ui.js';
+import { t } from './i18n.js';
 import { Store, idb } from './storage.js';
 import { compress } from './utils.js';
 import { APP_KNOWLEDGE, TOOL_DECLARATIONS, isWriteTool, describeWriteCall } from './ai-knowledge.js';
@@ -77,9 +78,9 @@ async function initOfflineAISettings() {
         if (progressFill) progressFill.style.width = `${pct}%`;
         if (progressLabel) progressLabel.textContent = `${pct}%${text ? ' — ' + text : ''}`;
       });
-      toast('Offline AI ready');
+      toast(t('Offline AI ready'));
     } catch (err) {
-      toast(`Offline AI download failed: ${err.message}`, true);
+      toast(t('Offline AI download failed: {err}', { err: err.message }), true);
     } finally {
       downloadBtn.disabled = false;
       downloadBtn.textContent = 'Download Offline AI';
@@ -91,7 +92,7 @@ async function initOfflineAISettings() {
   deleteBtn?.addEventListener('click', async () => {
     if (!await fcConfirm('Delete the offline AI model and free its storage? You can download it again later.')) return;
     await deleteOfflineModel();
-    toast('Offline AI deleted');
+    toast(t('Offline AI deleted'));
     await refreshStatus();
   });
 }
@@ -334,7 +335,7 @@ async function resolvePendingWrite(confirmed, card, buttonRow) {
     if (result.ok) {
       status.textContent = '✅ Done.';
       status.style.color = 'var(--emerald)';
-      toast('Saved by SylvX');
+      toast(t('Saved by SylvX'));
     } else {
       status.textContent = `❌ ${result.error}`;
       status.style.color = 'var(--red)';
@@ -362,7 +363,7 @@ async function handleChatSubmit() {
   if (!text) return;
 
   if (pendingWrite) {
-    toast('Please Confirm or Cancel the pending action above first', true);
+    toast(t('Please Confirm or Cancel the pending action above first'), true);
     return;
   }
 
@@ -382,7 +383,7 @@ async function handleChatSubmit() {
   }
 
   if (!apiKey) {
-    toast('Please enter your Gemini API Key in Settings', true);
+    toast(t('Please enter your Gemini API Key in Settings'), true);
     $('#btnSettings')?.click();
     return;
   }
