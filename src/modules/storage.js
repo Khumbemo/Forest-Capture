@@ -2,6 +2,7 @@
 
 import { ensureAuth, loadSDK } from './firebase.js';
 import { toast } from './ui.js';
+import { t } from './i18n.js';
 
 // Bound once loadSDK() succeeds (inside getUserRef(), below). Every call
 // site in this file that uses these already awaits getUserRef() first —
@@ -938,7 +939,7 @@ export async function checkStorageQuota() {
       if (!estimate.quota) return null;
       const percentUsed = (estimate.usage / estimate.quota) * 100;
       if (percentUsed > 90) {
-        toast(`⚠️ Storage ${Math.round(percentUsed)}% full. Sync or export your data immediately to prevent data loss.`, true);
+        toast(t('⚠️ Storage {pct}% full. Sync or export your data immediately to prevent data loss.', { pct: Math.round(percentUsed) }), true);
       }
       return { usage: estimate.usage, quota: estimate.quota, percent: percentUsed };
     } catch (e) {

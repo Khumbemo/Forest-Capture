@@ -1,6 +1,7 @@
 // src/modules/environment.js
 
 import { $, toast, fcConfirm } from './ui.js';
+import { t } from './i18n.js';
 import { Store, loadSettings } from './storage.js';
 import { curPos } from './gps.js';
 import { toMetric, toImperial, getLocalISO } from './utils.js';
@@ -14,7 +15,7 @@ export function autoFillEnv() {
   const hv = parseFloat(h);
   if (!isNaN(tv)) $('#envTemperature').value = tv;
   if (!isNaN(hv)) $('#envHumidity').value = Math.round(hv);
-  toast('Auto-filled');
+  toast(t('Auto-filled'));
 }
 
 function numOrNull(v) {
@@ -24,7 +25,7 @@ function numOrNull(v) {
 
 export async function saveEnv() {
   const s = await ensureActiveSurvey();
-  if (!s) { toast('Could not start a survey — try again.', true); return; }
+  if (!s) { toast(t('Could not start a survey — try again.'), true); return; }
   const sysSettings = await loadSettings();
   const isImperial = sysSettings.settingUnitSystem === 'imperial';
   const eData = {
@@ -65,12 +66,12 @@ export async function saveEnv() {
     if (!await fcConfirm('Soil pH must be 0-14. Proceed anyway?')) return;
   }
   if (eData.canopyCover !== null && (eData.canopyCover < 0 || eData.canopyCover > 100)) {
-    toast('Cover must be 0-100%', true); return;
+    toast(t('Cover must be 0-100%'), true); return;
   }
 
   s.environment = eData;
   await Store.update(s);
-  toast('Saved');
+  toast(t('Saved'));
 }
 
 export async function loadEnvData() {
@@ -165,7 +166,7 @@ export function estimateCanopy(file) {
       $('#canopyEstimate').textContent = `≈ ${pct}% cover | LAI: ${lai}`;
       if ($('#envLAI')) $('#envLAI').value = lai;
       $('#envCanopyCover').value = pct;
-      toast(`Canopy: ~${pct}% (LAI: ${lai})`);
+      toast(t('Canopy: ~{pct}% (LAI: {lai})', { pct, lai }));
     };
     img.src = ev.target.result;
   };

@@ -9,6 +9,7 @@
  */
 
 import { $, $$, toast } from './ui.js';
+import { t } from './i18n.js';
 import { Store, loadSettings } from './storage.js';
 import { toMetric, toImperial } from './utils.js';
 
@@ -159,7 +160,7 @@ function lockBase() {
   const btn = $('#btnLockBase');
   if (btn) btn.classList.add('locked');
 
-  toast('Base angle locked');
+  toast(t('Base angle locked'));
 }
 
 /**
@@ -174,7 +175,7 @@ function lockTop() {
   const btn = $('#btnLockTop');
   if (btn) btn.classList.add('locked');
 
-  toast('Top angle locked');
+  toast(t('Top angle locked'));
 }
 
 /**
@@ -251,13 +252,13 @@ function _computeHeight() {
 async function applyToSpecies() {
   const height = _computeHeight();
   if (height === undefined) {
-    toast('Enter a valid distance first');
+    toast(t('Enter a valid distance first'));
     return;
   }
 
   const survey = await Store.getActive();
   if (!survey) {
-    toast('No active survey');
+    toast(t('No active survey'));
     return;
   }
 
@@ -267,13 +268,13 @@ async function applyToSpecies() {
   const sp = target && survey.quadrats?.[target.qIdx]?.species?.[target.spIdx];
 
   if (!sp) {
-    toast('Select a species first');
+    toast(t('Select a species first'));
     return;
   }
 
   sp.height = Number(height.toFixed(2));
   await Store.update(survey);
-  toast('Height applied to species');
+  toast(t('Height applied to species'));
 }
 
 /**

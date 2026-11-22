@@ -7,6 +7,7 @@
  */
 
 import { $, toast } from './ui.js';
+import { t } from './i18n.js';
 
 let active = false;
 let heading = 0;
@@ -97,7 +98,7 @@ function simulateStep() {
   simulatedHeading = (simulatedHeading + 15) % 360;
   simulatedSlope = Math.round(10 + Math.random() * 8); // Random realistic slope aspect
   _updateUI(simulatedHeading, simulatedSlope);
-  toast(`Simulated Compass Aspect: ${simulatedHeading}° ${getCardinal(simulatedHeading)}`);
+  toast(t('Simulated Compass Aspect: {deg}° {dir}', { deg: simulatedHeading, dir: getCardinal(simulatedHeading) }));
 }
 
 /**

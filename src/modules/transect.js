@@ -1,6 +1,7 @@
 // src/modules/transect.js
 
 import { $, $$, toast, esc, fcConfirm } from './ui.js';
+import { t as translate } from './i18n.js';
 import { Store, loadSettings } from './storage.js';
 import { attachAutocomplete } from './species-autocomplete.js';
 import { fillGPSField } from './gps.js';
@@ -36,7 +37,7 @@ export async function saveTransect() {
   isSavingTransect = true;
   try {
     const s = await ensureActiveSurvey();
-  if (!s) { toast('Could not start a survey — try again.', true); return; }
+  if (!s) { toast(translate('Could not start a survey — try again.'), true); return; }
   const sysSettings = await loadSettings();
   const isImperial = sysSettings.settingUnitSystem === 'imperial';
   const t = {
@@ -92,12 +93,12 @@ export async function saveTransect() {
   const editIdx = $('#btnSaveTransect').dataset.editIdx;
   if (editIdx !== undefined && editIdx !== "") {
     s.transects[parseInt(editIdx)] = t;
-    toast(`Transect #${t.number} updated`);
+    toast(translate('Transect #{n} updated', { n: t.number }));
     delete $('#btnSaveTransect').dataset.editIdx;
     $('#btnSaveTransect').textContent = 'Save Transect';
   } else {
     s.transects.push(t);
-    toast(`Transect #${t.number} saved`);
+    toast(translate('Transect #{n} saved', { n: t.number }));
     $('#transectNumber').value = t.number + 1;
   }
 
@@ -169,7 +170,7 @@ export async function refreshTransectTable() {
       $('#btnSaveTransect').textContent = 'Update Transect';
       $('#btnSaveTransect').dataset.editIdx = idx;
       $('#screenTransect').scrollTo({ top: 0, behavior: 'smooth' });
-      toast('Transect loaded for editing');
+      toast(translate('Transect loaded for editing'));
     };
   });
 
@@ -181,7 +182,7 @@ export async function refreshTransectTable() {
       s.transects.splice(idx, 1);
       await Store.update(s);
       refreshTransectTable();
-      toast('Transect deleted');
+      toast(translate('Transect deleted'));
     };
   });
 }

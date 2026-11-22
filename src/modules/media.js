@@ -1,6 +1,7 @@
 // src/modules/media.js
 
 import { $, toast, esc } from './ui.js';
+import { t } from './i18n.js';
 import { Store, MediaStore } from './storage.js';
 import { ensureAuth, loadSDK } from './firebase.js';
 import { compress } from './utils.js';
@@ -69,10 +70,10 @@ export async function refreshPhotos() {
         s.photos.splice(idx, 1);
         await Store.update(s);
         refreshPhotos();
-        toast('Deleted');
+        toast(t('Deleted'));
       } catch (err) {
         console.error(err);
-        toast('Delete failed', true);
+        toast(t('Delete failed'), true);
       }
     });
   });
@@ -80,9 +81,9 @@ export async function refreshPhotos() {
 
 export async function handlePhotoInput(file) {
   const s = await ensureActiveSurvey();
-  if (!s) { toast('Could not start a survey — try again.', true); return; }
+  if (!s) { toast(t('Could not start a survey — try again.'), true); return; }
 
-  toast('Saving photo...', false);
+  toast(t('Saving photo...'), false);
 
   try {
     if (!s.photos) s.photos = [];
@@ -108,7 +109,7 @@ export async function handlePhotoInput(file) {
       let finalPath = '';
 
       if (user) {
-        toast('Uploading photo...', false);
+        toast(t('Uploading photo...'), false);
         const storageRef = ref(storage, `users/${user.uid}/surveys/${s.id}/photos/${fileName}`);
         
         // Pipe directly from local filesystem path
@@ -131,7 +132,7 @@ export async function handlePhotoInput(file) {
 
       await Store.update(s);
       refreshPhotos();
-      toast(user ? 'Photo uploaded' : 'Photo saved locally');
+      toast(user ? t('Photo uploaded') : t('Photo saved locally'));
 
     } else {
       // ─── WEB FALLBACK: COMPRESS → STORE IN IndexedDB ───
@@ -143,7 +144,7 @@ export async function handlePhotoInput(file) {
           const fileName = `photo_${Date.now()}.jpg`;
 
           if (user) {
-            toast('Uploading photo...', false);
+            toast(t('Uploading photo...'), false);
             const storageRef = ref(storage, `users/${user.uid}/surveys/${s.id}/photos/${fileName}`);
             const snapshot = await uploadString(storageRef, compressedBase64, 'data_url');
             finalUrl = await getDownloadURL(snapshot.ref);
@@ -165,17 +166,17 @@ export async function handlePhotoInput(file) {
 
           await Store.update(s);
           refreshPhotos();
-          toast(user ? 'Photo uploaded' : 'Photo saved (offline)');
+          toast(user ? t('Photo uploaded') : t('Photo saved (offline)'));
         } catch(e) {
           console.error('Photo save failed', e);
-          toast('Photo save failed', true);
+          toast(t('Photo save failed'), true);
         }
       });
     }
 
   } catch (err) {
     console.error(err);
-    toast('Capture failed: ' + err.message, true);
+    toast(t('Capture failed: ') + err.message, true);
   }
 }
 
@@ -224,7 +225,7 @@ export async function startRecording(onStart) {
           let finalPath = '';
 
           if (user) {
-            toast('Uploading audio...', false);
+            toast(t('Uploading audio...'), false);
             const storageRef = ref(storage, `users/${user.uid}/surveys/${s.id}/audio/${fileName}`);
             const req = await fetch(convertUrl);
             const blobData = await req.blob();
@@ -243,7 +244,7 @@ export async function startRecording(onStart) {
 
           await Store.update(s);
           refreshAudio();
-          toast(user ? 'Voice note uploaded' : 'Voice note saved locally');
+          toast(user ? t('Voice note uploaded') : t('Voice note saved locally'));
         } else {
           // ─── WEB FALLBACK: STORE IN IndexedDB ───
           const reader = new FileReader();
@@ -260,7 +261,7 @@ export async function startRecording(onStart) {
               const audioDataUrl = ev.target.result;
 
               if (user) {
-                toast('Uploading audio...', false);
+                toast(t('Uploading audio...'), false);
                 const storageRef = ref(storage, `users/${user.uid}/surveys/${s.id}/audio/${fileName}`);
                 const snapshot = await uploadString(storageRef, audioDataUrl, 'data_url');
                 finalUrl = await getDownloadURL(snapshot.ref);
@@ -279,24 +280,24 @@ export async function startRecording(onStart) {
 
               await Store.update(s);
               refreshAudio();
-              toast(user ? 'Voice note uploaded' : 'Voice note saved (offline)');
+              toast(user ? t('Voice note uploaded') : t('Voice note saved (offline)'));
             } catch (e) {
               console.error('Audio save failed', e);
-              toast('Audio save failed', true);
+              toast(t('Audio save failed'), true);
             }
           };
           reader.readAsDataURL(blob);
         }
       } catch (err) {
         console.error('Audio save failed', err);
-        toast('Audio save failed', true);
+        toast(t('Audio save failed'), true);
       }
       stream.getTracks().forEach(t => t.stop());
     };
     mediaRec.start();
     if (onStart) onStart();
   } catch {
-    toast('Mic unavailable', true);
+    toast(t('Mic unavailable'), true);
   }
 }
 
@@ -345,7 +346,7 @@ export async function refreshAudio() {
       s.audioNotes.splice(idx, 1);
       await Store.update(s);
       refreshAudio();
-      toast('Deleted');
+      toast(t('Deleted'));
       try {
         if (note && note.path) {
           await ensureStorageBindings();

@@ -1,6 +1,7 @@
 // src/modules/map.js
 
 import { toast, esc, fcPrompt } from './ui.js';
+import { t } from './i18n.js';
 import { curPos } from './gps.js';
 import { getWps, saveWps, loadSettings } from './storage.js';
 import { initOfflineMapUI } from './map-offline.js';
@@ -96,8 +97,8 @@ export function locateMe() {
     map.setView([curPos.lat, curPos.lng], 16);
     if (userMarker) userMarker.setLatLng([curPos.lat, curPos.lng]);
     else userMarker = L.circleMarker([curPos.lat, curPos.lng], { radius: 8, color: '#5ee5a0', fillColor: '#5ee5a0', fillOpacity: .8, weight: 2 }).addTo(map).bindPopup('You');
-    toast('Centered');
-  } else toast('No GPS', true);
+    toast(t('Centered'));
+  } else toast(t('No GPS'), true);
 }
 
 function mapHas(Ly) { return map && Ly && map.hasLayer(Ly); }
@@ -108,17 +109,17 @@ export function setMapLayer(type) {
     if (mapHas(terLayer)) map.removeLayer(terLayer);
     if (mapHas(hybLayer)) map.removeLayer(hybLayer);
     if (!mapHas(satLayer)) satLayer.addTo(map);
-    toast('Satellite');
+    toast(t('Satellite'));
   } else if (type === 'ter') {
     if (mapHas(satLayer)) map.removeLayer(satLayer);
     if (mapHas(hybLayer)) map.removeLayer(hybLayer);
     if (!mapHas(terLayer)) terLayer.addTo(map);
-    toast('Terrain');
+    toast(t('Terrain'));
   } else if (type === 'hyb') {
     if (mapHas(satLayer)) map.removeLayer(satLayer);
     if (mapHas(terLayer)) map.removeLayer(terLayer);
     if (!mapHas(hybLayer)) hybLayer.addTo(map);
-    toast('Hybrid');
+    toast(t('Hybrid'));
   }
 }
 
@@ -132,7 +133,7 @@ export async function addWaypoint(name, type, notes = '', manualLat = null, manu
     if (!manual) return;
     const parts = manual.split(',').map(s => parseFloat(s.trim()));
     if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) {
-      toast('Invalid coordinates. Use format: lat, lng', true);
+      toast(t('Invalid coordinates. Use format: lat, lng'), true);
       return;
     }
     lat = parts[0];
@@ -143,5 +144,5 @@ export async function addWaypoint(name, type, notes = '', manualLat = null, manu
   w.push({ name: name || 'Waypoint', type: type || 'plot', lat, lng, notes, time: new Date().toISOString() });
   await saveWps(w);
   await refreshMapWps();
-  toast('Waypoint added');
+  toast(t('Waypoint added'));
 }

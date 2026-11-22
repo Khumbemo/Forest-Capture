@@ -1,6 +1,7 @@
 // src/modules/waypoints.js
 
 import { $, esc, toast } from './ui.js';
+import { t } from './i18n.js';
 import { getWps, saveWps } from './storage.js';
 import { refreshMapWps } from './map.js';
 
@@ -31,7 +32,7 @@ export async function refreshWpList() {
       await saveWps(w);
       await refreshWpList();
       refreshMapWps();
-      toast('Deleted');
+      toast(t('Deleted'));
     });
   });
 }

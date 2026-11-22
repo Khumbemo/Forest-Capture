@@ -9,6 +9,7 @@
  */
 
 import { $, toast } from './ui.js';
+import { t } from './i18n.js';
 import { Store, getWps } from './storage.js';
 
 // ----------------------------------------------------------
@@ -61,10 +62,10 @@ function _escapeXML(str) {
 // ============================================================
 export async function exportPDF() {
   const s = await Store.getActive();
-  if (!s) { toast('No active survey', true); return; }
+  if (!s) { toast(t('No active survey'), true); return; }
 
   if (typeof window.jspdf === 'undefined') {
-    toast('PDF library loading...', true);
+    toast(t('PDF library loading...'), true);
     return;
   }
 
@@ -240,7 +241,7 @@ export async function exportPDF() {
   }
 
   doc.save(_filename(s.name, 'pdf'));
-  toast('PDF report exported');
+  toast(t('PDF report exported'));
 }
 
 
@@ -249,7 +250,7 @@ export async function exportPDF() {
 // ============================================================
 export async function exportWord() {
   const s = await Store.getActive();
-  if (!s) { toast('No active survey', true); return; }
+  if (!s) { toast(t('No active survey'), true); return; }
 
   const title = (s.name || 'Survey') + ' — Field Report';
 
@@ -402,7 +403,7 @@ export async function exportWord() {
     new Blob(['\ufeff', html], { type: 'application/msword' }),
     _filename(s.name, 'doc')
   );
-  toast('Word document exported');
+  toast(t('Word document exported'));
 }
 
 
@@ -414,7 +415,7 @@ export async function exportEnhancedGPX() {
   const wps = await getWps();
 
   if (!s && (!wps || !wps.length)) {
-    toast('No survey or waypoints to export', true);
+    toast(t('No survey or waypoints to export'), true);
     return;
   }
 
@@ -488,7 +489,7 @@ export async function exportEnhancedGPX() {
   }
 
   if (points.length === 0) {
-    toast('No GPS coordinates found in data', true);
+    toast(t('No GPS coordinates found in data'), true);
     return;
   }
 
@@ -535,7 +536,7 @@ ${trkTag}
     new Blob([gpx], { type: 'application/gpx+xml' }),
     _filename(trackName, 'gpx')
   );
-  toast('Enhanced GPX exported');
+  toast(t('Enhanced GPX exported'));
 }
 
 // ============================================================
@@ -543,7 +544,7 @@ ${trkTag}
 // ============================================================
 export async function exportDwC() {
   const s = await Store.getActive();
-  if (!s) { toast('No active survey', true); return; }
+  if (!s) { toast(t('No active survey'), true); return; }
 
   // DwC standard column headers
   const headers = [
@@ -636,7 +637,7 @@ export async function exportDwC() {
   });
 
   if (rows.length <= 1) {
-    toast('No species data to export', true);
+    toast(t('No species data to export'), true);
     return;
   }
 
@@ -645,7 +646,7 @@ export async function exportDwC() {
     new Blob([csv], { type: 'text/csv;charset=utf-8' }),
     _filename(s.name || 'DarwinCore', 'csv')
   );
-  toast(`Darwin Core exported — ${rows.length - 1} occurrences`);
+  toast(t('Darwin Core exported — {count} occurrences', { count: rows.length - 1 }));
 }
 
 // ============================================================

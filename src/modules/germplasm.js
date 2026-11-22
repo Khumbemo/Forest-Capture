@@ -1,6 +1,7 @@
 // src/modules/germplasm.js
 
 import { $, $$, toast, switchScreen, fcConfirm, esc } from './ui.js';
+import { t } from './i18n.js';
 import { Store } from './storage.js';
 import { curPos } from './gps.js';
 import { ensureActiveSurvey } from './survey.js';
@@ -126,9 +127,9 @@ function handleAutoGPS() {
     if ($('#germ_nbpgr_latitude')) $('#germ_nbpgr_latitude').value = curPos.lat.toFixed(6);
     if ($('#germ_nbpgr_longitude')) $('#germ_nbpgr_longitude').value = curPos.lng.toFixed(6);
     if ($('#germ_nbpgr_altitude') && curPos.alt != null) $('#germ_nbpgr_altitude').value = Math.round(curPos.alt);
-    toast('GPS coordinates filled');
+    toast(t('GPS coordinates filled'));
   } else {
-    toast('No GPS signal — enter coordinates manually', true);
+    toast(t('No GPS signal — enter coordinates manually'), true);
   }
 }
 
@@ -194,10 +195,10 @@ export async function refreshGermplasmUI() {
         try {
           const spc = $('#germ_' + currentBody + '_speciesScientific').value.trim();
           console.log('species extracted:', spc);
-          if (!spc) { toast('Scientific name is required.', true); return; }
+          if (!spc) { toast(t('Scientific name is required.'), true); return; }
 
           const sv = await ensureActiveSurvey();
-          if (!sv) { toast('Could not start a survey — try again.', true); return; }
+          if (!sv) { toast(t('Could not start a survey — try again.'), true); return; }
 
           const keys = currentBody === 'icfre' ? emptyICFRE : currentBody === 'nbpgr' ? emptyNBPGR : emptyISTA;
           const rec = { id: Date.now(), bodyId: currentBody };
@@ -212,12 +213,12 @@ export async function refreshGermplasmUI() {
           sv.germplasm.unshift(rec);
           await Store.update(sv);
 
-          toast('Record saved!');
+          toast(t('Record saved!'));
           currentView = 'list';
           await refreshGermplasmUI();
         } catch (e) {
           console.error(e);
-          toast('Error saving record.', true);
+          toast(t('Error saving record.'), true);
         }
       });
       console.log('germplasm.js: ATTACHED save listener to btnGSaveRec');

@@ -1,5 +1,6 @@
 import { toUTM } from './utils.js';
 import { $, toast, setHeaderWeatherIcon, fcConfirm } from './ui.js';
+import { t } from './i18n.js';
 import { loadSettings } from './storage.js';
 
 export let curPos = { lat: null, lng: null, alt: null, acc: null };
@@ -32,7 +33,7 @@ export function fmtCoords(lat, lng, format = 'dd') {
  */
 export async function fillGPSField(inputId, includeAlt = false) {
   if (curPos.lat == null) {
-    toast('No GPS signal', true);
+    toast(t('No GPS signal'), true);
     return;
   }
 
@@ -51,7 +52,7 @@ export async function fillGPSField(inputId, includeAlt = false) {
   const el = $(inputId);
   if (el) {
     el.value = val;
-    toast('GPS coordinates filled');
+    toast(t('GPS coordinates filled'));
   }
 }
 

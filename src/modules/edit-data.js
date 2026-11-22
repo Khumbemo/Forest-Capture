@@ -9,6 +9,7 @@
 // a record type gains or loses a field.
 
 import { $, toast, esc, fcConfirm } from './ui.js';
+import { t } from './i18n.js';
 import { Store } from './storage.js';
 import { refreshDataRecords } from './survey.js';
 
@@ -140,9 +141,9 @@ function _getTarget(survey, ref) {
 export async function openEditRecord(ref) {
   const surveys = await Store.getSurveys();
   const survey = surveys.find(s => s.id === ref.surveyId);
-  if (!survey) { toast('Survey not found', true); return; }
+  if (!survey) { toast(t('Survey not found'), true); return; }
   const target = _getTarget(survey, ref);
-  if (!target) { toast('Record not found', true); return; }
+  if (!target) { toast(t('Record not found'), true); return; }
 
   _current = { ...ref, survey, target };
 
@@ -201,7 +202,7 @@ export async function saveEditRecord() {
       else if (kind === 'json') updates[key] = JSON.parse(el.value);
       else updates[key] = el.value;
     } catch {
-      toast(`"${_titleCase(key)}" isn't valid JSON — fix it before saving`, true);
+      toast(t('"{field}" isn\'t valid JSON — fix it before saving', { field: _titleCase(key) }), true);
       return;
     }
   }
@@ -209,7 +210,7 @@ export async function saveEditRecord() {
   Object.assign(_current.target, updates);
 
   await Store.update(_current.survey);
-  toast('Saved');
+  toast(t('Saved'));
   refreshDataRecords().catch(() => {});
   renderEditDataList();
 }
@@ -229,12 +230,12 @@ export async function deleteEditRecord() {
     case 'herbarium': survey.herbariums.splice(index, 1); break;
     case 'germplasm': survey.germplasm.splice(index, 1); break;
     case 'survey':
-      toast('Delete the whole survey from the Tools screen instead', true);
+      toast(t('Delete the whole survey from the Tools screen instead'), true);
       return;
   }
 
   await Store.update(survey);
-  toast('Deleted');
+  toast(t('Deleted'));
   refreshDataRecords().catch(() => {});
   renderEditDataList();
 }
