@@ -74,6 +74,15 @@ export async function exportSurveyCSV() {
       window.XLSX.utils.book_append_sheet(wb, wsPrism, "Prism_Sweeps");
     }
 
+    if (s.invasiveSpecies && s.invasiveSpecies.length) {
+      const iRows = [['Survey', 'ScientificName', 'CommonName', 'Date', 'Observer', 'GPS', 'Locality', 'HabitatType', 'InfestedArea', 'AreaUnit', 'CoverClass', 'GrowthStage', 'SpreadRisk', 'ControlStatus', 'ControlMethod', 'ControlDate', 'Notes']];
+      s.invasiveSpecies.forEach(inv => {
+        iRows.push([s.name, inv.speciesScientific || '', inv.speciesCommon || '', inv.date || '', inv.observer || '', inv.gps || '', inv.locality || '', inv.habitatType || '', inv.infestationArea ?? '', inv.infestationAreaUnit || '', inv.coverClass || '', inv.growthStage || '', inv.spreadRisk || '', inv.controlStatus || '', inv.controlMethod || '', inv.controlDate || '', inv.notes || '']);
+      });
+      const wsInvasive = window.XLSX.utils.aoa_to_sheet(iRows);
+      window.XLSX.utils.book_append_sheet(wb, wsInvasive, "Invasive_Species");
+    }
+
     const wbout = window.XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
     await dl(wbout, s.name.replace(/\W/g, '_') + '_survey.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     toast(t('Exporting Excel (XLSX)...'));
@@ -301,6 +310,14 @@ export async function generateReport() {
     s.herbariums.forEach(h => {
       let r = [h.county, h.state, h.country].filter(Boolean).join(', ');
       html += `<tr><td>${esc(h.voucherNo||'—')}</td><td style="text-transform:uppercase;">${esc(h.family||'—')}</td><td class="species">${esc(h.scientific||'—')}</td><td>${esc(r||h.locality||'—')}</td><td>${esc(h.lifeForm||'—')}</td><td>${esc(h.phenology||'—')}</td><td>${esc(h.date||'—')}</td><td>${esc(h.dateIdentified||'—')}</td></tr>`;
+    });
+    html += `</table>`;
+  }
+
+  if (s.invasiveSpecies && s.invasiveSpecies.length) {
+    html += `<h2>Invasive Species</h2><table><tr><th>Scientific Name</th><th>Common Name</th><th>Cover Class</th><th>Growth Stage</th><th>Spread Risk</th><th>Control Status</th><th>Date</th></tr>`;
+    s.invasiveSpecies.forEach(inv => {
+      html += `<tr><td class="species">${esc(inv.speciesScientific||'—')}</td><td>${esc(inv.speciesCommon||'—')}</td><td>${esc(inv.coverClass||'—')}</td><td>${esc(inv.growthStage||'—')}</td><td>${esc(inv.spreadRisk||'—')}</td><td>${esc(inv.controlStatus||'—')}</td><td>${esc(inv.date||'—')}</td></tr>`;
     });
     html += `</table>`;
   }

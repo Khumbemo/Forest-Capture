@@ -21,7 +21,8 @@ const TYPE_META = {
   disturbance: { icon: 'D', label: 'Disturbance & CBI' },
   notes:       { icon: 'N', label: 'Note' },
   herbarium:   { icon: 'H', label: 'Herbarium Voucher' },
-  germplasm:   { icon: 'G', label: 'Germplasm Record' }
+  germplasm:   { icon: 'G', label: 'Germplasm Record' },
+  invasive:    { icon: 'I', label: 'Invasive Species Record' }
 };
 
 // Keys shown read-only (identity/derived fields) rather than as inputs —
@@ -75,6 +76,9 @@ async function _loadRecords() {
     });
     (sv.germplasm || []).forEach((g, i) => {
       out.push({ type: 'germplasm', surveyId: sv.id, index: i, label: `Germplasm (${g.bodyId ? g.bodyId.toUpperCase() : 'Entry'})`, detail: g.speciesScientific || 'Unknown species', survey: svName, sortDate: svDate });
+    });
+    (sv.invasiveSpecies || []).forEach((inv, i) => {
+      out.push({ type: 'invasive', surveyId: sv.id, index: i, label: `Invasive: ${inv.speciesScientific || 'Unknown species'}`, detail: inv.coverClass || 'No cover class', survey: svName, sortDate: svDate });
     });
   });
 
@@ -134,6 +138,7 @@ function _getTarget(survey, ref) {
     case 'notes': return survey.notes?.[ref.index];
     case 'herbarium': return survey.herbariums?.[ref.index];
     case 'germplasm': return survey.germplasm?.[ref.index];
+    case 'invasive': return survey.invasiveSpecies?.[ref.index];
     default: return null;
   }
 }
@@ -229,6 +234,7 @@ export async function deleteEditRecord() {
     case 'notes': survey.notes.splice(index, 1); break;
     case 'herbarium': survey.herbariums.splice(index, 1); break;
     case 'germplasm': survey.germplasm.splice(index, 1); break;
+    case 'invasive': survey.invasiveSpecies.splice(index, 1); break;
     case 'survey':
       toast(t('Delete the whole survey from the Tools screen instead'), true);
       return;
