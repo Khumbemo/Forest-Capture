@@ -10,6 +10,26 @@ changelog kept live during that work.
 ## [Unreleased]
 
 ### Added
+- **Invasive Species Monitoring**, a new survey tool alongside Quadrat/
+  Transect/Herbarium: logs a species (with autocomplete), observation
+  date/observer, GPS location and habitat type, an infestation
+  assessment (area + unit, cover class, growth stage, spread risk), a
+  control/management record (status, method, treatment date), notes,
+  and an optional photo (same capture/upload pipeline as the Herbarium
+  tool). Fully wired into the rest of the app: a Toolbar entry point,
+  the Data and Edit Data screens' generic record list/editor/delete
+  flow, the HTML survey report, and its own XLSX export sheet
+  (`Invasive_Species`, alongside the existing `Prism_Sweeps`). Every
+  user-facing message is translated across all 9 supported languages,
+  consistent with the i18n coverage work in #27. (#28)
+- Found, while adding the new tool's translations, that most of the
+  ~24 `aria-label`s added in the accessibility pass (#26) — "Edit
+  voucher", "Satellite map layer", "Send message", and so on — had
+  never actually gotten a dictionary entry, even though
+  `walkDOMAndTranslate()` was already set up to translate them (#27):
+  the mechanism worked, but almost nothing had been added for it to
+  translate, so those labels were silently stuck in English in every
+  language. Added the missing ~32 translations. (#28)
 - i18n coverage for dynamically-generated content. Every `toast()` call
   across the app (~140 call sites, ~100 distinct messages) now routes
   through the translation layer and has real dictionary entries in all

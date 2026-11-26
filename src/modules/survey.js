@@ -146,6 +146,12 @@ export async function refreshDataRecords() {
         _allDataRecords.push({ type: 'germplasm', icon: 'G', label: `Germplasm Record (${g.bodyId ? g.bodyId.toUpperCase() : 'Entry'})`, detail: `${g.speciesScientific || 'Unknown Species'} · ${g.collectionDate || g.acquisitionDate || g.samplingDate || 'Undated'}`, survey: svName, date: svDate, sortDate: svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
       });
     }
+    // Invasive species
+    if (sv.invasiveSpecies && sv.invasiveSpecies.length) {
+      sv.invasiveSpecies.forEach((inv) => {
+        _allDataRecords.push({ type: 'invasive', icon: 'I', label: `Invasive Species: ${inv.speciesScientific || 'Unknown Species'}`, detail: `${inv.coverClass || 'No cover class'} · ${inv.controlStatus || 'No control status'}`, survey: svName, date: inv.date || svDate, sortDate: inv.date || svDate || '0000-00-00', surveyId: sv.id, isTampered: sv.isTampered });
+      });
+    }
   });
 
   if (filterType !== 'all') _allDataRecords = _allDataRecords.filter(r => r.type === filterType);
@@ -222,6 +228,7 @@ function _renderPagedRecords(isReset = false) {
         else if (r.type === 'notes' || r.type === 'photos') tgt = 'screenPhotos';
         else if (r.type === 'herbarium') tgt = 'screenHerbarium';
         else if (r.type === 'germplasm') tgt = 'screenGermplasm';
+        else if (r.type === 'invasive') tgt = 'screenInvasive';
         
         if (tgt && typeof switchScreen === 'function') switchScreen(tgt, window._fcScreenCallbacks || {});
       });

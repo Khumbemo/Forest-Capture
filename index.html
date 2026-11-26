@@ -338,6 +338,9 @@
             <option value="disturbance">Disturbance</option>
             <option value="notes">Notes</option>
             <option value="photos">Photos</option>
+            <option value="herbarium">Herbarium</option>
+            <option value="germplasm">Germplasm</option>
+            <option value="invasive">Invasive Species</option>
           </select>
         </div>
       </div>
@@ -364,6 +367,7 @@
               <option value="notes">Notes</option>
               <option value="herbarium">Herbarium</option>
               <option value="germplasm">Germplasm</option>
+              <option value="invasive">Invasive Species</option>
             </select>
           </div>
         </div>
@@ -565,6 +569,22 @@
             </svg>
           </div>
           <div class="stat-label">Germplasm</div>
+        </div>
+
+        <div class="stat-card" role="button" tabindex="0" data-screen="screenInvasive">
+          <div class="stat-icon">
+            <svg viewBox="0 0 100 100" width="48" height="48" fill="none" stroke-linejoin="round" stroke-linecap="round">
+              <path d="M50 85 V45" stroke="var(--red)" stroke-width="4"/>
+              <path d="M50 60 C 30 60, 20 40, 30 25" stroke="var(--red)" stroke-width="3" fill="none"/>
+              <path d="M50 55 C 70 55, 80 35, 70 20" stroke="var(--red)" stroke-width="3" fill="none"/>
+              <path d="M50 45 C 35 45, 28 30, 35 18" stroke="var(--red)" stroke-width="3" fill="none"/>
+              <circle cx="30" cy="25" r="5" fill="rgba(239,68,68,0.35)" stroke="var(--red)" stroke-width="2"/>
+              <circle cx="70" cy="20" r="5" fill="rgba(239,68,68,0.35)" stroke="var(--red)" stroke-width="2"/>
+              <circle cx="35" cy="18" r="5" fill="rgba(239,68,68,0.35)" stroke="var(--red)" stroke-width="2"/>
+              <path d="M15 90 H85" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="stat-label">Invasive Species</div>
         </div>
 
         <div class="stat-card" role="button" tabindex="0" data-screen="screenPrism">
@@ -1813,6 +1833,157 @@
             <tbody id="herbTableBody">
               <tr>
                 <td colspan="5" class="table-empty">No vouchers logged</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== INVASIVE SPECIES MONITORING ===== -->
+    <section class="screen" id="screenInvasive">
+      <div class="screen-header">
+        <h2>Invasive Species Monitoring</h2>
+      </div>
+      <div class="active-survey-bar"><span class="active-label">Active:</span><span class="active-name"
+          id="invSurveyName">No survey</span></div>
+
+      <div class="form-card">
+        <h3 class="card-title">Species & Date</h3>
+        <div class="form-row">
+          <div class="form-group"><label for="invSpeciesScientific">Scientific Name</label><input type="text"
+              id="invSpeciesScientific" placeholder="e.g., Lantana camara" autocomplete="off" /></div>
+          <div class="form-group"><label for="invSpeciesCommon">Common Name</label><input type="text"
+              id="invSpeciesCommon" placeholder="e.g., Wild sage" /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label for="invDate">Observation Date</label><input type="date" id="invDate" /></div>
+          <div class="form-group"><label for="invObserver">Observer</label><input type="text" id="invObserver"
+              placeholder="Recorded by" /></div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <h3 class="card-title">Location</h3>
+        <div class="form-group"><label for="invGPS">GPS Coordinates & Altitude</label>
+          <div class="flex-gap-xs">
+            <input type="text" id="invGPS" placeholder="Lat, Long (Alt)" class="flex-1" />
+            <button class="btn btn-accent btn-sm" id="btnInvGPS" aria-label="Fill GPS coordinates">⊕</button>
+          </div>
+        </div>
+        <div class="form-group"><label for="invLocality">Locality</label><input type="text" id="invLocality"
+            placeholder="Precise location details..." /></div>
+        <div class="form-group"><label for="invHabitatType">Habitat Type</label><select id="invHabitatType">
+            <option value="">—</option>
+            <option value="Forest edge">Forest edge</option>
+            <option value="Forest interior">Forest interior</option>
+            <option value="Riparian/streambank">Riparian / Streambank</option>
+            <option value="Grassland">Grassland</option>
+            <option value="Wetland">Wetland</option>
+            <option value="Roadside/disturbed">Roadside / Disturbed land</option>
+            <option value="Agricultural edge">Agricultural edge</option>
+            <option value="Other">Other</option>
+          </select></div>
+      </div>
+
+      <div class="form-card">
+        <h3 class="card-title">Infestation Assessment</h3>
+        <div class="form-row">
+          <div class="form-group"><label for="invInfestationArea">Infested Area</label><input type="number"
+              id="invInfestationArea" min="0" step="0.01" placeholder="e.g., 150" /></div>
+          <div class="form-group"><label for="invInfestationAreaUnit">Unit</label><select id="invInfestationAreaUnit">
+              <option value="m2">m²</option>
+              <option value="ha">hectares</option>
+            </select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label for="invCoverClass">Cover Class</label><select id="invCoverClass">
+              <option value="">—</option>
+              <option value="<1%">&lt;1%</option>
+              <option value="1-5%">1–5%</option>
+              <option value="6-25%">6–25%</option>
+              <option value="26-50%">26–50%</option>
+              <option value="51-75%">51–75%</option>
+              <option value="76-100%">76–100%</option>
+            </select></div>
+          <div class="form-group"><label for="invGrowthStage">Growth Stage</label><select id="invGrowthStage">
+              <option value="">—</option>
+              <option value="Seedling">Seedling</option>
+              <option value="Vegetative">Vegetative</option>
+              <option value="Flowering">Flowering</option>
+              <option value="Fruiting">Fruiting</option>
+              <option value="Seeding/Dispersing">Seeding / Dispersing</option>
+              <option value="Dormant">Dormant</option>
+            </select></div>
+        </div>
+        <div class="form-group"><label for="invSpreadRisk">Spread Risk</label><select id="invSpreadRisk">
+            <option value="">—</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+          </select></div>
+      </div>
+
+      <div class="form-card">
+        <h3 class="card-title">Control & Management</h3>
+        <div class="form-row">
+          <div class="form-group"><label for="invControlStatus">Control Status</label><select id="invControlStatus">
+              <option value="">—</option>
+              <option value="None">None</option>
+              <option value="Monitored">Monitored (no action yet)</option>
+              <option value="Treated">Treated</option>
+              <option value="Eradicated">Eradicated</option>
+            </select></div>
+          <div class="form-group"><label for="invControlMethod">Control Method</label><select id="invControlMethod">
+              <option value="">—</option>
+              <option value="Mechanical">Mechanical (cutting/uprooting)</option>
+              <option value="Chemical">Chemical (herbicide)</option>
+              <option value="Biological">Biological control</option>
+              <option value="Manual removal">Manual removal</option>
+              <option value="Burning">Controlled burning</option>
+              <option value="Other">Other</option>
+            </select></div>
+        </div>
+        <div class="form-group"><label for="invControlDate">Control/Treatment Date</label><input type="date"
+            id="invControlDate" /></div>
+        <div class="form-group"><label for="invNotes">Notes / Remarks</label><textarea id="invNotes" rows="2"
+            placeholder="Spread pattern, associated species, management history..."></textarea></div>
+      </div>
+
+      <div class="form-card">
+        <h3 class="card-title">Photo</h3>
+        <div class="photo-capture-area">
+          <label class="photo-upload-btn" for="invPhotoInput"><span
+              class="photo-upload-icon">📷</span><span>Capture/Attach Photo</span></label>
+          <input type="file" id="invPhotoInput" accept="image/*" capture="environment" class="hidden-input" />
+        </div>
+        <div class="photo-gallery" id="invPhotoPreview" style="margin-top:12px; display:none; justify-content:center;">
+          <img id="invImgEl" src=""
+            style="max-width:100%; max-height:250px; border-radius:8px; border:1px solid var(--border);" />
+        </div>
+        <canvas id="invCanvas" class="hidden"></canvas>
+      </div>
+
+      <div class="flex-gap-wrap mt-md">
+        <button class="btn btn-primary btn-block" id="btnSaveInvasive">Save to Survey</button>
+      </div>
+
+      <div class="form-card mt-lg">
+        <h3 class="card-title">Logged Invasive Species</h3>
+        <div class="table-scroll">
+          <table class="quadrat-table">
+            <thead>
+              <tr>
+                <th>Scientific Name</th>
+                <th>Cover Class</th>
+                <th>Growth Stage</th>
+                <th>Date</th>
+                <th>⌀</th>
+              </tr>
+            </thead>
+            <tbody id="invTableBody">
+              <tr>
+                <td colspan="5" class="table-empty">No invasive species logged</td>
               </tr>
             </tbody>
           </table>

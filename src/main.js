@@ -19,6 +19,7 @@ import { refreshAnalytics } from './modules/analytics.js';
 import { refreshPreview, exportSurveyCSV, exportSurveyJSON, exportAllSurveysCSV, exportGPX, generateReport, backupAll, restoreData } from './modules/export.js';
 import { initCompareScreen, init as initCompare } from './modules/analytics-compare.js';
 import { initHerbarium, init as initHerbariumListeners } from './modules/herbarium.js';
+import { initInvasive, init as initInvasiveListeners } from './modules/invasive.js';
 import { init as initGermplasm, onScreenEnter as germplasmEnter } from './modules/germplasm.js';
 import { addPrismTally, refreshPrismTable, init as initPrism } from './modules/prism.js';
 import { initBackgrounds } from './modules/backgrounds.js';
@@ -343,6 +344,7 @@ const screenCallbacks = {
     stopCompass();
   },
   screenHerbarium: () => { initHerbarium(); stopCompass(); },
+  screenInvasive: () => { initInvasive(); stopCompass(); },
   screenGermplasm: () => { germplasmEnter(); stopCompass(); },
   screenPrism: () => { refreshPrismTable(); stopCompass(); },
   screenClinometer: () => { clinometerEnter(); stopCompass(); },
@@ -356,7 +358,7 @@ async function updateBars() {
   try {
     const s = await Store.getActive();
     const n = s ? s.name : 'No survey';
-    ['mapSurveyName', 'quadratSurveyName', 'envSurveyName', 'distSurveyName', 'photoSurveyName', 'exportSurveyName', 'analyticsSurveyName', 'transectSurveyName', 'herbSurveyName', 'germSurveyName', 'prismSurveyName', 'clinoSurveyName', 'chatSurveyName'].forEach(id => {
+    ['mapSurveyName', 'quadratSurveyName', 'envSurveyName', 'distSurveyName', 'photoSurveyName', 'exportSurveyName', 'analyticsSurveyName', 'transectSurveyName', 'herbSurveyName', 'germSurveyName', 'prismSurveyName', 'clinoSurveyName', 'chatSurveyName', 'invSurveyName'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.textContent = n;
     });
@@ -763,6 +765,9 @@ function setupEventListeners() {
 
   // Herbarium
   initHerbariumListeners();
+
+  // Invasive Species
+  initInvasiveListeners();
 
   // Notes
   initNotes();
