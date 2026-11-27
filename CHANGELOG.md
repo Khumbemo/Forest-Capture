@@ -10,6 +10,30 @@ changelog kept live during that work.
 ## [Unreleased]
 
 ### Added
+- Automated test coverage for code that previously had none, run on
+  every PR as part of the existing (but previously under-used) test
+  infrastructure — `npm run test:unit` (jsdom) and `npm run test:e2e`
+  (a real Puppeteer browser, already wired into CI via
+  `android-build.yml` as the "Run E2E Tests" step, which is why every
+  PR's "build" check has actually been exercising it this whole time
+  without anyone adding to it):
+  - `tests/utils.test.js` — `toMetric()`/`toImperial()`, the exact
+    function whose gaps caused shipped bugs more than once this
+    project (#17, #24): every conversion type, round-trip behavior,
+    and the exact rounding each one returns.
+  - `tests/i18n.test.js` — `t()`'s dictionary lookup, fallback, and
+    `{placeholder}` substitution, and `walkDOMAndTranslate()`'s text/
+    placeholder/title/aria-label translation (including a revert-to-
+    English check). The aria-label case specifically guards against
+    the "translatable in principle, never actually translated"
+    regression just found and fixed in #28.
+  - `tests/gps-format.test.js` — `fmtCoords()`'s decimal-degrees/DMS/
+    UTM formatting, including the degree/minute/second decomposition
+    and hemisphere sign reviewed during the scientific-accuracy audit.
+  - `tests/invasive.test.js` — a new Puppeteer E2E spec for the
+    Invasive Species tool (navigation, required-field validation,
+    save, edit, and Edit Data screen integration), mirroring the
+    existing `germplasm.test.js`. (#29)
 - **Invasive Species Monitoring**, a new survey tool alongside Quadrat/
   Transect/Herbarium: logs a species (with autocomplete), observation
   date/observer, GPS location and habitat type, an infestation
