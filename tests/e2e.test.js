@@ -15,6 +15,12 @@ async function dismissUnsavedChangesDialog(page) {
 
 describe('Forest Capture E2E UI Tests', () => {
   beforeAll(async () => {
+    // Surface the page's own console/errors in the test runner's output —
+    // without this, a CI-only failure that never reproduces locally has
+    // no way to show what actually happened in the browser.
+    page.on('console', msg => console.log('[browser]', msg.type(), msg.text()));
+    page.on('pageerror', err => console.log('[pageerror]', err.message));
+
     // Navigate to the local server
     await page.goto('http://localhost:8080');
     // Set a consistent viewport
@@ -131,18 +137,21 @@ describe('Forest Capture E2E UI Tests', () => {
     await page.evaluate(() => document.querySelector('.settings-tab[data-tab="setLang"]').click());
     await page.waitForSelector('#settingLanguage', { timeout: 3000 });
 
-    // The settingLanguage 'change' handler awaits saveSettings() before
-    // re-translating, and that does a real (try/catch-wrapped, but
-    // untimed) Firestore write attempt — fast-failing in an environment
-    // whose network is blocked outright, but potentially taking several
-    // real seconds against genuine internet (e.g. a CI runner) before it
-    // falls through. Give it real room rather than assuming either
-    // environment's latency.
     await page.select('#settingLanguage', 'fr');
-    await page.waitForFunction(
-      () => document.getElementById('btnSignOut').textContent.trim() === 'Se Connecter',
-      { timeout: 12000 }
-    );
+    try {
+      await page.waitForFunction(
+        () => document.getElementById('btnSignOut').textContent.trim() === 'Se Connecter',
+        { timeout: 12000 }
+      );
+    } catch (e) {
+      const diag = await page.evaluate(() => ({
+        selectValue: document.getElementById('settingLanguage')?.value,
+        btnSignOutText: document.getElementById('btnSignOut')?.textContent,
+        htmlLang: document.documentElement.lang,
+      }));
+      console.log('[diag] language-switch timeout, state was:', JSON.stringify(diag));
+      throw e;
+    }
 
     await page.select('#settingLanguage', 'en');
     await page.waitForFunction(
