@@ -945,6 +945,7 @@ function setupEventListeners() {
     const el = $('#' + id);
     if (!el) return;
     el.addEventListener('change', async () => {
+      console.log('[diag] change handler fired for', id, 'value=', el.type === 'checkbox' ? el.checked : el.value);
       const s = await loadSettings();
       s[id] = el.type === 'checkbox' ? el.checked : el.value;
       await saveSettings(s);
@@ -954,9 +955,15 @@ function setupEventListeners() {
         import('./modules/map.js').then(m => m.setMapLayer(el.value));
       }
       if (id === 'settingLanguage') {
+        console.log('[diag] entering settingLanguage branch');
         setLanguage(el.value);
         walkDOMAndTranslate();
-        updateAccountStatusLabel();
+        try {
+          updateAccountStatusLabel();
+          console.log('[diag] updateAccountStatusLabel ran OK');
+        } catch (e) {
+          console.log('[diag] updateAccountStatusLabel threw:', e && e.message, e && e.stack);
+        }
       }
       if (id === 'settingUnitSystem') {
         import('./modules/ui.js').then(ui => ui.applyUnitSystem(el.value));
