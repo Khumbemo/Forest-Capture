@@ -131,16 +131,23 @@ describe('Forest Capture E2E UI Tests', () => {
     await page.evaluate(() => document.querySelector('.settings-tab[data-tab="setLang"]').click());
     await page.waitForSelector('#settingLanguage', { timeout: 3000 });
 
+    // The settingLanguage 'change' handler awaits saveSettings() before
+    // re-translating, and that does a real (try/catch-wrapped, but
+    // untimed) Firestore write attempt — fast-failing in an environment
+    // whose network is blocked outright, but potentially taking several
+    // real seconds against genuine internet (e.g. a CI runner) before it
+    // falls through. Give it real room rather than assuming either
+    // environment's latency.
     await page.select('#settingLanguage', 'fr');
     await page.waitForFunction(
       () => document.getElementById('btnSignOut').textContent.trim() === 'Se Connecter',
-      { timeout: 5000 }
+      { timeout: 12000 }
     );
 
     await page.select('#settingLanguage', 'en');
     await page.waitForFunction(
       () => document.getElementById('btnSignOut').textContent.trim() === 'Log In',
-      { timeout: 5000 }
+      { timeout: 12000 }
     );
 
     await page.evaluate(() => document.querySelector('#btnSettingsClose').click());
