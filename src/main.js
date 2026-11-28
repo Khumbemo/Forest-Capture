@@ -1,6 +1,6 @@
 // src/main.js
 
-import { setLanguage, walkDOMAndTranslate } from './modules/i18n.js';
+import { t, setLanguage, walkDOMAndTranslate } from './modules/i18n.js';
 import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot, updateConnectivityBanner, fcConfirm, fcPrompt } from './modules/ui.js';
 import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, resetUserRef, migrateFromLocalStorage, migrateInlineMedia, clearUserCache } from './modules/storage.js';
 import { startGPS, fmtCoords, curPos } from './modules/gps.js';
@@ -369,6 +369,7 @@ async function updateBars() {
 }
 
 function setupEventListeners() {
+  console.log('[diag] setupEventListeners called');
   // Global Hardware Back Button (Popstate) Hook
   window.addEventListener('popstate', (e) => {
     if (e.state && e.state.screen) {
@@ -849,19 +850,27 @@ function setupEventListeners() {
 
   if (accountSection) accountSection.style.display = '';
 
-  if (storedUser && storedUser.email) {
-    if (userEmailEl) userEmailEl.textContent = storedUser.email;
-    if (btnSignOut) btnSignOut.textContent = 'Sign Out';
-  } else {
-    if (userEmailEl) userEmailEl.textContent = 'Offline Mode';
-    if (btnSignOut) {
-      btnSignOut.textContent = 'Log In';
-      btnSignOut.classList.remove('btn-ghost');
-      btnSignOut.classList.add('btn-primary');
-      btnSignOut.style.border = 'none';
-      btnSignOut.style.color = '#fff';
+  // Re-run on every language switch too (not just here at init) — the
+  // labels are set via a one-off textContent assignment rather than being
+  // walked by walkDOMAndTranslate() on every switch like the rest of the
+  // DOM, so without this they'd stay stuck in whichever language was
+  // active the first time this ran.
+  const updateAccountStatusLabel = () => {
+    if (storedUser && storedUser.email) {
+      if (userEmailEl) userEmailEl.textContent = storedUser.email;
+      if (btnSignOut) btnSignOut.textContent = t('Sign Out');
+    } else {
+      if (userEmailEl) userEmailEl.textContent = t('Offline Mode');
+      if (btnSignOut) {
+        btnSignOut.textContent = t('Log In');
+        btnSignOut.classList.remove('btn-ghost');
+        btnSignOut.classList.add('btn-primary');
+        btnSignOut.style.border = 'none';
+        btnSignOut.style.color = '#fff';
+      }
     }
-  }
+  };
+  updateAccountStatusLabel();
 
   $('#btnSignOut')?.addEventListener('click', async () => {
     if (storedUser && storedUser.email) {
@@ -933,10 +942,13 @@ function setupEventListeners() {
     }
   }));
 
+  console.log('[diag] about to attach settings-field change listeners');
   ['settingsGPSContinuous', 'settingLanguage', 'settingUnitSystem', 'settingMapTileUrl', 'settingGBIFEnabled', 'settingItalicSpecies', 'settingAutoSave', 'settingExportGPS', 'settingCoordFormat', 'settingsTaxonomyPack', 'settingsGeminiApiKey'].forEach(id => {
     const el = $('#' + id);
+    console.log('[diag] settings field', id, 'found=', !!el);
     if (!el) return;
     el.addEventListener('change', async () => {
+      console.log('[diag] change handler fired for', id, 'value=', el.type === 'checkbox' ? el.checked : el.value);
       const s = await loadSettings();
       s[id] = el.type === 'checkbox' ? el.checked : el.value;
       await saveSettings(s);
@@ -946,8 +958,15 @@ function setupEventListeners() {
         import('./modules/map.js').then(m => m.setMapLayer(el.value));
       }
       if (id === 'settingLanguage') {
+        console.log('[diag] entering settingLanguage branch');
         setLanguage(el.value);
         walkDOMAndTranslate();
+        try {
+          updateAccountStatusLabel();
+          console.log('[diag] updateAccountStatusLabel ran OK');
+        } catch (e) {
+          console.log('[diag] updateAccountStatusLabel threw:', e && e.message, e && e.stack);
+        }
       }
       if (id === 'settingUnitSystem') {
         import('./modules/ui.js').then(ui => ui.applyUnitSystem(el.value));
