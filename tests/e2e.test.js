@@ -137,23 +137,25 @@ describe('Forest Capture E2E UI Tests', () => {
     await page.evaluate(() => document.querySelector('.settings-tab[data-tab="setLang"]').click());
     await page.waitForSelector('#settingLanguage', { timeout: 3000 });
 
-    await page.select('#settingLanguage', 'fr');
-    try {
-      await page.waitForFunction(
-        () => document.getElementById('btnSignOut').textContent.trim() === 'Se Connecter',
-        { timeout: 12000 }
-      );
-    } catch (e) {
-      const diag = await page.evaluate(() => ({
-        selectValue: document.getElementById('settingLanguage')?.value,
-        btnSignOutText: document.getElementById('btnSignOut')?.textContent,
-        htmlLang: document.documentElement.lang,
-      }));
-      console.log('[diag] language-switch timeout, state was:', JSON.stringify(diag));
-      throw e;
-    }
+    // page.select() sets the value correctly but doesn't reliably dispatch
+    // a real 'change' event in every Chromium build this suite runs
+    // against (confirmed: the select's value updated, but main.js's
+    // 'change' listener never ran, anywhere, no error thrown) — so
+    // dispatch it explicitly, the same way the Clinometer test already
+    // does for its slider's 'input' event.
+    const selectLanguage = (lang) => page.evaluate((value) => {
+      const el = document.getElementById('settingLanguage');
+      el.value = value;
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    }, lang);
 
-    await page.select('#settingLanguage', 'en');
+    await selectLanguage('fr');
+    await page.waitForFunction(
+      () => document.getElementById('btnSignOut').textContent.trim() === 'Se Connecter',
+      { timeout: 12000 }
+    );
+
+    await selectLanguage('en');
     await page.waitForFunction(
       () => document.getElementById('btnSignOut').textContent.trim() === 'Log In',
       { timeout: 12000 }
