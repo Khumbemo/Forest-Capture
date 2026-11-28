@@ -369,6 +369,7 @@ async function updateBars() {
 }
 
 function setupEventListeners() {
+  console.log('[diag] setupEventListeners called');
   // Global Hardware Back Button (Popstate) Hook
   window.addEventListener('popstate', (e) => {
     if (e.state && e.state.screen) {
@@ -941,8 +942,10 @@ function setupEventListeners() {
     }
   }));
 
+  console.log('[diag] about to attach settings-field change listeners');
   ['settingsGPSContinuous', 'settingLanguage', 'settingUnitSystem', 'settingMapTileUrl', 'settingGBIFEnabled', 'settingItalicSpecies', 'settingAutoSave', 'settingExportGPS', 'settingCoordFormat', 'settingsTaxonomyPack', 'settingsGeminiApiKey'].forEach(id => {
     const el = $('#' + id);
+    console.log('[diag] settings field', id, 'found=', !!el);
     if (!el) return;
     el.addEventListener('change', async () => {
       console.log('[diag] change handler fired for', id, 'value=', el.type === 'checkbox' ? el.checked : el.value);
