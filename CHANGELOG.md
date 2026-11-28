@@ -94,6 +94,20 @@ changelog kept live during that work.
   an existing record for the same body. (#25)
 
 ### Fixed
+- Two bugs found during a live, hands-on walkthrough of every tool in a
+  real browser (not just the automated suites, which hadn't exercised
+  either path): the Settings panel's account button (Sign Out/Offline
+  Mode/Log In) was set via raw string literals with no dictionary entry
+  at all, so it stayed stuck in English regardless of the active
+  language — the same "mechanism exists, dictionary entry missing" bug
+  class as #28, now also guarded by a regression test and made to
+  re-translate on every language switch, not just the first; and the
+  Clinometer's manual-angle fallback was unreachable on any device
+  without a real motion sensor, including a plain desktop/laptop
+  browser, because it used `DeviceOrientationEvent`'s mere presence as
+  proof a sensor would report in, when the API is defined globally
+  there too with no accelerometer behind it — height was always stuck
+  at 0.00m with no way to enter an angle manually. (#30)
 - Three more scientific-accuracy/data-integrity bugs found during a full
   audit of every tool's formulas and protocols against forestry/ecology
   conventions: the Prism Sweep tool's DBH field was labeled unit-aware

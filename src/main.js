@@ -1,6 +1,6 @@
 // src/main.js
 
-import { setLanguage, walkDOMAndTranslate } from './modules/i18n.js';
+import { t, setLanguage, walkDOMAndTranslate } from './modules/i18n.js';
 import { $, $$, toast, switchScreen, dismissSplash, showLogin, hideLogin, updateClock, updateOnlineDot, updateConnectivityBanner, fcConfirm, fcPrompt } from './modules/ui.js';
 import { Store, loadSettings, saveSettings, getTheme, setTheme, getBrightness, setBrightness, resetUserRef, migrateFromLocalStorage, migrateInlineMedia, clearUserCache } from './modules/storage.js';
 import { startGPS, fmtCoords, curPos } from './modules/gps.js';
@@ -849,19 +849,27 @@ function setupEventListeners() {
 
   if (accountSection) accountSection.style.display = '';
 
-  if (storedUser && storedUser.email) {
-    if (userEmailEl) userEmailEl.textContent = storedUser.email;
-    if (btnSignOut) btnSignOut.textContent = 'Sign Out';
-  } else {
-    if (userEmailEl) userEmailEl.textContent = 'Offline Mode';
-    if (btnSignOut) {
-      btnSignOut.textContent = 'Log In';
-      btnSignOut.classList.remove('btn-ghost');
-      btnSignOut.classList.add('btn-primary');
-      btnSignOut.style.border = 'none';
-      btnSignOut.style.color = '#fff';
+  // Re-run on every language switch too (not just here at init) — the
+  // labels are set via a one-off textContent assignment rather than being
+  // walked by walkDOMAndTranslate() on every switch like the rest of the
+  // DOM, so without this they'd stay stuck in whichever language was
+  // active the first time this ran.
+  const updateAccountStatusLabel = () => {
+    if (storedUser && storedUser.email) {
+      if (userEmailEl) userEmailEl.textContent = storedUser.email;
+      if (btnSignOut) btnSignOut.textContent = t('Sign Out');
+    } else {
+      if (userEmailEl) userEmailEl.textContent = t('Offline Mode');
+      if (btnSignOut) {
+        btnSignOut.textContent = t('Log In');
+        btnSignOut.classList.remove('btn-ghost');
+        btnSignOut.classList.add('btn-primary');
+        btnSignOut.style.border = 'none';
+        btnSignOut.style.color = '#fff';
+      }
     }
-  }
+  };
+  updateAccountStatusLabel();
 
   $('#btnSignOut')?.addEventListener('click', async () => {
     if (storedUser && storedUser.email) {
@@ -948,6 +956,7 @@ function setupEventListeners() {
       if (id === 'settingLanguage') {
         setLanguage(el.value);
         walkDOMAndTranslate();
+        updateAccountStatusLabel();
       }
       if (id === 'settingUnitSystem') {
         import('./modules/ui.js').then(ui => ui.applyUnitSystem(el.value));

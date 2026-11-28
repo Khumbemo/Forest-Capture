@@ -23,6 +23,7 @@ let sensorAvailable = false;
 let animFrameId    = null;
 let isImperial     = false;  // refreshed each time the screen is entered
 let _speciesIndexMap = [];   // flat dropdown index -> {qIdx, spIdx}
+let _gotRealOrientationEvent = false; // set once a genuine sensor reading arrives
 
 /** Low-pass filter coefficient (0 < α < 1). Smaller = smoother. */
 const ALPHA = 0.15;
@@ -38,11 +39,31 @@ let _orientationHandler = null;
  * Falls back to a manual slider when no sensor is available.
  */
 function startSensor() {
+  _gotRealOrientationEvent = false;
   _orientationHandler = (event) => {
     if (event.beta !== null) {
+      _gotRealOrientationEvent = true;
       // Clamp beta to the usable -90 … 90° range
       currentPitch = Math.max(-90, Math.min(90, event.beta));
     }
+  };
+
+  // Attaching the listener and getting a 'granted' permission (iOS 13+)
+  // or finding the API defined at all (everywhere else) is never actual
+  // proof a real sensor will report in: iOS can grant permission for an
+  // accelerometer that still never fires, and desktop/laptop browsers
+  // define DeviceOrientationEvent globally with no accelerometer behind
+  // it at all. Either way, fall back to the manual slider unless a
+  // genuine event (one with a non-null beta) shows up within a short
+  // grace period.
+  const armFallbackTimeout = () => {
+    sensorAvailable = true;
+    setTimeout(() => {
+      if (!_gotRealOrientationEvent) {
+        sensorAvailable = false;
+        _enableManualFallback();
+      }
+    }, 600);
   };
 
   // iOS 13+ requires an explicit permission request
@@ -54,7 +75,7 @@ function startSensor() {
       .then((state) => {
         if (state === 'granted') {
           window.addEventListener('deviceorientation', _orientationHandler);
-          sensorAvailable = true;
+          armFallbackTimeout();
         } else {
           _enableManualFallback();
         }
@@ -63,9 +84,8 @@ function startSensor() {
         _enableManualFallback();
       });
   } else if (typeof DeviceOrientationEvent !== 'undefined') {
-    // Non-iOS – just attach the listener directly
     window.addEventListener('deviceorientation', _orientationHandler);
-    sensorAvailable = true;
+    armFallbackTimeout();
   } else {
     _enableManualFallback();
   }
